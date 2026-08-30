@@ -11,6 +11,7 @@ export function useLocalVoice(input?: { asrClient?: LocalAsrClient; mediaDevices
   const release = useCallback(() => { stopTracks(); recorder.current = null; chunks.current = []; context.current?.close().catch(() => undefined); context.current = null; startedAt.current = null; }, [stopTracks]);
   const client = useCallback(() => { if (!clientRef.current && typeof Worker !== "undefined") clientRef.current = createLocalAsrClient(); return clientRef.current; }, []);
   useEffect(() => {
+    mounted.current = true;
     const asr = client(); if (!asr) return; const unsubscribe = asr.subscribe((event: AsrWorkerEvent) => {
       if (!mounted.current) return; if (event.type === "loading") { setStatus("loading-model"); setProgress(event.progress); }
       if (event.type === "ready") { setStatus("ready"); setProgress(null); setErrorMessage(null); }
