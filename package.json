@@ -11,7 +11,10 @@
     "start": "node --env-file-if-exists=.env.local server/start.mjs",
     "test": "vitest run",
     "build": "tsc -b && vite build",
-    "audit:known": "node scripts/check-audit.mjs"
+    "audit:known": "node scripts/check-audit.mjs",
+    "release:files": "node scripts/check-release.mjs",
+    "check": "npm test -- --reporter=verbose && npm run build && npm run audit:known",
+    "release:check": "npm run release:files && npm run check"
   },
   "dependencies": {
     "@huggingface/transformers": "4.2.0",
