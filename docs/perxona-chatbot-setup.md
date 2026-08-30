@@ -1,12 +1,12 @@
 # Perxona Chatbot setup contract
 
-這份文件只描述後續人工設定的合約；本階段不建立 Chatbot、不建立 API Key，也不寫入 `.env.local`。在資源尚未建立前，Raise Room 會使用明確標示的本機腳本 fallback。
+這份文件記錄已建立的專用 Chatbot 與後續設定合約。Raise Room 在缺少設定或暫時失敗時，仍會使用明確標示的本機腳本 fallback。
 
 ## 建立前提
 
-取得使用者在當下行動前的明確確認後，才可在 Perxona Console 建立專用 Chatbot。建議名稱為 `Raise Room Manager Engine`。不要共用一般用途 Chatbot，也不要在每一局練習時 PATCH `custom_instructions`。
+已在 Perxona Console 建立並啟用專用 Chatbot `Raise Room Manager Engine`。不要共用一般用途 Chatbot，也不要在每一局練習時 PATCH `custom_instructions`。
 
-建立後，將 Chatbot ID 與 Secret Key 僅放入未追蹤的 `.env.local`：
+`nuva-raise-room-secret` 是 unrestricted 的 Secret Key，`nuva-raise-room-local` 是只允許 `raise-room.localhost` 的 Publishable Key；兩者都在 2026-11-28 到期。它們的值、Chatbot ID 與 target IDs 只存在 ignored `.env.local`，不會寫入文件、Git 或前端 bundle：
 
 ```dotenv
 PERXONA_API_BASE_URL=https://console.perxona.ai/asia
@@ -34,4 +34,4 @@ PERXONA_CHATBOT_ID=
 
 ## 驗證範圍
 
-設定完成後先確認 `/api/manager/status` 顯示 `configured: true`，再以一個文字回合確認回覆來源為 Perxona。不要把成功設定視為麥克風、鏡頭、角色顯示、對嘴、表情、場景、聲音或動作已驗收；那些是後續獨立關卡。
+已以一個真實文字回合驗收 server reply 的來源為 `perxona`。不要把這個 Chatbot 驗收視為 custom VRoid、對嘴、表情、獨立動作、聲學音訊品質、麥克風／鏡頭／視覺 permission E2E 或完整 device-enabled 十分鐘 session 已驗收；那些仍是後續獨立關卡。
