@@ -95,6 +95,14 @@ test("styles the manager as a 16:9 main stage with a smaller camera overlay", ()
   expect(styles).toMatch(/\.meeting-sidebar\s*\{[^}]*position:\s*absolute;[^}]*width:\s*clamp\(10rem,\s*22%,\s*16rem\);/s);
 });
 
+test("bounds the 16:9 manager stage for short desktop viewports without a mobile height override", () => {
+  const styles = readFileSync("src/styles.css", "utf8");
+
+  expect(styles).toMatch(/@media \(max-height: 899px\)[\s\S]*?\.manager-stage\s*\{[^}]*width:\s*min\(100%,\s*58rem\);[^}]*aspect-ratio:\s*16\s*\/\s*9;[^}]*min-height:\s*0;[^}]*margin-inline:\s*auto;/);
+  expect(styles).toMatch(/@media \(min-height: 900px\)[\s\S]*?\.manager-stage\s*\{[^}]*width:\s*min\(100%,\s*72rem\);/);
+  expect(styles).not.toMatch(/@media \(max-width: 42rem\)[\s\S]*?\.manager-stage\s*\{[^}]*min-height:\s*22rem;/);
+});
+
 test("emits all proportional events at exact M:SS offsets for a scheduled twenty minute meeting", () => {
   vi.useFakeTimers();
   let now = 0;

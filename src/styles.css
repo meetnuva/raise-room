@@ -538,7 +538,8 @@ button {
   }
 
   .manager-stage {
-    min-height: 22rem;
+    min-height: 0;
+    aspect-ratio: 16 / 9;
   }
 }
 
@@ -1271,6 +1272,24 @@ button {
   min-height: 0;
 }
 
+@media (max-height: 899px) {
+  .manager-stage {
+    width: min(100%, 58rem);
+    aspect-ratio: 16 / 9;
+    min-height: 0;
+    margin-inline: auto;
+  }
+}
+
+@media (min-height: 900px) {
+  .manager-stage {
+    width: min(100%, 72rem);
+    aspect-ratio: 16 / 9;
+    min-height: 0;
+    margin-inline: auto;
+  }
+}
+
 .meeting-sidebar {
   position: absolute;
   right: 1rem;
@@ -1354,7 +1373,9 @@ button {
   }
 
   .manager-stage {
-    min-height: 22rem;
+    width: 100%;
+    min-height: 0;
+    aspect-ratio: 16 / 9;
   }
 
   .meeting-sidebar {
