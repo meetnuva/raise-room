@@ -122,7 +122,8 @@ function VoiceSettingsView({
           );
         })}
       </fieldset>
-    {!hasWebGpu && <p role="status">此裝置不支援 WebGPU，高品質模型無法使用。</p>}
+      {!hasWebGpu && <p role="status">此裝置不支援 WebGPU，高品質模型無法使用。</p>}
+      {!hasWebGpu && <p aria-label="WASM 可能很慢" role="status">平衡與快速模型將使用 WASM，可能很慢。</p>}
       <section className="microphone-test" aria-labelledby="microphone-test-title">
         <h3 id="microphone-test-title">麥克風精準度測試</h3>
         <label>

@@ -30,7 +30,13 @@ test("renders all allowlisted model cards without loading a model or microphone 
 test("keeps a quality selection disabled with an explicit WebGPU explanation", () => {
   render(<VoiceSettings savedPreset="quality" onSave={vi.fn()} onBack={vi.fn()} hasWebGpu={false} />);
   expect(screen.getByText("此裝置不支援 WebGPU，高品質模型無法使用。")).toBeVisible();
+  expect(screen.getByRole("status", { name: /WASM.*可能很慢/ })).toBeVisible();
   expect(screen.getByRole("radio", { name: /高品質/ })).toBeDisabled();
+});
+
+test("does not show the WASM speed warning when WebGPU is available", () => {
+  render(<VoiceSettings savedPreset="quality" onSave={vi.fn()} onBack={vi.fn()} hasWebGpu />);
+  expect(screen.queryByText(/WASM.*可能很慢/)).toBeNull();
 });
 
 test("persists only the chosen preset after explicit confirmation", () => {
