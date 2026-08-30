@@ -216,6 +216,10 @@ button {
   min-width: 0;
 }
 
+.meeting-stages > * {
+  box-sizing: border-box;
+}
+
 .manager-stage {
   flex: 7 1 0;
   min-width: 0;
@@ -230,6 +234,22 @@ button {
   flex: 3 1 18rem;
   gap: 1rem;
   min-width: 0;
+}
+
+@media (max-width: 48rem) {
+  .meeting-stages {
+    flex-direction: column;
+  }
+
+  .manager-stage,
+  .meeting-sidebar {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .manager-stage {
+    min-height: 22rem;
+  }
 }
 
 .local-camera-tile,
