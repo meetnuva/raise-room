@@ -3,6 +3,18 @@ import { expect, test, vi } from "vitest";
 import type { PresenterClient } from "../lib/perxona-presenter";
 import { PerxonaManagerStage } from "./PerxonaManagerStage";
 
+test("shows the pinned state and exposes real manager tile actions", () => {
+  const onTogglePin = vi.fn();
+  const onViewRole = vi.fn();
+  const onOpenInfo = vi.fn();
+  render(<PerxonaManagerStage managerName="王主管" config={{ enabled: false, reason: "missing-key" }} latestManagerText={null} pinned onTogglePin={onTogglePin} onViewRole={onViewRole} onOpenInfo={onOpenInfo} />);
+
+  expect(screen.getByText("主管畫面 · 已釘選")).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "主管更多操作" }));
+  fireEvent.click(screen.getByRole("menuitem", { name: "取消釘選主管" }));
+  expect(onTogglePin).toHaveBeenCalledOnce();
+});
+
 test("keeps a visible deterministic fallback when Perxona is not configured", () => {
   render(<PerxonaManagerStage managerName="王主管" config={{ enabled: false, reason: "missing-key" }} latestManagerText={null} />);
   expect(screen.getByRole("status")).toHaveTextContent("尚未設定 Perxona");

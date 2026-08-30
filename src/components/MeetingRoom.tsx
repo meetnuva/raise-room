@@ -25,6 +25,8 @@ import { MeetingControlBar } from "./MeetingControlBar";
 import { MeetingSidePanel } from "./MeetingSidePanel";
 import type { MeetingPanelTab } from "./MeetingSidePanel";
 import { PerxonaManagerStage } from "./PerxonaManagerStage";
+import { ParticipantMenu } from "./ParticipantMenu";
+import { ToastRegion, type MeetingToast } from "./ToastRegion";
 
 type VoiceController = ReturnType<typeof useLocalVoice>;
 type Clock = {
@@ -38,6 +40,7 @@ type MeetingCamera = {
   requesting: boolean;
   toggle(): void;
 };
+type StageFocus = "manager" | "self";
 
 export type MeetingRoomProps = {
   meeting: ScheduledPracticeMeeting;
@@ -108,8 +111,9 @@ function MeetingRoomView({
   const [meeting, setMeeting] = useState(() => createMeeting(scenario, durationSeconds));
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
-  const [sendError, setSendError] = useState<string | null>(null);
-  const [managerNotice, setManagerNotice] = useState<string | null>(null);
+  const [toasts, setToasts] = useState<MeetingToast[]>([]);
+  const [stageFocus, setStageFocus] = useState<StageFocus>("manager");
+  const [pinnedParticipant, setPinnedParticipant] = useState<"manager" | "self" | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
   const [panelMotion, setPanelMotion] = useState<"entering" | "entered">("entered");
   const [activePanelTab, setActivePanelTab] = useState<MeetingPanelTab>("transcript");
@@ -125,6 +129,14 @@ function MeetingRoomView({
         ? "主管引擎：Perxona 動態主管"
         : "主管引擎：本機腳本 fallback"
       : "主管引擎：等待首次回覆";
+
+  const addToast = (toast: MeetingToast) => {
+    setToasts((current) => [...current.filter((item) => item.id !== toast.id), toast]);
+  };
+
+  useEffect(() => {
+    addToast({ id: "manager-engine", tone: "notice", message: managerEngineStatus, durationMs: 4000 });
+  }, [managerEngineStatus]);
 
   const finishMeeting = (transcript: TranscriptTurn[]) => {
     vision.stopObserving();
@@ -160,21 +172,21 @@ function MeetingRoomView({
     meetingRef.current = userTurn;
     setMeeting(userTurn);
     setSending(true);
-    setSendError(null);
+    setToasts((current) => current.filter((toast) => toast.id !== "send-error"));
 
     try {
       const repliedMeeting = await respondToUser(userTurn, scenario, responder);
       const managerTurn = repliedMeeting.transcript[repliedMeeting.transcript.length - 1];
-      setManagerNotice(
-        managerTurn.speaker === "manager" ? managerTurn.managerNotice ?? null : null,
-      );
+      if (managerTurn.speaker === "manager" && managerTurn.managerNotice) {
+        addToast({ id: "manager-notice", tone: "notice", message: managerTurn.managerNotice, durationMs: 4000 });
+      }
       setMeeting((current) => {
         const next = { ...current, transcript: [...current.transcript, managerTurn] };
         meetingRef.current = next;
         return next;
       });
     } catch {
-      setSendError("主管回覆暫時無法取得，請重新送出。 ");
+      addToast({ id: "send-error", tone: "error", message: "主管回覆暫時無法取得，請重新送出。" });
     } finally {
       setSending(false);
     }
@@ -226,7 +238,6 @@ function MeetingRoomView({
     <>
       <section className="meeting-information-summary" aria-label="會議資訊內容">
         <h3>會議資訊</h3>
-        <p>{managerEngineStatus}</p>
         <p>{formatPracticeTimeRange(scheduledMeeting, "zh-TW")}</p>
       </section>
       <LocalVoiceControl
@@ -267,15 +278,19 @@ function MeetingRoomView({
           </p>
         </div>
       </header>
-      {sendError && <p role="alert">{sendError}</p>}
-      {managerNotice && <p role="status">{managerNotice}</p>}
+      <ToastRegion toasts={toasts.map((toast) => ({ ...toast, onDismiss: (id: string) => setToasts((current) => current.filter((item) => item.id !== id)) }))} />
 
       <div className={panelOpen ? "meeting-layout panel-open" : "meeting-layout"}>
-        <div className="meeting-stages" aria-label="會議雙人畫面">
+        <div className={`meeting-stages stage-focus-${stageFocus}`} aria-label="會議雙人畫面">
           <PerxonaManagerStage
             managerName={scenario.manager.name}
             config={presenterConfig}
             latestManagerText={latestTurn?.speaker === "manager" ? latestTurn.text : null}
+            pinned={pinnedParticipant === "manager"}
+            onTogglePin={() => setPinnedParticipant((current) => current === "manager" ? null : "manager")}
+            onViewRole={() => addToast({ id: "manager-role", tone: "notice", message: `主管角色：${scenario.role} · 直接度${scenario.manager.directness}`, durationMs: 4000 })}
+            onOpenInfo={() => openPanel("transcript", null)}
+            onPresenterError={(message) => addToast({ id: "presenter-error", tone: "error", message })}
           />
           <aside className="meeting-sidebar">
             <LocalCameraTile
@@ -283,6 +298,8 @@ function MeetingRoomView({
               detail={`${scenario.company} · ${scenario.tenureMonths} 個月年資`}
               showControl={false}
               onVideoElement={setCameraVideoElement}
+              pinned={pinnedParticipant === "self"}
+              tileActions={<ParticipantMenu kind="self" pinned={pinnedParticipant === "self"} expanded={stageFocus === "self"} onToggleExpand={() => setStageFocus((current) => current === "self" ? "manager" : "self")} onTogglePin={() => setPinnedParticipant((current) => current === "self" ? null : "self")} onOpenDevices={() => openPanel("devices", null)} />}
             />
           </aside>
         </div>

@@ -8,6 +8,8 @@ export function LocalCameraTile({
   onVideoElement,
   previewStream,
   overlay,
+  pinned = false,
+  tileActions,
 }: {
   camera?: Camera;
   detail?: string;
@@ -15,6 +17,8 @@ export function LocalCameraTile({
   onVideoElement?: (element: HTMLVideoElement | null) => void;
   previewStream?: MediaStream | null;
   overlay?: ReactNode;
+  pinned?: boolean;
+  tileActions?: ReactNode;
 }) {
   const owned = useLocalCamera();
   const camera = injected ?? owned;
@@ -48,7 +52,10 @@ export function LocalCameraTile({
 
   return (
     <section className="local-camera-tile" aria-label="你的本機鏡頭">
-      <p className="stage-label">你 · 本機預覽</p>
+      <div className="participant-tile-overlay">
+        <p className="stage-label">你 · 本機預覽{pinned ? " · 已釘選" : ""}</p>
+        {tileActions}
+      </div>
       {detail && <p>{detail}</p>}
       {active ? (
         <>

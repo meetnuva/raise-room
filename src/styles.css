@@ -2009,3 +2009,118 @@ button {
     display: none;
   }
 }
+
+/* Task 6: participant tile actions, stage focus, and transient meeting notices. */
+.manager-stage,
+.local-camera-tile {
+  position: relative;
+}
+
+.participant-tile-overlay {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+  padding: .25rem;
+  border-radius: .5rem;
+  background: linear-gradient(to bottom, rgb(0 0 0 / 54%), transparent);
+  opacity: 0;
+  transition: opacity var(--motion-default);
+}
+
+.manager-stage:hover .participant-tile-overlay,
+.manager-stage:focus-within .participant-tile-overlay,
+.local-camera-tile:hover .participant-tile-overlay,
+.local-camera-tile:focus-within .participant-tile-overlay {
+  opacity: 1;
+}
+
+.participant-tile-overlay .stage-label,
+.participant-tile-overlay h3 {
+  margin: 0;
+}
+
+.participant-tile-overlay .action-menu-content {
+  z-index: 35;
+}
+
+.stage-focus-self .meeting-sidebar {
+  position: static;
+  width: 100%;
+}
+
+.stage-focus-self .meeting-sidebar .local-camera-tile {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 72rem);
+  min-height: 0;
+  aspect-ratio: 16 / 9;
+  margin-inline: auto;
+}
+
+.stage-focus-self .meeting-sidebar .local-camera-tile video {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+}
+
+.stage-focus-self .manager-stage {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 3;
+  width: clamp(10rem, 22%, 16rem);
+  min-height: 0;
+  padding: .5rem;
+}
+
+.stage-focus-self .manager-stage .presenter-canvas {
+  min-height: 0;
+  aspect-ratio: 16 / 9;
+}
+
+.toast-region {
+  position: fixed;
+  z-index: 40;
+  top: .75rem;
+  right: .75rem;
+  display: grid;
+  width: min(24rem, calc(100vw - 1.5rem));
+  gap: .5rem;
+}
+
+.meeting-toast {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+  padding: .625rem .75rem;
+  border: 1px solid #5f6368;
+  border-radius: .5rem;
+  background: #303134;
+  color: #f8f9fa;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 28%);
+}
+
+.meeting-toast--error {
+  border-color: #f28b82;
+  background: #5f2120;
+}
+
+.meeting-toast p {
+  margin: 0;
+}
+
+.meeting-toast .icon-button {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 767px) {
+  .stage-focus-self .manager-stage {
+    right: .75rem;
+    bottom: .75rem;
+    width: min(42%, 12rem);
+  }
+}

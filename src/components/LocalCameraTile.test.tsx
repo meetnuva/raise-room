@@ -61,3 +61,11 @@ test("renders an injected preview overlay without taking ownership of its stream
   unmount();
   expect(stop).not.toHaveBeenCalled();
 });
+
+test("renders self tile actions and its visible pin state without owning an injected stream", () => {
+  const stream = {} as MediaStream;
+  render(<LocalCameraTile previewStream={stream} showControl={false} pinned tileActions={<button type="button">開啟裝置設定</button>} />);
+
+  expect(screen.getByText("你 · 本機預覽 · 已釘選")).toBeVisible();
+  expect(screen.getByRole("button", { name: "開啟裝置設定" })).toBeVisible();
+});

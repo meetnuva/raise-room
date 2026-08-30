@@ -259,6 +259,38 @@ test("shows the first pressure card when the development jump is used", () => {
   expect(screen.getByText("要求先說明成果")).toBeVisible();
 });
 
+test("switches self stage focus reversibly without remounting the presenter or local video", () => {
+  const camera = injectedCamera({ status: "active", stream: {} as MediaStream, cameraEnabled: true });
+  const { container } = render(<MeetingRoom meeting={scheduledMeeting(10)} scenario={defaultScenario} camera={camera} voice={injectedVoice()} responder={simulatedResponder} />);
+  const presenter = screen.getByLabelText("Perxona 3D 主管舞台");
+  const video = screen.getByLabelText("本機鏡頭預覽");
+
+  fireEvent.click(screen.getByRole("button", { name: "你的更多操作" }));
+  fireEvent.click(screen.getByRole("menuitem", { name: "放大自己" }));
+  expect(container.querySelector(".meeting-stages")).toHaveClass("stage-focus-self");
+  expect(screen.getByLabelText("Perxona 3D 主管舞台")).toBe(presenter);
+  expect(screen.getByLabelText("本機鏡頭預覽")).toBe(video);
+
+  fireEvent.click(screen.getByRole("button", { name: "你的更多操作" }));
+  fireEvent.click(screen.getByRole("menuitem", { name: "還原主管畫面" }));
+  expect(container.querySelector(".meeting-stages")).toHaveClass("stage-focus-manager");
+  expect(screen.getByLabelText("Perxona 3D 主管舞台")).toBe(presenter);
+  expect(screen.getByLabelText("本機鏡頭預覽")).toBe(video);
+});
+
+test("surfaces engine source and manager notices as four-second toasts", async () => {
+  vi.useFakeTimers();
+  render(<MeetingRoom meeting={scheduledMeeting(10)} scenario={defaultScenario} responder={{ reply: async () => ({ text: "我需要你先說明。", source: "simulated", notice: "主管立場更新" }) }} />);
+
+  expect(screen.getByText("主管引擎：等待首次回覆")).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "開啟逐字稿" }));
+  fireEvent.change(screen.getByLabelText("開發用文字輸入"), { target: { value: "我想討論調薪" } });
+  fireEvent.click(screen.getByRole("button", { name: "送出" }));
+  await act(async () => {});
+  expect(screen.getByText("主管引擎：本機腳本 fallback")).toBeVisible();
+  expect(screen.getByText("主管立場更新")).toBeVisible();
+});
+
 test("keeps a timed event after the development fallback receives a reply", async () => {
   let resolveReply = (_reply: { text: string; source: "simulated" }) => {};
   const delayedResponder = {
