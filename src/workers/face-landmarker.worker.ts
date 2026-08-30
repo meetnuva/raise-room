@@ -1,9 +1,23 @@
 import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
+import visionWasmInternalLoaderUrl from "@mediapipe/tasks-vision/vision_wasm_internal.js?url";
+import visionWasmInternalBinaryUrl from "@mediapipe/tasks-vision/vision_wasm_internal.wasm?url";
+import visionWasmNoSimdLoaderUrl from "@mediapipe/tasks-vision/vision_wasm_nosimd_internal.js?url";
+import visionWasmNoSimdBinaryUrl from "@mediapipe/tasks-vision/vision_wasm_nosimd_internal.wasm?url";
+import visionWasmModuleLoaderUrl from "@mediapipe/tasks-vision/vision_wasm_module_internal.js?url";
+import visionWasmModuleBinaryUrl from "@mediapipe/tasks-vision/vision_wasm_module_internal.wasm?url";
 import { extractVisualObservation, type LandmarkPoint } from "../domain/visual";
 import type { VisionWorkerEvent, VisionWorkerRequest } from "../lib/local-vision";
 
-const wasmBase = "/mediapipe/wasm";
+const wasmSelectionBase = "vite-asset-selection";
 const modelUrl = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
+const bundledWasmAssetUrls = {
+  "vision_wasm_internal.js": visionWasmInternalLoaderUrl,
+  "vision_wasm_internal.wasm": visionWasmInternalBinaryUrl,
+  "vision_wasm_nosimd_internal.js": visionWasmNoSimdLoaderUrl,
+  "vision_wasm_nosimd_internal.wasm": visionWasmNoSimdBinaryUrl,
+  "vision_wasm_module_internal.js": visionWasmModuleLoaderUrl,
+  "vision_wasm_module_internal.wasm": visionWasmModuleBinaryUrl,
+};
 
 let landmarker: FaceLandmarker | null = null;
 let loading: Promise<void> | null = null;
@@ -12,10 +26,24 @@ let lastTimestamp = -1;
 let analyzing = false;
 let closed = false;
 
-export function createVisionFileset<T>(
+type VisionFileset = { wasmLoaderPath: string; wasmBinaryPath: string };
+
+function assetName(path: string) {
+  const segments = path.split("/");
+  return segments[segments.length - 1];
+}
+
+export async function createVisionFileset<T extends VisionFileset>(
   forVisionTasks: (basePath?: string, useModule?: boolean) => Promise<T>,
+  assetUrls: Record<string, string> = bundledWasmAssetUrls,
 ): Promise<T> {
-  return forVisionTasks(wasmBase, true);
+  const selected = await forVisionTasks(wasmSelectionBase, true);
+  const wasmLoaderPath = assetUrls[assetName(selected.wasmLoaderPath) ?? ""];
+  const wasmBinaryPath = assetUrls[assetName(selected.wasmBinaryPath) ?? ""];
+  if (!wasmLoaderPath || !wasmBinaryPath) {
+    throw new Error("找不到相容的 MediaPipe WASM 資產。");
+  }
+  return { ...selected, wasmLoaderPath, wasmBinaryPath };
 }
 
 function post(event: VisionWorkerEvent) {

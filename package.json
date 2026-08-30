@@ -9,9 +9,7 @@
   "scripts": {
     "dev": "vite",
     "test": "vitest run",
-    "build": "tsc -b && vite build",
-    "prepare:mediapipe": "node scripts/copy-mediapipe-assets.mjs",
-    "postinstall": "npm run prepare:mediapipe"
+    "build": "tsc -b && vite build"
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "1.0.1",

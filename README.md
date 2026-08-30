@@ -45,7 +45,7 @@ npm run build
 
 ## Phase 4：可選本機視覺觀察
 
-先直接開啟本機鏡頭，再點擊「載入本機視覺模型」與「開始本機視覺觀察」。模型檔首次從 Google MediaPipe 固定網址下載；MediaPipe WASM 則在安裝時從 pinned `@mediapipe/tasks-vision@1.0.1` 複製到本機 `public/mediapipe/wasm`。這不是完全離線宣告，真實 camera permission 仍須在 browser 內即時同意。
+先直接開啟本機鏡頭，再點擊「載入本機視覺模型」與「開始本機視覺觀察」。模型檔首次從 Google MediaPipe 固定網址下載；MediaPipe WASM loader 與 binary 則從 pinned `@mediapipe/tasks-vision@1.0.1` 以 Vite build asset 載入。這不是完全離線宣告，真實 camera permission 仍須在 browser 內即時同意。
 
 觀察預設每秒 5 次，且同時只處理一張影格。影格只會傳入同頁 Web Worker，worker 會立刻縮減成一筆可觀察數值並關閉 ImageBitmap；不保存或上傳影格與 landmarks。報告只保留本局 aggregate counts／ratios：臉部可見率、置中率、距離穩定率，以及鏡頭方向近似率。
 

@@ -6,7 +6,7 @@ Raise Room 是私人練習工具，不是雇主評分、招募篩選、謊言偵
 
 - 原始視訊預設不會離開裝置。只有直接點擊後取得的 camera stream 會指派給本機 `<video>` 預覽；尚未點擊「載入本機視覺模型」與「開始本機視覺觀察」前，不讀取或抽樣影格。
 - 本機視覺觀察只會在已開鏡頭且使用者明確開始後執行，每秒最多 5 次且同時只有一張影格處理中。ImageBitmap 僅傳入同頁 Web Worker，worker 即時算出臉部可見、置中、距離穩定與 iris 幾何近似的 aggregate counts／ratios，隨即關閉 ImageBitmap；不寫入磁碟、瀏覽器持久儲存、報告或網路，也不保存 landmarks。
-- 視覺模型檔首次從 Google MediaPipe 固定網址下載，WASM 由 pinned `@mediapipe/tasks-vision@1.0.1` 安裝資產提供；因此不能宣稱完全離線。Face Landmarker 固定關閉 blendshapes 與 transformation matrices，不做臉部辨識、年齡、性別、情緒、誠實、自信或能力推論。
+- 視覺模型檔首次從 Google MediaPipe 固定網址下載，WASM loader 與 binary 由 pinned `@mediapipe/tasks-vision@1.0.1` 的 Vite build assets 提供；因此不能宣稱完全離線。Face Landmarker 固定關閉 blendshapes 與 transformation matrices，不做臉部辨識、年齡、性別、情緒、誠實、自信或能力推論。
 - 視覺報告只顯示本局 aggregate counts／ratios：臉部可見率以所有樣本為分母；置中與距離穩定也以所有樣本為分母；鏡頭方向近似只以 iris 點完整的樣本為分母。iris 幾何近似不等於眼神接觸，所有數值不可作 HR、雇主或招募用途。
 - 關閉鏡頭與元件卸載都會停止所有 MediaStream tracks，釋放裝置。
 - 本機語音只有在使用者明確按下載入模型、開始說話後才會啟用。音訊不會上傳或保存；每段停止時立即關閉麥克風 tracks，僅在 browser memory 內解碼並轉錄最後 30 秒。
