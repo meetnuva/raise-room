@@ -189,6 +189,29 @@ button {
   color: #f8fafc;
 }
 
+.local-visual-control {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid #334155;
+  border-radius: 0.5rem;
+  background: #172033;
+}
+
+.local-visual-control p {
+  margin: 0;
+}
+
+.local-visual-control button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.vision-disclaimer {
+  color: #cbd5e1;
+  font-size: 0.875rem;
+}
+
 .meeting-room .eyebrow,
 .meeting-room .stage-label {
   color: #94a3b8;
