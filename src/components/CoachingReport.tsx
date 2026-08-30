@@ -5,21 +5,25 @@ import {
   type Recommendation,
 } from "../domain/report";
 import type { TranscriptTurn } from "../domain/meeting";
+import type { VisualSignals } from "../domain/visual";
 import type { Scenario } from "../domain/scenario";
 
 export function CoachingReport({
   scenario,
   transcript,
+  visualSignals,
   onRetry,
   onReset,
 }: {
   scenario: Scenario;
   transcript: TranscriptTurn[];
+  visualSignals?: VisualSignals;
   onRetry: () => void;
   onReset: () => void;
 }) {
   const report = createCoachingReport(scenario, transcript);
   const [selectedEvidence, setSelectedEvidence] = useState<Recommendation | null>(null);
+  const percentage = (value: number | null) => value === null ? "資料不足" : `${Math.round(value * 100)}%`;
 
   return (
     <section aria-labelledby="coaching-report-title" className="coaching-report">
@@ -48,6 +52,22 @@ export function CoachingReport({
         <p>填充詞總數：{report.deliverySignals.fillerWordCount}</p>
         <ul className="delivery-filler-words">{report.deliverySignals.fillerWords.map((item) => <li key={item.word}>{item.word}：{item.count}</li>)}</ul>
         <p>這些是可回看的行為資料，不是自信、誠實或情緒分數；不同語言不可直接比較。</p>
+      </section>
+
+      <section aria-labelledby="visual-signals-title" className="report-section">
+        <h3 id="visual-signals-title">可觀察視覺訊號</h3>
+        {!visualSignals || visualSignals.sampleCount === 0 ? (
+          <p>本局未啟用視覺觀察</p>
+        ) : (
+          <>
+            <p>樣本數：{visualSignals.sampleCount}</p>
+            <p>臉部可見率：{percentage(visualSignals.faceVisibleRatio)}</p>
+            <p>置中率：{percentage(visualSignals.centeredRatio)}</p>
+            <p>距離穩定率：{percentage(visualSignals.stableDistanceRatio)}</p>
+            <p>鏡頭方向近似率：{percentage(visualSignals.cameraDirectionEstimateRatio)}</p>
+          </>
+        )}
+        <p>鏡頭方向只是 iris 幾何近似，不等於眼神接觸；所有數值都不是情緒、誠實、自信或能力分數。</p>
       </section>
 
       <div className="report-columns">

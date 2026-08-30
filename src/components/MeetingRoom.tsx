@@ -8,10 +8,13 @@ import {
   type TurnDelivery,
 } from "../domain/meeting";
 import type { TranscriptTurn } from "../domain/meeting";
+import type { VisualSignals } from "../domain/visual";
 import type { Scenario, ScheduledEvent } from "../domain/scenario";
 import { useLocalCamera } from "../hooks/use-local-camera";
+import { useLocalVision } from "../hooks/use-local-vision";
 import type { PresenterRuntimeConfig } from "../lib/perxona-config";
 import { LocalCameraTile } from "./LocalCameraTile";
+import { LocalVisualControl } from "./LocalVisualControl";
 import { LocalVoiceControl } from "./LocalVoiceControl";
 import { PerxonaManagerStage } from "./PerxonaManagerStage";
 import { useMeetingClock } from "../hooks/use-meeting-clock";
@@ -43,7 +46,7 @@ export function MeetingRoom({
 }: {
   scenario: Scenario;
   responder: ManagerResponder;
-  onFinish?: (transcript: TranscriptTurn[]) => void;
+  onFinish?: (transcript: TranscriptTurn[], visualSignals?: VisualSignals) => void;
   presenterConfig?: PresenterRuntimeConfig;
   clock?: { durationSeconds?: number; now?: () => number; intervalMs?: number };
 }) {
@@ -51,10 +54,22 @@ export function MeetingRoom({
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [cameraVideoElement, setCameraVideoElement] = useState<HTMLVideoElement | null>(null);
   const meetingRef = useRef(meeting);
   const latestTurn = meeting.transcript[meeting.transcript.length - 1];
   const camera = useLocalCamera();
+  const vision = useLocalVision({ videoElement: cameraVideoElement });
   const durationSeconds = clock?.durationSeconds ?? meetingLengthSeconds;
+
+  const finishMeeting = (transcript: TranscriptTurn[]) => {
+    vision.stopObserving();
+    const visualSignals = vision.getSignals();
+    if (visualSignals.sampleCount > 0) {
+      onFinish?.(transcript, visualSignals);
+    } else {
+      onFinish?.(transcript);
+    }
+  };
 
   const advanceTo = (elapsedSeconds: number) => {
     setMeeting((current) => {
@@ -67,7 +82,7 @@ export function MeetingRoom({
   useMeetingClock({
     durationSeconds,
     onTick: advanceTo,
-    onComplete: () => onFinish?.(meetingRef.current.transcript),
+    onComplete: () => finishMeeting(meetingRef.current.transcript),
     now: clock?.now,
     intervalMs: clock?.intervalMs,
   });
@@ -132,7 +147,9 @@ export function MeetingRoom({
             camera={camera}
             detail={`${scenario.company} · ${scenario.tenureMonths} 個月年資`}
             showControl={false}
+            onVideoElement={setCameraVideoElement}
           />
+          <LocalVisualControl vision={vision} cameraActive={camera.status === "active"} />
           <section className="event-rail" aria-labelledby="event-rail-title">
             <p className="eyebrow">事件軌</p>
             <h3 id="event-rail-title">會議壓力事件</h3>
@@ -187,7 +204,7 @@ export function MeetingRoom({
         <button
           className="finish-meeting"
           type="button"
-          onClick={() => onFinish?.(meeting.transcript)}
+          onClick={() => finishMeeting(meeting.transcript)}
         >
           結束並看報告
         </button>

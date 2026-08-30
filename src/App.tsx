@@ -4,13 +4,14 @@ import { MeetingRoom } from "./components/MeetingRoom";
 import { ScenarioWorkshop } from "./components/ScenarioWorkshop";
 import { simulatedResponder } from "./domain/meeting";
 import type { TranscriptTurn } from "./domain/meeting";
+import type { VisualSignals } from "./domain/visual";
 import type { Scenario } from "./domain/scenario";
 import { readPresenterRuntimeConfig } from "./lib/perxona-config";
 
 type AppState =
   | { view: "setup" }
   | { view: "meeting"; scenario: Scenario }
-  | { view: "report"; scenario: Scenario; transcript: TranscriptTurn[] };
+  | { view: "report"; scenario: Scenario; transcript: TranscriptTurn[]; visualSignals?: VisualSignals };
 
 export function App() {
   const presenterConfig = readPresenterRuntimeConfig(import.meta.env);
@@ -38,11 +39,12 @@ export function App() {
           scenario={appState.scenario}
           responder={simulatedResponder}
           presenterConfig={presenterConfig}
-          onFinish={(transcript) => {
+          onFinish={(transcript, visualSignals) => {
             setAppState({
               view: "report",
               scenario: appState.scenario,
               transcript,
+              visualSignals,
             });
           }}
         />
@@ -51,6 +53,7 @@ export function App() {
         <CoachingReport
           scenario={appState.scenario}
           transcript={appState.transcript}
+          visualSignals={appState.visualSignals}
           onRetry={() => setAppState({ view: "meeting", scenario: appState.scenario })}
           onReset={() => setAppState({ view: "setup" })}
         />

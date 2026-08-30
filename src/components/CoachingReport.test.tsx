@@ -76,3 +76,22 @@ test("shows delivery observations without psychological claims", () => {
   expect(screen.getByRole("heading", { name: "可觀察表達訊號" })).toBeVisible();
   expect(screen.getByText("這些是可回看的行為資料，不是自信、誠實或情緒分數；不同語言不可直接比較。")).toBeVisible();
 });
+
+test("shows transparent aggregate visual signals without treating them as a score", () => {
+  render(<CoachingReport
+    scenario={defaultScenario}
+    transcript={[]}
+    visualSignals={{ sampleCount: 4, faceVisibleRatio: 0.75, centeredRatio: 0.5, stableDistanceRatio: null, cameraDirectionEstimateRatio: 1 }}
+    onRetry={vi.fn()}
+    onReset={vi.fn()}
+  />);
+  expect(screen.getByRole("heading", { name: "可觀察視覺訊號" })).toBeVisible();
+  expect(screen.getByText("臉部可見率：75%")).toBeVisible();
+  expect(screen.getByText("距離穩定率：資料不足")).toBeVisible();
+  expect(screen.getByText("鏡頭方向只是 iris 幾何近似，不等於眼神接觸；所有數值都不是情緒、誠實、自信或能力分數。")).toBeVisible();
+});
+
+test("states when visual observation was not enabled", () => {
+  render(<CoachingReport scenario={defaultScenario} transcript={[]} onRetry={vi.fn()} onReset={vi.fn()} />);
+  expect(screen.getByText("本局未啟用視覺觀察")).toBeVisible();
+});

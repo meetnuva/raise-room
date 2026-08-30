@@ -43,6 +43,7 @@ export function useLocalVision(input: LocalVisionInput): {
   const clientRef = useRef<LocalVisionClient | null>(input.client ?? null);
   const injectedClient = useRef(Boolean(input.client));
   const clientFactory = useRef(input.clientFactory ?? createLocalVisionClient);
+  const canCreateClient = useRef(Boolean(input.clientFactory) || typeof Worker !== "undefined");
   const mounted = useRef(true);
   const observing = useRef(false);
   const inFlight = useRef(false);
@@ -64,7 +65,7 @@ export function useLocalVision(input: LocalVisionInput): {
   }, []);
 
   const getClient = useCallback(() => {
-    if (!clientRef.current && !injectedClient.current) {
+    if (!clientRef.current && !injectedClient.current && canCreateClient.current) {
       clientRef.current = clientFactory.current();
     }
     return clientRef.current;

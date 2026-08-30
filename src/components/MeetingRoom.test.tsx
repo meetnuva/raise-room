@@ -1,8 +1,28 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import { vi } from "vitest";
+import { afterEach, vi } from "vitest";
 import { simulatedResponder } from "../domain/meeting";
 import { defaultScenario } from "../domain/scenario";
+import type { VisualSignals } from "../domain/visual";
 import { MeetingRoom } from "./MeetingRoom";
+
+const visionState = vi.hoisted(() => ({
+  value: {
+    status: "ready",
+    progress: null,
+    lastObservation: null,
+    signals: { sampleCount: 0, faceVisibleRatio: null, centeredRatio: null, stableDistanceRatio: null, cameraDirectionEstimateRatio: null } as VisualSignals,
+    errorMessage: null,
+    loadModel: vi.fn(), startObserving: vi.fn(), stopObserving: vi.fn(), resetSignals: vi.fn(),
+    getSignals: vi.fn(() => visionState.value.signals),
+  },
+}));
+
+vi.mock("../hooks/use-local-vision", () => ({ useLocalVision: () => visionState.value }));
+
+afterEach(() => {
+  visionState.value.signals = { sampleCount: 0, faceVisibleRatio: null, centeredRatio: null, stableDistanceRatio: null, cameraDirectionEstimateRatio: null };
+  visionState.value.stopObserving.mockClear();
+});
 
 test("shows the budget-freeze card when the test clock reaches three minutes", () => {
   render(<MeetingRoom scenario={defaultScenario} responder={simulatedResponder} />);
@@ -56,6 +76,21 @@ test("hands the append-only transcript to onFinish", async () => {
       elapsedSeconds: 0,
     },
   ]);
+  expect(onFinish.mock.calls[0]).toHaveLength(1);
+});
+
+test("hands only aggregate visual signals to onFinish after stopping observation", () => {
+  visionState.value.signals = {
+    sampleCount: 3, faceVisibleRatio: 1, centeredRatio: 2 / 3, stableDistanceRatio: 1,
+    cameraDirectionEstimateRatio: 0.5,
+  };
+  const onFinish = vi.fn();
+  render(<MeetingRoom scenario={defaultScenario} responder={simulatedResponder} onFinish={onFinish} />);
+
+  fireEvent.click(screen.getByRole("button", { name: "結束並看報告" }));
+
+  expect(visionState.value.stopObserving).toHaveBeenCalledOnce();
+  expect(onFinish).toHaveBeenCalledWith([], visionState.value.signals);
 });
 
 test("renders one bottom-control camera toggle when Perxona is not configured", () => {
