@@ -106,7 +106,7 @@ function findRecoveryTurn(transcript: TranscriptTurn[]) {
 
 function findNextStepTurn(transcript: TranscriptTurn[]) {
   return transcript.find(
-    (turn) => turn.speaker === "user" && /下一步|何時|時間|回覆|確認|再約|追蹤/.test(turn.text),
+    (turn) => turn.speaker === "user" && /下一步|何時|什麼時候|回覆|確認|再約|追蹤/.test(turn.text),
   );
 }
 

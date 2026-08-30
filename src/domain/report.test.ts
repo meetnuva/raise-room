@@ -68,6 +68,16 @@ test("marks absent behaviors as missing evidence without inventing a quotation",
   expect(report.negotiationMap.every((item) => !item.complete)).toBe(true);
 });
 
+test("treats shortened delivery time as an achievement rather than a next step", () => {
+  const report = createCoachingReport(defaultScenario, [
+    { speaker: "user", elapsedSeconds: 10, text: "我把交付時間縮短 3 天。" },
+  ]);
+
+  expect(report.strengths.map((recommendation) => recommendation.id)).toContain("achievement");
+  expect(report.strengths.map((recommendation) => recommendation.id)).not.toContain("next-step");
+  expect(report.negotiationMap.find((item) => item.id === "next-step")?.complete).toBe(false);
+});
+
 test("formats transcript timestamps as MM:SS", () => {
   expect(formatTimestamp(0)).toBe("00:00");
   expect(formatTimestamp(65)).toBe("01:05");
