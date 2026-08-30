@@ -80,3 +80,38 @@ test("StrictMode unmount cleans the current session once without retaining a sta
   expect(audio.stop).toHaveBeenCalledOnce();
   expect(video.stop).toHaveBeenCalledOnce();
 });
+
+test("starts a replacement request after dispose and ignores the stale permission result", async () => {
+  const first = fakeStream();
+  const second = fakeStream();
+  let resolveFirst: (stream: MediaStream) => void;
+  let resolveSecond: (stream: MediaStream) => void;
+  const firstPermission = new Promise<MediaStream>((resolve) => { resolveFirst = resolve; });
+  const secondPermission = new Promise<MediaStream>((resolve) => { resolveSecond = resolve; });
+  const getUserMedia = vi.fn().mockReturnValueOnce(firstPermission).mockReturnValueOnce(secondPermission);
+  const { result } = renderHook(() => usePracticeMedia({ mediaDevices: { getUserMedia } }));
+
+  let firstRequest!: Promise<void>;
+  act(() => { firstRequest = result.current.request(); });
+  act(() => result.current.dispose());
+  let secondRequest!: Promise<void>;
+  act(() => { secondRequest = result.current.request(); });
+  expect(getUserMedia).toHaveBeenCalledTimes(2);
+
+  await act(async () => {
+    resolveFirst!(first.stream);
+    await firstRequest;
+  });
+
+  expect(first.audio.stop).toHaveBeenCalledOnce();
+  expect(first.video.stop).toHaveBeenCalledOnce();
+  expect(result.current.request()).toBe(secondRequest);
+  expect(getUserMedia).toHaveBeenCalledTimes(2);
+
+  await act(async () => {
+    resolveSecond!(second.stream);
+    await secondRequest;
+  });
+
+  expect(result.current).toMatchObject({ status: "active", stream: second.stream });
+});

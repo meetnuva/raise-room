@@ -53,6 +53,7 @@ export function usePracticeMedia(input?: PracticeMediaInput): PracticeMediaContr
 
   const dispose = useCallback(() => {
     requestVersion.current += 1;
+    requestPromise.current = null;
     const current = streamRef.current;
     streamRef.current = null;
     current?.getTracks().forEach((track) => track.stop());
