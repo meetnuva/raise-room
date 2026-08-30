@@ -7,6 +7,10 @@ test("renders Raise Room's local-first setup entry point", () => {
   expect(screen.getByRole("heading", { name: "Raise Room" })).toBeVisible();
   expect(screen.getByText("你的練習資料預設只留在這台裝置。")).toBeVisible();
   expect(screen.getByText("視覺教練功能尚未啟用")).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "語音設定" }));
+  expect(screen.getByRole("heading", { name: "語音模型與麥克風測試" })).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "返回情境設定" }));
+  expect(screen.getByRole("heading", { name: "設定這場薪資檢討" })).toBeVisible();
 });
 
 test("preserves the scenario through the report retry flow and can return to setup", async () => {
