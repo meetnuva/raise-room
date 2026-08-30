@@ -1,6 +1,8 @@
 import { type ReactNode, useEffect } from "react";
 import type { TranscriptTurn } from "../domain/meeting";
 import { getEventOffsetSeconds, type ScheduledEvent } from "../domain/scenario";
+import { Icon, type IconName } from "./ui/Icons";
+import { IconButton } from "./ui/IconButton";
 
 export type MeetingPanelTab = "transcript" | "events" | "observations" | "devices";
 
@@ -39,11 +41,11 @@ export function MeetingSidePanel({
   transcriptFallback,
   onClose,
 }: MeetingSidePanelProps) {
-  const tabs: Array<{ id: MeetingPanelTab; label: string }> = [
-    { id: "transcript", label: "逐字稿" },
-    { id: "events", label: "壓力事件" },
-    { id: "observations", label: "觀察" },
-    { id: "devices", label: "裝置" },
+  const tabs: Array<{ id: MeetingPanelTab; label: string; accessibleLabel: string; icon: IconName }> = [
+    { id: "transcript", label: "逐字稿", accessibleLabel: "逐字稿", icon: "captions" },
+    { id: "events", label: "事件", accessibleLabel: "壓力事件", icon: "events" },
+    { id: "observations", label: "觀察", accessibleLabel: "觀察", icon: "info" },
+    { id: "devices", label: "裝置", accessibleLabel: "裝置", icon: "devices" },
   ];
   const selectTabFromKeyboard = (tab: MeetingPanelTab, key: string) => {
     const direction = key === "ArrowRight" || key === "ArrowDown" ? 1 : key === "ArrowLeft" || key === "ArrowUp" ? -1 : 0;
@@ -71,6 +73,7 @@ export function MeetingSidePanel({
               id={`meeting-information-${tab.id}-tab`}
               type="button"
               role="tab"
+              aria-label={tab.accessibleLabel}
               aria-controls={`meeting-information-${tab.id}-panel`}
               aria-selected={activeTab === tab.id}
               tabIndex={activeTab === tab.id ? 0 : -1}
@@ -80,13 +83,12 @@ export function MeetingSidePanel({
                 if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) event.preventDefault();
               }}
             >
+              <Icon name={tab.icon} size={16} />
               {tab.label}
             </button>
           ))}
         </div>
-        <button type="button" aria-label="關閉資訊面板" onClick={onClose}>
-          關閉
-        </button>
+        <IconButton className="meeting-side-panel-close" icon="close" label="關閉資訊面板" onClick={onClose} />
       </div>
 
       {activeTab === "transcript" && (

@@ -72,3 +72,36 @@ test("uses the shared drawer motion token for panel and scrim transitions", () =
   expect(styles).toMatch(/\.meeting-side-panel\s*\{[^}]*transition:\s*opacity\s+var\(--motion-dialog\),\s*transform\s+var\(--motion-dialog\);/s);
   expect(styles).toMatch(/\.meeting-panel-scrim\s*\{[^}]*transition:\s*opacity\s+var\(--motion-dialog\);/s);
 });
+
+test("uses icon tabs, a compact close icon, and keeps the full events meaning accessible", () => {
+  render(
+    <MeetingSidePanel
+      activeTab="events"
+      onActiveTabChange={vi.fn()}
+      transcript={[]}
+      events={defaultScenario.events}
+      emittedEventIds={[]}
+      durationSeconds={1200}
+      managerName={defaultScenario.manager.name}
+      observationContent={null}
+      voiceContent={null}
+      deviceContent={null}
+      onClose={vi.fn()}
+    />,
+  );
+
+  const events = screen.getByRole("tab", { name: "壓力事件" });
+  expect(events).toHaveTextContent("事件");
+  expect(screen.getAllByRole("tab").every((tab) => tab.querySelector("svg"))).toBe(true);
+  expect(screen.getByRole("button", { name: "關閉資訊面板" })).toHaveClass("icon-button");
+});
+
+test("defines a single light panel surface with one-row tabs and readable supporting text", () => {
+  const styles = readFileSync("src/styles.css", "utf8");
+  const lightPanelStyles = styles.slice(styles.lastIndexOf("/* Meeting side-panel light surface */"));
+
+  expect(lightPanelStyles).toMatch(/\.meeting-side-panel\s*\{[^}]*background:\s*var\(--surface-raised\);[^}]*color:\s*var\(--text-primary\);/s);
+  expect(lightPanelStyles).toMatch(/\.meeting-side-panel \[role="tablist"\]\s*\{[^}]*flex-wrap:\s*nowrap;[^}]*overflow-x:\s*auto;/s);
+  expect(lightPanelStyles).toMatch(/\.meeting-side-panel \.transcript-panel,[\s\S]*?\.meeting-side-panel \.event-rail\s*\{[^}]*padding:\s*0;[^}]*border:\s*0;[^}]*background:\s*transparent;/s);
+  expect(lightPanelStyles).toMatch(/\.meeting-side-panel \.empty-transcript\s*\{[^}]*color:\s*var\(--text-secondary\);/s);
+});

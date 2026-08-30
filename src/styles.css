@@ -2322,3 +2322,99 @@ button {
     bottom: 5rem;
   }
 }
+
+/* Meeting side-panel light surface */
+.meeting-side-panel {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 18%);
+}
+
+.meeting-side-panel-header {
+  flex-wrap: nowrap;
+  min-height: 40px;
+  gap: .5rem;
+  margin-bottom: .75rem;
+}
+
+.meeting-side-panel [role="tablist"] {
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
+  min-width: 0;
+  gap: .25rem;
+  overflow-x: auto;
+}
+
+.meeting-side-panel [role="tab"] {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  min-height: 40px;
+  gap: .375rem;
+  padding: .5rem .625rem;
+  border: 1px solid transparent;
+  border-radius: .5rem;
+  background: transparent;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.meeting-side-panel [role="tab"]:hover {
+  background: var(--surface-subtle);
+  color: var(--text-primary);
+}
+
+.meeting-side-panel [role="tab"][aria-selected="true"] {
+  border-color: #bfdbfe;
+  background: #e8f0fe;
+  color: var(--accent);
+}
+
+.meeting-side-panel-close {
+  flex: 0 0 40px;
+}
+
+.meeting-side-panel .transcript-panel,
+.meeting-side-panel .event-rail {
+  box-sizing: border-box;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.meeting-side-panel .meeting-observations,
+.meeting-side-panel .meeting-devices {
+  box-sizing: border-box;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.meeting-side-panel .event-card {
+  border-left-color: var(--border-subtle);
+  background: var(--surface-subtle);
+  color: var(--text-primary);
+}
+
+.meeting-side-panel .event-card.emitted {
+  border-left-color: var(--accent);
+  background: #e8f0fe;
+}
+
+.meeting-side-panel .empty-transcript {
+  color: var(--text-secondary);
+}
+
+.meeting-side-panel .meeting-information-summary,
+.meeting-side-panel .meeting-device-status {
+  border-color: var(--border-subtle);
+}
+
+.meeting-side-panel .meeting-information-summary p,
+.meeting-side-panel .meeting-device-status p {
+  color: var(--text-secondary);
+}
