@@ -16,3 +16,4 @@
 - Cancel stale Presenter mounts after React StrictMode cleanup so the engine-load race leaves one `sv-presenter`.
 - Validate proportional pressure-event payloads at the manager API boundary and refresh expired schedules immediately when returning home.
 - 移除被誤追蹤的內部 `.superpowers` report，讓 release-files 保持拒絕內部 agent 證據與其他禁止路徑的閘門。
+- 依真實 Chrome 截圖修正首頁日期換行、排程卡資訊黏連、CTA affordance、設定比例、lobby 首屏 CTA、手機 header、Presenter action／self tile 重疊、手機會議 overlay、drawer 對比與跨尺寸舞台定位。

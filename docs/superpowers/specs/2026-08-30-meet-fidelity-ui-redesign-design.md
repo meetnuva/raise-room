@@ -263,3 +263,13 @@ CSS root 必須定義並由本次觸及的 UI 使用：
 - Fresh CSS token scan: 28 custom-property definitions, 19 referenced token types, 81 `var()` uses, and 0 unknown references. This re-review made `--surface-canvas`、`--accent-hover`、`--scrim` live in the touched UI rules.
 - StrictMode regression coverage verifies explicit microphone/camera requests remain usable after effect replay, late camera resolution is stopped after unmount, and successful preview streams stop on real unmount. Meeting drawer keeps device selection only and does not offer a second raw media request.
 - Full-surface participant triggers are sibling semantic buttons; Presenter canvas, local video, and real controls sit above the hit target while noninteractive surface clicks open the menu. Browser-level pointer hit testing remains part of root Chrome acceptance.
+
+### Root Chrome acceptance evidence (2026-08-31)
+
+- Fresh automated gate：59 test files／338 tests；TypeScript、Vite production build、release-files、已審閱 dependency audit 與 `git diff --check` 通過。Fresh CSS scan：28 個 custom-property 定義、19 種被引用 token、100 次 `var()` 使用、0 unknown references。
+- 使用既有已登入 Google Meet 分頁唯讀觀察首頁、設定 dialog、icon hover/tooltip 與右上角控制；Raise Room 逐頁保存首頁、設定、lobby、meeting、drawer 與修正前後截圖到 Git 外的 `Perxona Connect Kit/Raise Room 驗收截圖/`。
+- 五個指定 viewport `375×812`、`768×1024`、`1280×800`、`1440×900`、`1920×1080` 的 `documentElement.scrollWidth` 均等於 viewport width，沒有水平 overflow。手機 header、設定 tabs、lobby CTA、固定控制列與 drawer 可見；主管 action、self tile、toast 與 control bar 的矩形不相交；desktop self tile 完整位於置中 manager stage 內。
+- Header help/settings/more/user、三個 more menu action、About/user popover、Escape focus return、participant canvas/self-tile click、pin、self expand/restore、drawer 與六鍵控制均有真實 DOM readback。Console 無 app error；只有既有 Perxona Presenter `react-i18next` warning。
+- 真實 combined media 成功，video `1280×720`、`readyState=4`；高品質 WebGPU ASR Ready 並產生可編輯 preview；Perxona Presenter iframe mount 且狀態 Ready；本機視覺觀察開始並持續累積 aggregate。
+- 一局不中斷 20 分鐘完成：壓力事件在 `2:00`、`6:00`、`10:00`、`14:00`、`18:00` 全部轉為已發生，`20:00` 自動 handoff 至報告；報告顯示 1,213 個本機視覺 aggregate 樣本。
+- 尚未執行的外送關卡：從完整 UI 按「送給主管」會將公司、職位、薪資情境與測試文字傳給 Perxona，必須取得使用者 action-time 明確確認。Chrome permission deny 與系統 reduced-motion 偏好本次未改動使用者瀏覽器／系統設定，保留自動化驗證證據。
