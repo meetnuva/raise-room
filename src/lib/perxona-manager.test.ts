@@ -76,6 +76,21 @@ test("uses a visible local fallback when a configured manager API is unavailable
   });
 });
 
+test("uses a visible local fallback when a configured manager reply is malformed", async () => {
+  const fetchImpl = vi.fn()
+    .mockResolvedValueOnce(new Response(JSON.stringify({ configured: true }), { status: 200 }))
+    .mockResolvedValueOnce(
+      new Response(JSON.stringify({ replyText: 42, source: "perxona" }), { status: 200 }),
+    );
+
+  const reply = await createHybridManagerResponder(fetchImpl).reply(replyInput());
+
+  expect(reply).toMatchObject({
+    source: "simulated",
+    notice: "Perxona 動態主管暫時無法使用，已切換為本機腳本 fallback。",
+  });
+});
+
 test("uses a visible local fallback for status network or malformed responses", async () => {
   const networkReply = await createHybridManagerResponder(
     vi.fn().mockRejectedValue(new TypeError("network unavailable")),
