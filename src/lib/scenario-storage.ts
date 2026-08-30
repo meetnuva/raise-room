@@ -1,28 +1,39 @@
 import {
   defaultScenario,
   pressureEventRatios,
-  type PressureEventRatio,
   type Scenario,
   type ScheduledEvent,
 } from "../domain/scenario";
 
 const draftStorageKey = "raise-room-scenario-draft";
 
-type LegacyScheduledEvent = Omit<ScheduledEvent, "triggerRatio"> & {
-  minute: number;
-};
+type StoredEvent = Pick<ScheduledEvent, "id" | "label" | "instruction">;
 
-function migrateEvents(
-  events: Array<ScheduledEvent | LegacyScheduledEvent>,
-): ScheduledEvent[] {
-  return events.map((event, index) => {
-    if ("triggerRatio" in event) {
-      return event;
-    }
+function isStoredEvent(event: unknown): event is StoredEvent {
+  return (
+    typeof event === "object" &&
+    event !== null &&
+    typeof (event as StoredEvent).id === "string" &&
+    typeof (event as StoredEvent).label === "string" &&
+    typeof (event as StoredEvent).instruction === "string"
+  );
+}
+
+function migrateEvents(events: unknown): ScheduledEvent[] {
+  if (
+    !Array.isArray(events) ||
+    events.length !== pressureEventRatios.length ||
+    !events.every(isStoredEvent)
+  ) {
+    throw new Error("Invalid scenario draft events");
+  }
+
+  return pressureEventRatios.map((triggerRatio, index) => {
+    const event = events[index];
 
     return {
       id: event.id,
-      triggerRatio: pressureEventRatios[index] as PressureEventRatio,
+      triggerRatio,
       label: event.label,
       instruction: event.instruction,
     };
@@ -35,9 +46,7 @@ export function readScenarioDraft(
   try {
     const draft = storage.getItem(draftStorageKey);
     if (draft) {
-      const parsed = JSON.parse(draft) as Scenario & {
-        events: Array<ScheduledEvent | LegacyScheduledEvent>;
-      };
+      const parsed = JSON.parse(draft) as Scenario;
 
       return {
         ...parsed,

@@ -6,7 +6,7 @@ import { createHybridManagerResponder } from "./perxona-manager";
 function replyInput() {
   return {
     scenario: defaultScenario,
-    transcript: appendUserTurn(createMeeting(defaultScenario), "我想依成果討論調薪").transcript,
+    transcript: appendUserTurn(createMeeting(defaultScenario, 600), "我想依成果討論調薪").transcript,
     dueEvents: [],
   };
 }

@@ -9,7 +9,11 @@ import {
 } from "../domain/meeting";
 import type { TranscriptTurn } from "../domain/meeting";
 import type { VisualSignals } from "../domain/visual";
-import type { Scenario, ScheduledEvent } from "../domain/scenario";
+import {
+  getEventOffsetSeconds,
+  type Scenario,
+  type ScheduledEvent,
+} from "../domain/scenario";
 import { useLocalCamera } from "../hooks/use-local-camera";
 import { useLocalVision } from "../hooks/use-local-vision";
 import type { PresenterRuntimeConfig } from "../lib/perxona-config";
@@ -53,7 +57,10 @@ export function MeetingRoom({
   clock?: { durationSeconds?: number; now?: () => number; intervalMs?: number };
   modelPreset?: AsrModelPresetId;
 }) {
-  const [meeting, setMeeting] = useState(() => createMeeting(scenario));
+  const durationSeconds = clock?.durationSeconds ?? meetingLengthSeconds;
+  const [meeting, setMeeting] = useState(() =>
+    createMeeting(scenario, durationSeconds),
+  );
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
@@ -69,7 +76,6 @@ export function MeetingRoom({
       : "主管引擎：等待首次回覆";
   const camera = useLocalCamera();
   const vision = useLocalVision({ videoElement: cameraVideoElement });
-  const durationSeconds = clock?.durationSeconds ?? meetingLengthSeconds;
 
   const finishMeeting = (transcript: TranscriptTurn[]) => {
     vision.stopObserving();
@@ -171,10 +177,11 @@ export function MeetingRoom({
             <ol>
               {scenario.events.map((event) => {
                 const emitted = meeting.emittedEventIds.includes(event.id);
+                const eventMinute = getEventOffsetSeconds(event, durationSeconds) / 60;
 
                 return (
                   <li className={emitted ? "event-card emitted" : "event-card"} key={event.id}>
-                    <span>第 {event.minute} 分鐘 · {emitted ? "已發生" : "待命"}</span>
+                    <span>第 {eventMinute} 分鐘 · {emitted ? "已發生" : "待命"}</span>
                     <strong>{eventTitle(event)}</strong>
                     <p>{event.instruction}</p>
                   </li>
