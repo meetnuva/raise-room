@@ -36,7 +36,20 @@ test("labels simulated manager replies with their visible source", async () => {
       dueEvents: [],
     }),
   ).resolves.toMatchObject({
-    text: expect.any(String),
+    text: "我們開始吧，請說明你希望討論的薪資調整。",
+    source: "simulated",
+  });
+});
+
+test("keeps simulated manager text free of a duplicate manager-name prefix", async () => {
+  await expect(
+    simulatedResponder.reply({
+      scenario: defaultScenario,
+      transcript: [],
+      dueEvents: [defaultScenario.events[0]],
+    }),
+  ).resolves.toMatchObject({
+    text: "請對方先以具體成果說明這次請求",
     source: "simulated",
   });
 });

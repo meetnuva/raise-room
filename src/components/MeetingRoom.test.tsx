@@ -65,14 +65,14 @@ test("hands the append-only transcript to onFinish", async () => {
     target: { value: "我想依成果討論調薪" },
   });
   fireEvent.click(screen.getByRole("button", { name: "送出" }));
-  await screen.findByText("王主管：請以具體成果說明這次薪資調整請求。");
+  await screen.findByText("請以具體成果說明這次薪資調整請求。");
   fireEvent.click(screen.getByRole("button", { name: "結束並看報告" }));
 
   expect(onFinish).toHaveBeenCalledWith([
     { speaker: "user", text: "我想依成果討論調薪", elapsedSeconds: 0, delivery: { source: "text" } },
     {
       speaker: "manager",
-      text: "王主管：請以具體成果說明這次薪資調整請求。",
+      text: "請以具體成果說明這次薪資調整請求。",
       elapsedSeconds: 0,
       managerSource: "simulated",
     },

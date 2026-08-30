@@ -121,20 +121,20 @@ export const simulatedResponder: ManagerResponder = {
 
     if (latestEvent) {
       return {
-        text: `${scenario.manager.name}：${latestEvent.instruction}`,
+        text: latestEvent.instruction,
         source: "simulated",
       };
     }
 
     if (transcript[transcript.length - 1]?.speaker === "user") {
       return {
-        text: `${scenario.manager.name}：請以具體成果說明這次薪資調整請求。`,
+        text: "請以具體成果說明這次薪資調整請求。",
         source: "simulated",
       };
     }
 
     return {
-      text: `${scenario.manager.name}：我們開始吧，請說明你希望討論的薪資調整。`,
+      text: "我們開始吧，請說明你希望討論的薪資調整。",
       source: "simulated",
     };
   },

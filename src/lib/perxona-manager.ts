@@ -22,9 +22,33 @@ function isPerxonaReply(value: unknown): value is { replyText: string; source: "
 export function createHybridManagerResponder(
   fetchImpl: FetchImplementation = fetch,
 ): ManagerResponder {
+  let configured: boolean | undefined;
+
+  async function isConfigured() {
+    if (configured !== undefined) return configured;
+
+    const response = await fetchImpl("/api/manager/status");
+    if (!response.ok) throw new Error("manager status unavailable");
+    const payload: unknown = await response.json();
+    if (
+      typeof payload !== "object" ||
+      payload === null ||
+      !("configured" in payload) ||
+      typeof payload.configured !== "boolean"
+    ) {
+      throw new Error("invalid manager status response");
+    }
+    configured = payload.configured;
+    return configured;
+  }
+
   return {
     async reply(input) {
       try {
+        if (!(await isConfigured())) {
+          const fallback = await simulatedResponder.reply(input);
+          return { ...fallback, notice: fallbackNotice };
+        }
         const response = await fetchImpl("/api/manager/reply", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

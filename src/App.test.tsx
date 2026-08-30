@@ -17,7 +17,7 @@ test("preserves the scenario through the report retry flow and can return to set
     target: { value: "我期待調整 5%。" },
   });
   fireEvent.click(screen.getByRole("button", { name: "送出" }));
-  await screen.findByText("王主管：請以具體成果說明這次薪資調整請求。");
+  await screen.findByText("請以具體成果說明這次薪資調整請求。");
   fireEvent.click(screen.getByRole("button", { name: "結束並看報告" }));
 
   expect(screen.getByRole("heading", { name: "會後教練報告" })).toBeVisible();
