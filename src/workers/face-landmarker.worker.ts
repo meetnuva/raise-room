@@ -12,6 +12,12 @@ let lastTimestamp = -1;
 let analyzing = false;
 let closed = false;
 
+export function createVisionFileset<T>(
+  forVisionTasks: (basePath?: string, useModule?: boolean) => Promise<T>,
+): Promise<T> {
+  return forVisionTasks(wasmBase, true);
+}
+
 function post(event: VisionWorkerEvent) {
   self.postMessage(event);
 }
@@ -58,7 +64,7 @@ async function readModel(): Promise<ArrayBuffer> {
 }
 
 async function createLandmarker(delegate: "GPU" | "CPU", modelAssetBuffer: ArrayBuffer) {
-  const vision = await FilesetResolver.forVisionTasks(wasmBase);
+  const vision = await createVisionFileset(FilesetResolver.forVisionTasks);
   return FaceLandmarker.createFromOptions(vision, {
     baseOptions: { modelAssetBuffer: new Uint8Array(modelAssetBuffer), delegate },
     runningMode: "VIDEO",
