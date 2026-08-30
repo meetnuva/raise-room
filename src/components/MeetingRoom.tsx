@@ -54,9 +54,16 @@ export function MeetingRoom({
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [managerNotice, setManagerNotice] = useState<string | null>(null);
   const [cameraVideoElement, setCameraVideoElement] = useState<HTMLVideoElement | null>(null);
   const meetingRef = useRef(meeting);
   const latestTurn = meeting.transcript[meeting.transcript.length - 1];
+  const managerEngineStatus =
+    latestTurn?.speaker === "manager"
+      ? latestTurn.managerSource === "perxona"
+        ? "主管引擎：Perxona 動態主管"
+        : "主管引擎：本機腳本 fallback"
+      : "主管引擎：等待首次回覆";
   const camera = useLocalCamera();
   const vision = useLocalVision({ videoElement: cameraVideoElement });
   const durationSeconds = clock?.durationSeconds ?? meetingLengthSeconds;
@@ -100,6 +107,9 @@ export function MeetingRoom({
     try {
       const repliedMeeting = await respondToUser(userTurn, scenario, responder);
       const managerTurn = repliedMeeting.transcript[repliedMeeting.transcript.length - 1];
+      setManagerNotice(
+        managerTurn.speaker === "manager" ? managerTurn.managerNotice ?? null : null,
+      );
       setMeeting((current) => {
         const next = { ...current, transcript: [...current.transcript, managerTurn] };
         meetingRef.current = next;
@@ -134,7 +144,9 @@ export function MeetingRoom({
           剩餘 {formatCountdown(meeting.elapsedSeconds, durationSeconds)}
         </p>
       </header>
+      <p aria-live="polite" className="manager-engine-status">{managerEngineStatus}</p>
       {sendError && <p role="alert">{sendError}</p>}
+      {managerNotice && <p role="status">{managerNotice}</p>}
 
       <div className="meeting-stages" aria-label="會議雙人畫面">
         <PerxonaManagerStage

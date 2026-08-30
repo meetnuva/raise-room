@@ -14,6 +14,7 @@ export interface UserTranscriptTurn extends BaseTranscriptTurn {
 export interface ManagerTranscriptTurn extends BaseTranscriptTurn {
   speaker: "manager";
   managerSource?: ManagerReply["source"];
+  managerNotice?: string;
 }
 
 export type TranscriptTurn = UserTranscriptTurn | ManagerTranscriptTurn;
@@ -108,6 +109,7 @@ export async function respondToUser(
         text: reply.text,
         elapsedSeconds: state.elapsedSeconds,
         managerSource: reply.source,
+        ...(reply.notice ? { managerNotice: reply.notice } : {}),
       },
     ],
   };

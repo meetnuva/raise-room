@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import { CoachingReport } from "./components/CoachingReport";
 import { MeetingRoom } from "./components/MeetingRoom";
 import { ScenarioWorkshop } from "./components/ScenarioWorkshop";
-import { simulatedResponder } from "./domain/meeting";
 import type { TranscriptTurn } from "./domain/meeting";
 import type { VisualSignals } from "./domain/visual";
 import type { Scenario } from "./domain/scenario";
 import { readPresenterRuntimeConfig } from "./lib/perxona-config";
+import { createHybridManagerResponder } from "./lib/perxona-manager";
 
 type AppState =
   | { view: "setup" }
@@ -16,6 +16,7 @@ type AppState =
 export function App() {
   const presenterConfig = readPresenterRuntimeConfig(import.meta.env);
   const [appState, setAppState] = useState<AppState>({ view: "setup" });
+  const [managerResponder] = useState(() => createHybridManagerResponder());
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -37,7 +38,7 @@ export function App() {
       {appState.view === "meeting" && (
         <MeetingRoom
           scenario={appState.scenario}
-          responder={simulatedResponder}
+          responder={managerResponder}
           presenterConfig={presenterConfig}
           onFinish={(transcript, visualSignals) => {
             setAppState({

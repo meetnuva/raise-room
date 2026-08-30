@@ -123,3 +123,40 @@ test("unlocks text input and shows a visible error when the manager responder re
   fireEvent.change(screen.getByLabelText("開發用文字輸入"), { target: { value: "重試" } }); fireEvent.click(screen.getByRole("button", { name: "送出" }));
   expect(await screen.findByRole("alert")).toHaveTextContent("主管回覆暫時無法取得，請重新送出。"); expect(screen.getByRole("button", { name: "送出" })).not.toBeDisabled();
 });
+
+test("announces the Perxona manager source after a successful reply", async () => {
+  render(
+    <MeetingRoom
+      scenario={defaultScenario}
+      responder={{ reply: async () => ({ text: "請先說明具體成果。", source: "perxona" }) }}
+    />,
+  );
+
+  expect(screen.getByText("主管引擎：等待首次回覆")).toBeVisible();
+  fireEvent.change(screen.getByLabelText("開發用文字輸入"), { target: { value: "我的請求" } });
+  fireEvent.click(screen.getByRole("button", { name: "送出" }));
+
+  expect(await screen.findByText("主管引擎：Perxona 動態主管")).toBeVisible();
+});
+
+test("shows a non-blocking fallback notice without placing it in the transcript", async () => {
+  render(
+    <MeetingRoom
+      scenario={defaultScenario}
+      responder={{
+        reply: async () => ({
+          text: "請先說明具體成果。",
+          source: "simulated",
+          notice: "Perxona 動態主管暫時無法使用，已切換為本機腳本 fallback。",
+        }),
+      }}
+    />,
+  );
+
+  fireEvent.change(screen.getByLabelText("開發用文字輸入"), { target: { value: "我的請求" } });
+  fireEvent.click(screen.getByRole("button", { name: "送出" }));
+
+  expect(await screen.findByText("主管引擎：本機腳本 fallback")).toBeVisible();
+  expect(screen.getByText("Perxona 動態主管暫時無法使用，已切換為本機腳本 fallback。")).toBeVisible();
+  expect(screen.getByText("請先說明具體成果。")).toBeVisible();
+});
