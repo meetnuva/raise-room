@@ -14,6 +14,7 @@ export interface ManagerProfile {
   warmth: string;
   authority: string;
   hiddenStance: string;
+  customInstructions: string;
 }
 
 export interface Scenario {
@@ -51,6 +52,7 @@ export const defaultScenario: Scenario = {
     warmth: "中",
     authority: "高",
     hiddenStance: "先觀察對方能否以具體成果說明請求",
+    customInstructions: "保持主管角色，只回主管會說的話，不提供教練建議。",
   },
   events: [
     {

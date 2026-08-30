@@ -16,7 +16,17 @@ function readDraft(): Scenario {
   try {
     const draft = localStorage.getItem(draftStorageKey);
     if (draft) {
-      return JSON.parse(draft) as Scenario;
+      const parsed = JSON.parse(draft) as Scenario;
+      return {
+        ...parsed,
+        manager: {
+          ...parsed.manager,
+          customInstructions:
+            typeof parsed.manager?.customInstructions === "string"
+              ? parsed.manager.customInstructions
+              : defaultScenario.manager.customInstructions,
+        },
+      };
     }
   } catch {
     localStorage.removeItem(draftStorageKey);
@@ -254,6 +264,19 @@ export function ScenarioWorkshop({
             }
           />
         </label>
+        <label>
+          主管補充角色指令（像 system prompt）
+          <textarea
+            value={scenario.manager.customInstructions}
+            onChange={(event) =>
+              updateScenario({
+                ...scenario,
+                manager: { ...scenario.manager, customInstructions: event.target.value },
+              })
+            }
+          />
+        </label>
+        <p className="field-help">補充這位主管的說話方式；只會用在這場練習，不會取代上方人格設定。</p>
       </fieldset>
 
       <fieldset>
