@@ -30,7 +30,11 @@ test("uses the blue nuva brand and opens settings", () => {
     "src",
     "/brand/blue-nuva-logo.png",
   );
-  fireEvent.click(screen.getByRole("button", { name: "設定" }));
+  const settings = screen.getByRole("button", { name: "設定" });
+  expect(settings).toHaveAttribute("title", "設定");
+  expect(settings.querySelector("svg")).not.toBeNull();
+  expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+  fireEvent.click(settings);
   expect(onOpenSettings).toHaveBeenCalledOnce();
 });
 

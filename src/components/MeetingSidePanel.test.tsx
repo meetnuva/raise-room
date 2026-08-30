@@ -24,7 +24,11 @@ test("keeps one active information tab and lets close return control to the stag
 
   expect(screen.getByRole("tab", { name: "逐字稿" })).toHaveAttribute("aria-selected", "true");
   expect(screen.getAllByRole("tab", { selected: true })).toHaveLength(1);
+  expect(screen.getByRole("tab", { name: "逐字稿" })).toHaveAttribute("aria-controls", "meeting-information-transcript-panel");
+  expect(screen.getByRole("tabpanel")).toHaveAttribute("aria-labelledby", "meeting-information-transcript-tab");
   expect(screen.getAllByText("我想依成果討論調薪")).toHaveLength(1);
+  fireEvent.keyDown(screen.getByRole("tab", { name: "逐字稿" }), { key: "ArrowRight" });
+  expect(screen.getByRole("tab", { name: "壓力事件" })).toHaveFocus();
   fireEvent.click(screen.getByRole("tab", { name: "壓力事件" }));
   expect(screen.getByRole("tab", { name: "壓力事件" })).toHaveAttribute("aria-selected", "true");
   expect(screen.getAllByRole("tab", { selected: true })).toHaveLength(1);

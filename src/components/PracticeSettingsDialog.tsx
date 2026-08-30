@@ -125,6 +125,13 @@ export function PracticeSettingsDialog({
     }
     onSave(draft);
   };
+  const selectTabFromKeyboard = (tab: SettingsTab, key: string) => {
+    const direction = key === "ArrowDown" || key === "ArrowRight" ? 1 : key === "ArrowUp" || key === "ArrowLeft" ? -1 : 0;
+    if (!direction) return;
+    const nextTab = tabs[(tabs.indexOf(tab) + direction + tabs.length) % tabs.length];
+    setSelectedTab(nextTab);
+    document.getElementById(`practice-settings-tab-${nextTab}`)?.focus();
+  };
 
   return (
     <dialog ref={dialog} className="practice-settings-dialog" open={supportsNativeModal ? undefined : true} aria-label="練習設定" onCancel={(event) => { event.preventDefault(); close(); }} onKeyDown={(event) => { if (event.key === "Escape") { event.preventDefault(); close(); } }}>
@@ -144,11 +151,15 @@ export function PracticeSettingsDialog({
             tabIndex={selectedTab === tab ? 0 : -1}
             type="button"
             onClick={() => setSelectedTab(tab)}
+            onKeyDown={(event) => {
+              selectTabFromKeyboard(tab, event.key);
+              if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) event.preventDefault();
+            }}
           >{tab}</button>
         ))}
       </div>
       <section aria-labelledby={`practice-settings-tab-${selectedTab}`} className="practice-settings-content" id={`practice-settings-${selectedTab}`} role="tabpanel">
-        {selectedTab === "音訊" && <DeviceSettingsPanel kinds={["audioinput", "audiooutput"]} selectedDeviceIds={selectedDeviceIds} onSelectDevice={onSelectDevice} />}
+        {selectedTab === "音訊" && <><DeviceSettingsPanel kinds={["audioinput"]} selectedDeviceIds={selectedDeviceIds} onSelectDevice={onSelectDevice} /><p>3D 主管聲音使用系統預設輸出裝置</p></>}
         {selectedTab === "視訊" && <DeviceSettingsPanel kinds={["videoinput"]} selectedDeviceIds={selectedDeviceIds} onSelectDevice={onSelectDevice} />}
         {selectedTab === "語音模型" && <VoiceSettingsPanel hasWebGpu={typeof navigator !== "undefined" && hasWebGpuSupport(navigator.gpu)} selectedPreset={draft.modelPreset} onSelectedPresetChange={(modelPreset) => setDraft((current) => ({ ...current, modelPreset }))} />}
         {selectedTab === "主管角色" && <>

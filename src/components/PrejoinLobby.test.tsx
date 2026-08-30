@@ -87,7 +87,7 @@ beforeEach(() => vi.clearAllMocks());
 test("keeps the desktop lobby at 70/30 with a 16:9 local preview stage", () => {
   const styles = readFileSync("src/styles.css", "utf8");
 
-  expect(styles).toMatch(/\.prejoin-grid\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*7fr\)\s*minmax\(18rem,\s*3fr\);/s);
+  expect(styles).toMatch(/\.prejoin-grid\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*7fr\)\s*minmax\(320px,\s*3fr\);/s);
   expect(styles).toMatch(/\.prejoin-preview \.local-camera-tile\s*\{[^}]*aspect-ratio:\s*16\s*\/\s*9;/s);
   expect(styles).toMatch(/\.prejoin-preview \.local-camera-tile video\s*\{[^}]*aspect-ratio:\s*16\s*\/\s*9;/s);
 });

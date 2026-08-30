@@ -35,6 +35,13 @@ export function MeetingSidePanel({
     { id: "events", label: "壓力事件" },
     { id: "observations", label: "觀察" },
   ];
+  const selectTabFromKeyboard = (tab: Tab, key: string) => {
+    const direction = key === "ArrowRight" || key === "ArrowDown" ? 1 : key === "ArrowLeft" || key === "ArrowUp" ? -1 : 0;
+    if (!direction) return;
+    const nextTab = tabs[(tabs.findIndex((item) => item.id === tab) + direction + tabs.length) % tabs.length];
+    setActiveTab(nextTab.id);
+    document.getElementById(`meeting-information-${nextTab.id}-tab`)?.focus();
+  };
 
   return (
     <aside className="meeting-side-panel" aria-label="會議資訊">
@@ -43,10 +50,17 @@ export function MeetingSidePanel({
           {tabs.map((tab) => (
             <button
               key={tab.id}
+              id={`meeting-information-${tab.id}-tab`}
               type="button"
               role="tab"
+              aria-controls={`meeting-information-${tab.id}-panel`}
               aria-selected={activeTab === tab.id}
+              tabIndex={activeTab === tab.id ? 0 : -1}
               onClick={() => setActiveTab(tab.id)}
+              onKeyDown={(event) => {
+                selectTabFromKeyboard(tab.id, event.key);
+                if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) event.preventDefault();
+              }}
             >
               {tab.label}
             </button>
@@ -58,7 +72,7 @@ export function MeetingSidePanel({
       </div>
 
       {activeTab === "transcript" && (
-        <section className="transcript-panel" aria-labelledby="transcript-title">
+        <section className="transcript-panel" aria-labelledby="meeting-information-transcript-tab" id="meeting-information-transcript-panel" role="tabpanel">
           <h3 id="transcript-title">對話紀錄</h3>
           {transcript.length === 0 ? (
             <p className="empty-transcript">尚未有對話。你可以先說明這次的調整請求。</p>
@@ -80,7 +94,7 @@ export function MeetingSidePanel({
       )}
 
       {activeTab === "events" && (
-        <section className="event-rail" aria-labelledby="event-rail-title">
+        <section className="event-rail" aria-labelledby="meeting-information-events-tab" id="meeting-information-events-panel" role="tabpanel">
           <h3 id="event-rail-title">會議壓力事件</h3>
           <ol>
             {events.map((event) => {
@@ -101,7 +115,7 @@ export function MeetingSidePanel({
       )}
 
       {activeTab === "observations" && (
-        <section className="meeting-observations" aria-labelledby="observations-title">
+        <section className="meeting-observations" aria-labelledby="meeting-information-observations-tab" id="meeting-information-observations-panel" role="tabpanel">
           <h3 id="observations-title">本機觀察</h3>
           {observationContent}
         </section>

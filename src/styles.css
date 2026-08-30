@@ -1,4 +1,12 @@
 :root {
+  --nuva-blue: #2563eb;
+  --nuva-blue-soft: #dbeafe;
+  --surface: #ffffff;
+  --surface-muted: #f8fafc;
+  --border: #dfe3ea;
+  --text: #202124;
+  --text-muted: #5f6368;
+  --video-stage: #202124;
   font-family: system-ui, sans-serif;
   color: #1f2937;
   background: #f8fafc;
@@ -6,6 +14,14 @@
 
 body {
   margin: 0;
+  overflow-x: hidden;
+}
+
+main:has(.meet-home),
+main:has(.prejoin-lobby) {
+  max-width: none;
+  margin: 0;
+  padding: 0;
 }
 
 main {
@@ -208,8 +224,11 @@ button:focus-visible {
 
 .practice-settings-dialog {
   box-sizing: border-box;
-  width: min(48rem, calc(100vw - 2rem));
-  max-height: min(44rem, calc(100vh - 2rem));
+  display: grid;
+  grid-template-columns: 12.5rem minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: min(1000px, calc(100vw - 48px));
+  max-height: calc(100vh - 48px);
   padding: 0;
   border: 1px solid #cbd5e1;
   border-radius: 0.75rem;
@@ -231,6 +250,11 @@ button:focus-visible {
   background: #ffffff;
 }
 
+.practice-settings-header,
+.practice-settings-actions {
+  grid-column: 1 / -1;
+}
+
 .practice-settings-header {
   border-bottom: 1px solid #e2e8f0;
 }
@@ -241,15 +265,21 @@ button:focus-visible {
 
 .practice-settings-tabs {
   display: flex;
+  grid-column: 1;
+  grid-row: 2;
+  align-items: stretch;
+  flex-direction: column;
   gap: 0.25rem;
-  overflow-x: auto;
-  padding: 0.75rem 1.25rem;
-  border-bottom: 1px solid #e2e8f0;
+  overflow-y: auto;
+  padding: 1rem;
+  border-right: 1px solid #e2e8f0;
+  border-bottom: 0;
   background: #ffffff;
 }
 
 .practice-settings-tabs [role="tab"] {
   flex: 0 0 auto;
+  text-align: left;
   border-color: transparent;
 }
 
@@ -259,13 +289,17 @@ button:focus-visible {
 }
 
 .practice-settings-content {
-  max-height: 30rem;
+  grid-column: 2;
+  grid-row: 2;
+  max-height: none;
   overflow-y: auto;
   padding: 1.25rem;
 }
 
 .practice-settings-actions {
   border-top: 1px solid #e2e8f0;
+  position: sticky;
+  bottom: 0;
 }
 
 .practice-settings-actions button:last-child {
@@ -815,8 +849,29 @@ button {
 }
 
 .meet-home-settings {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  padding: 0.5rem;
   border-color: transparent;
   color: #075985;
+}
+
+.meet-home-settings svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: currentcolor;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 .meet-home-avatar {
@@ -873,10 +928,7 @@ button {
 }
 
 .meet-home-content h1 {
-  margin-bottom: 2.5rem;
-  color: #111827;
-  font-size: clamp(2rem, 4vw, 3rem);
-  letter-spacing: -0.03em;
+  margin: 0;
 }
 
 .meet-home-schedule,
@@ -1006,11 +1058,11 @@ button {
 
 .prejoin-grid {
   display: grid;
-  grid-template-columns: minmax(0, 7fr) minmax(18rem, 3fr);
+  grid-template-columns: minmax(0, 7fr) minmax(320px, 3fr);
   gap: 2rem;
   width: min(100% - 3rem, 70rem);
   margin: 0 auto;
-  padding: clamp(2rem, 6vw, 5rem) 0;
+  padding: clamp(0.75rem, 3vw, 2.5rem) 0;
 }
 
 .prejoin-preview,
@@ -1094,7 +1146,10 @@ button {
 }
 
 .prejoin-join-panel {
-  padding: clamp(1.5rem, 4vw, 3rem);
+  position: sticky;
+  top: 1rem;
+  gap: 0.75rem;
+  padding: clamp(1rem, 2vw, 1.5rem);
   border: 1px solid #dbeafe;
   border-radius: 0.75rem;
   background: #ffffff;
@@ -1122,6 +1177,29 @@ button {
 }
 
 @media (max-width: 48rem) {
+  .practice-settings-dialog {
+    display: block;
+    width: calc(100vw - 2rem);
+    max-height: calc(100vh - 2rem);
+  }
+
+  .practice-settings-tabs {
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0.75rem 1rem;
+    border-right: 0;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .practice-settings-tabs [role="tab"] {
+    text-align: center;
+  }
+
+  .practice-settings-content {
+    max-height: calc(100vh - 15rem);
+  }
+
   .prejoin-grid {
     grid-template-columns: 1fr;
     width: min(100% - 2rem, 42rem);
@@ -1155,6 +1233,99 @@ button {
   .meet-home-content {
     padding: 2rem 1rem;
   }
+
+  .prejoin-join-panel {
+    position: static;
+  }
+}
+
+.meeting-room {
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  padding: 0.75rem;
+}
+
+.meeting-layout {
+  min-height: 0;
+}
+
+.meeting-stages {
+  position: relative;
+  display: block;
+  min-height: 0;
+}
+
+.manager-stage {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+  aspect-ratio: 16 / 9;
+  padding: 0.75rem;
+  overflow: hidden;
+}
+
+.manager-stage .presenter-canvas {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+}
+
+.meeting-sidebar {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 1;
+  width: clamp(10rem, 22%, 16rem);
+  min-width: 0;
+}
+
+.meeting-sidebar .local-camera-tile {
+  padding: 0.5rem;
+  background: #1e293b;
+}
+
+.meeting-sidebar .local-camera-tile video {
+  min-height: 0;
+  aspect-ratio: 16 / 9;
+}
+
+.meeting-layout.panel-open {
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 24rem);
+  align-items: stretch;
+}
+
+.meeting-side-panel {
+  max-height: calc(100vh - 10rem);
+}
+
+.meeting-controls {
+  z-index: 2;
+  gap: 0.5rem;
+  border-radius: 0.5rem;
+}
+
+@media (max-width: 48rem) {
+  .meeting-sidebar {
+    right: 0.75rem;
+    bottom: 0.75rem;
+    width: min(42%, 12rem);
+  }
+
+  .meeting-layout.panel-open {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
 
 @media (max-width: 42rem) {
@@ -1187,6 +1358,9 @@ button {
   }
 
   .meeting-sidebar {
-    width: 100%;
+    position: absolute;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    width: min(42%, 12rem);
   }
 }

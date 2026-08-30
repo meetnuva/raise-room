@@ -108,8 +108,9 @@ function MeetingRoomView({
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [managerNotice, setManagerNotice] = useState<string | null>(null);
-  const [panelOpen, setPanelOpen] = useState(true);
+  const [panelOpen, setPanelOpen] = useState(false);
   const [cameraVideoElement, setCameraVideoElement] = useState<HTMLVideoElement | null>(null);
+  const informationButton = useRef<HTMLButtonElement>(null);
   const meetingRef = useRef(meeting);
   const vision = useLocalVision({ videoElement: cameraVideoElement });
   const latestTurn = meeting.transcript[meeting.transcript.length - 1];
@@ -174,7 +175,7 @@ function MeetingRoomView({
     }
   };
 
-  const developmentFallback = (
+  const developmentFallback = import.meta.env.MODE === "test" ? (
     <form
       className="development-fallback"
       onSubmit={(event) => {
@@ -198,7 +199,7 @@ function MeetingRoomView({
         <button disabled={sending} type="submit">送出</button>
       </div>
     </form>
-  );
+  ) : undefined;
   const firstEventOffset = scenario.events.length
     ? Math.min(...scenario.events.map((event) => event.triggerRatio * durationSeconds))
     : 0;
@@ -212,7 +213,7 @@ function MeetingRoomView({
           <p className="meeting-schedule">{formatPracticeTimeRange(scheduledMeeting, "zh-TW")}</p>
         </div>
         <div className="meeting-header-actions">
-          <button type="button" aria-expanded={panelOpen} onClick={() => setPanelOpen(true)}>
+          <button ref={informationButton} type="button" aria-expanded={panelOpen} onClick={() => setPanelOpen(true)}>
             會議資訊
           </button>
           <p
@@ -252,7 +253,10 @@ function MeetingRoomView({
             managerName={scenario.manager.name}
             observationContent={<LocalVisualControl vision={vision} cameraActive={camera.cameraActive} />}
             transcriptFallback={developmentFallback}
-            onClose={() => setPanelOpen(false)}
+            onClose={() => {
+              informationButton.current?.focus();
+              setPanelOpen(false);
+            }}
           />
         )}
       </div>
@@ -273,14 +277,14 @@ function MeetingRoomView({
         <button type="button" onClick={camera.toggle} disabled={camera.requesting}>
           {camera.cameraActive ? "關閉我的鏡頭" : "開啟我的鏡頭"}
         </button>
-        <button
+        {import.meta.env.MODE === "test" && <button
           className="development-only"
           data-development-only="true"
           type="button"
           onClick={() => advanceTo(firstEventOffset)}
         >
           跳到第一個壓力事件
-        </button>
+        </button>}
         <button className="finish-meeting" type="button" onClick={() => finishMeeting(meeting.transcript)}>
           離開並查看報告
         </button>

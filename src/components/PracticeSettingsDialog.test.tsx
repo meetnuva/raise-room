@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { readFileSync } from "node:fs";
 import { vi } from "vitest";
 import { defaultAsrModelPresetId } from "../domain/asr-models";
 import { defaultPracticeSettings } from "../domain/practice-settings";
@@ -28,6 +29,28 @@ test("provides the seven exact accessible settings tabs without device or media 
     "音訊", "視訊", "語音模型", "主管角色", "主管個性", "會議", "隱私",
   ]);
   expect(screen.getByRole("tab", { name: "音訊" })).toHaveFocus();
+});
+
+test("uses roving tabs with linked panels and keyboard navigation", () => {
+  renderDialog();
+
+  const audio = screen.getByRole("tab", { name: "音訊" });
+  expect(audio).toHaveAttribute("aria-controls", "practice-settings-音訊");
+  expect(screen.getByRole("tabpanel")).toHaveAttribute("aria-labelledby", audio.id);
+  expect(audio).toHaveAttribute("tabindex", "0");
+  fireEvent.keyDown(audio, { key: "ArrowDown" });
+  expect(screen.getByRole("tab", { name: "視訊" })).toHaveFocus();
+  expect(screen.getByRole("tab", { name: "視訊" })).toHaveAttribute("tabindex", "0");
+  fireEvent.keyDown(screen.getByRole("tab", { name: "視訊" }), { key: "ArrowLeft" });
+  expect(audio).toHaveFocus();
+});
+
+test("defines a desktop vertical-tab dialog and a mobile horizontal fallback", () => {
+  const styles = readFileSync("src/styles.css", "utf8");
+
+  expect(styles).toMatch(/\.practice-settings-dialog\s*\{[^}]*grid-template-columns:\s*12\.5rem\s+minmax\(0,\s*1fr\);[^}]*width:\s*min\(1000px,\s*calc\(100vw\s*-\s*48px\)\);[^}]*max-height:\s*calc\(100vh\s*-\s*48px\);/s);
+  expect(styles).toMatch(/\.practice-settings-tabs\s*\{[^}]*flex-direction:\s*column;/s);
+  expect(styles).toMatch(/@media \(max-width: 48rem\)\s*\{[\s\S]*?\.practice-settings-dialog\s*\{[^}]*display:\s*block;[\s\S]*?\.practice-settings-tabs\s*\{[^}]*flex-direction:\s*row;[^}]*overflow-x:\s*auto;/);
 });
 
 test("uses native modal dialog behavior once when showModal is available", () => {
@@ -60,6 +83,8 @@ test("filters audio and video device panels and retains session-only selections"
     fireEvent.click(screen.getByRole("button", { name: "讀取可用裝置" }));
     await screen.findByRole("heading", { name: "麥克風" });
     expect(screen.queryByRole("heading", { name: "攝影機" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "喇叭" })).toBeNull();
+    expect(screen.getByText("3D 主管聲音使用系統預設輸出裝置")).toBeVisible();
     fireEvent.click(screen.getByRole("tab", { name: "視訊" }));
     fireEvent.click(screen.getByRole("button", { name: "讀取可用裝置" }));
     await screen.findByRole("heading", { name: "攝影機" });
