@@ -18,15 +18,52 @@ test("uses roving arrow focus and selects the active action", () => {
   fireEvent.click(trigger);
 
   const first = screen.getByRole("menuitem", { name: "檢查裝置" });
+  const second = screen.getByRole("menuitem", { name: "查看本機資料與隱私" });
   expect(first).toHaveFocus();
+  expect(first).toHaveAttribute("tabindex", "0");
+  expect(second).toHaveAttribute("tabindex", "-1");
+  expect(screen.getAllByRole("menuitem").filter((item) => item.getAttribute("tabindex") === "0")).toHaveLength(1);
   fireEvent.keyDown(first, { key: "ArrowDown" });
-  expect(screen.getByRole("menuitem", { name: "查看本機資料與隱私" })).toHaveFocus();
-  fireEvent.keyDown(screen.getByRole("menuitem", { name: "查看本機資料與隱私" }), { key: "ArrowUp" });
+  expect(second).toHaveFocus();
+  expect(first).toHaveAttribute("tabindex", "-1");
+  expect(second).toHaveAttribute("tabindex", "0");
+  expect(screen.getAllByRole("menuitem").filter((item) => item.getAttribute("tabindex") === "0")).toHaveLength(1);
+  fireEvent.keyDown(second, { key: "ArrowUp" });
   fireEvent.keyDown(first, { key: "Enter" });
 
   expect(onDevices).toHaveBeenCalledOnce();
   expect(screen.queryByRole("menu")).toBeNull();
   expect(trigger).toHaveFocus();
+});
+
+const nonActionMenus: Array<[string, ActionMenuItem[]]> = [
+  ["empty", []],
+  ["all-disabled", [{ id: "unavailable", label: "尚未提供", icon: "warning", disabled: true, disabledReason: "目前沒有可用操作", onSelect: vi.fn() }]],
+];
+
+test.each(nonActionMenus)("keeps a %s menu dismissable with Escape and returns focus", (_kind, items) => {
+  render(<ActionMenu label="更多選項" items={items} />);
+  const trigger = screen.getByRole("button", { name: "更多選項" });
+  fireEvent.click(trigger);
+
+  const menu = screen.getByRole("menu");
+  expect(menu).toHaveFocus();
+  fireEvent.keyDown(menu, { key: "Escape" });
+  expect(screen.queryByRole("menu")).toBeNull();
+  expect(trigger).toHaveFocus();
+});
+
+test("exposes a disabled action reason to assistive technology", () => {
+  const items: ActionMenuItem[] = [
+    { id: "unavailable", label: "尚未提供", icon: "warning", disabled: true, disabledReason: "目前沒有可用操作", onSelect: vi.fn() },
+  ];
+  render(<ActionMenu label="更多選項" items={items} />);
+  fireEvent.click(screen.getByRole("button", { name: "更多選項" }));
+
+  const disabledItem = screen.getByRole("menuitem", { name: "尚未提供" });
+  const descriptionId = disabledItem.getAttribute("aria-describedby");
+  expect(descriptionId).not.toBeNull();
+  expect(document.getElementById(descriptionId!)).toHaveTextContent("目前沒有可用操作");
 });
 
 test("closes on Escape and outside clicks, then returns focus to its trigger", () => {
