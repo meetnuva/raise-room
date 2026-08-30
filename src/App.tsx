@@ -163,7 +163,7 @@ export function App({ now = () => new Date() }: { now?: () => Date } = {}) {
         />
       )}
       {appState.view === "practice" && (
-        <PracticeSession modelPreset={voicePreset}>
+        <PracticeSession modelPreset={voicePreset} selectedDeviceIds={selectedDeviceIds}>
           {({ media, voice }) => appState.phase === "lobby" ? (
             <PrejoinLobby
               meeting={meeting}

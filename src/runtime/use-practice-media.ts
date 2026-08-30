@@ -16,12 +16,23 @@ export interface PracticeMediaController {
 
 type PracticeMediaInput = {
   mediaDevices?: Pick<MediaDevices, "getUserMedia">;
+  selectedDeviceIds?: Partial<Record<MediaDeviceKind, string>>;
 };
 
 const constraints: MediaStreamConstraints = {
   audio: true,
   video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
 };
+
+function requestConstraints(selectedDeviceIds?: Partial<Record<MediaDeviceKind, string>>): MediaStreamConstraints {
+  const microphoneId = selectedDeviceIds?.audioinput;
+  const cameraId = selectedDeviceIds?.videoinput;
+
+  return {
+    audio: microphoneId ? { deviceId: { exact: microphoneId } } : constraints.audio,
+    video: cameraId ? { deviceId: { exact: cameraId } } : constraints.video,
+  };
+}
 
 function isDenied(error: unknown) {
   return error instanceof DOMException && error.name === "NotAllowedError";
@@ -84,7 +95,7 @@ export function usePracticeMedia(input?: PracticeMediaInput): PracticeMediaContr
     const version = ++requestVersion.current;
     setMediaStatus("requesting");
     if (mounted.current) setErrorMessage(null);
-    const pending = mediaDevices.getUserMedia(constraints)
+    const pending = mediaDevices.getUserMedia(requestConstraints(input?.selectedDeviceIds))
       .then((next) => {
         if (!mounted.current || requestVersion.current !== version) {
           next.getTracks().forEach((track) => track.stop());
@@ -108,7 +119,7 @@ export function usePracticeMedia(input?: PracticeMediaInput): PracticeMediaContr
       });
     requestPromise.current = pending;
     return pending;
-  }, [input?.mediaDevices, setMediaStatus]);
+  }, [input?.mediaDevices, input?.selectedDeviceIds, setMediaStatus]);
 
   const toggleCamera = useCallback(() => {
     const tracks = streamRef.current?.getVideoTracks() ?? [];

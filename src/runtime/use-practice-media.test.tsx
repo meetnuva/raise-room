@@ -38,6 +38,40 @@ test("requests one audio-video stream only after explicit action", async () => {
   expect(getUserMedia).toHaveBeenCalledOnce();
 });
 
+test("uses the session-selected microphone and camera IDs for the next explicit request", async () => {
+  const { stream } = fakeStream();
+  const getUserMedia = vi.fn().mockResolvedValue(stream);
+  const { result } = renderHook(() => usePracticeMedia({
+    mediaDevices: { getUserMedia },
+    selectedDeviceIds: { audioinput: "mic-selected", videoinput: "camera-selected" },
+  }));
+
+  expect(getUserMedia).not.toHaveBeenCalled();
+  await act(async () => result.current.request());
+
+  expect(getUserMedia).toHaveBeenCalledExactlyOnceWith({
+    audio: { deviceId: { exact: "mic-selected" } },
+    video: { deviceId: { exact: "camera-selected" } },
+  });
+});
+
+test("honors device selections supplied by a rerender before permission is requested", async () => {
+  const { stream } = fakeStream();
+  const getUserMedia = vi.fn().mockResolvedValue(stream);
+  const { result, rerender } = renderHook(
+    ({ selectedDeviceIds }) => usePracticeMedia({ mediaDevices: { getUserMedia }, selectedDeviceIds }),
+    { initialProps: { selectedDeviceIds: {} as Partial<Record<MediaDeviceKind, string>> } },
+  );
+
+  rerender({ selectedDeviceIds: { audioinput: "rerendered-mic" } });
+  await act(async () => result.current.request());
+
+  expect(getUserMedia).toHaveBeenCalledWith({
+    audio: { deviceId: { exact: "rerendered-mic" } },
+    video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
+  });
+});
+
 test("toggles tracks without stopping them and dispose stops each session track once", async () => {
   const { stream, audio, video } = fakeStream();
   const { result } = renderHook(() => usePracticeMedia({ mediaDevices: { getUserMedia: vi.fn().mockResolvedValue(stream) } }));

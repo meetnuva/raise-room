@@ -10,12 +10,14 @@ export interface PracticeRuntime {
 
 export function PracticeSession({
   modelPreset,
+  selectedDeviceIds,
   children,
 }: {
   modelPreset: AsrModelPresetId;
+  selectedDeviceIds?: Partial<Record<MediaDeviceKind, string>>;
   children(runtime: PracticeRuntime): ReactNode;
 }) {
-  const media = usePracticeMedia();
+  const media = usePracticeMedia({ selectedDeviceIds });
   const voice = useLocalVoice({ modelPreset, sharedAudioStream: media.stream });
 
   return <>{children({ media, voice })}</>;

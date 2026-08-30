@@ -6,6 +6,7 @@ import { PracticeSession } from "./PracticeSession";
 const hooks = vi.hoisted(() => ({
   mediaMount: vi.fn(),
   mediaCleanup: vi.fn(),
+  mediaInput: vi.fn(),
   voiceMount: vi.fn(),
   voiceCleanup: vi.fn(),
   voiceInput: vi.fn(),
@@ -14,7 +15,8 @@ const hooks = vi.hoisted(() => ({
 }));
 
 vi.mock("../runtime/use-practice-media", () => ({
-  usePracticeMedia: () => {
+  usePracticeMedia: (input: unknown) => {
+    hooks.mediaInput(input);
     useEffect(() => {
       hooks.mediaMount();
       return () => hooks.mediaCleanup();
@@ -59,4 +61,16 @@ test("keeps media and voice owners mounted while the child changes from lobby to
   unmount();
   expect(hooks.mediaCleanup).toHaveBeenCalledTimes(1);
   expect(hooks.voiceCleanup).toHaveBeenCalledTimes(1);
+});
+
+test("passes session-only selected devices to the media runtime", () => {
+  render(
+    <PracticeSession modelPreset="quality" selectedDeviceIds={{ audioinput: "mic-selected", videoinput: "camera-selected" }}>
+      {() => null}
+    </PracticeSession>,
+  );
+
+  expect(hooks.mediaInput).toHaveBeenLastCalledWith({
+    selectedDeviceIds: { audioinput: "mic-selected", videoinput: "camera-selected" },
+  });
 });
