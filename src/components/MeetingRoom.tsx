@@ -8,10 +8,10 @@ import {
 } from "../domain/meeting";
 import type { TranscriptTurn } from "../domain/meeting";
 import type { Scenario, ScheduledEvent } from "../domain/scenario";
+import { useLocalCamera } from "../hooks/use-local-camera";
 import type { PresenterRuntimeConfig } from "../lib/perxona-config";
 import { LocalCameraTile } from "./LocalCameraTile";
 import { PerxonaManagerStage } from "./PerxonaManagerStage";
-import { useLocalCamera } from "../hooks/use-local-camera";
 
 const meetingLengthSeconds = 10 * 60;
 
@@ -79,15 +79,46 @@ export function MeetingRoom({
       </header>
 
       <div className="meeting-stages" aria-label="會議雙人畫面">
-        <PerxonaManagerStage managerName={scenario.manager.name} config={presenterConfig} latestManagerText={latestTurn?.speaker === "manager" ? latestTurn.text : null} />
-        <aside className="meeting-sidebar"><LocalCameraTile camera={camera} detail={`${scenario.company} · ${scenario.tenureMonths} 個月年資`} /><section className="event-rail" aria-labelledby="event-rail-title">
-          <p className="eyebrow">事件軌</p><h3 id="event-rail-title">會議壓力事件</h3><ol>{scenario.events.map((event) => { const emitted = meeting.emittedEventIds.includes(event.id); return <li className={emitted ? "event-card emitted" : "event-card"} key={event.id}><span>第 {event.minute} 分鐘 · {emitted ? "已發生" : "待命"}</span><strong>{eventTitle(event)}</strong><p>{event.instruction}</p></li>; })}</ol>
-        </section></aside>
+        <PerxonaManagerStage
+          managerName={scenario.manager.name}
+          config={presenterConfig}
+          latestManagerText={latestTurn?.speaker === "manager" ? latestTurn.text : null}
+        />
+        <aside className="meeting-sidebar">
+          <LocalCameraTile
+            camera={camera}
+            detail={`${scenario.company} · ${scenario.tenureMonths} 個月年資`}
+            showControl={false}
+          />
+          <section className="event-rail" aria-labelledby="event-rail-title">
+            <p className="eyebrow">事件軌</p>
+            <h3 id="event-rail-title">會議壓力事件</h3>
+            <ol>
+              {scenario.events.map((event) => {
+                const emitted = meeting.emittedEventIds.includes(event.id);
+
+                return (
+                  <li className={emitted ? "event-card emitted" : "event-card"} key={event.id}>
+                    <span>第 {event.minute} 分鐘 · {emitted ? "已發生" : "待命"}</span>
+                    <strong>{eventTitle(event)}</strong>
+                    <p>{event.instruction}</p>
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
+        </aside>
       </div>
 
       <div className="meeting-controls" aria-label="會議控制">
         <button disabled type="button">麥克風：尚未啟用</button>
-        <button type="button" onClick={() => camera.status === "active" ? camera.stop() : void camera.start()} disabled={camera.status === "requesting"}>{camera.status === "active" ? "關閉我的鏡頭" : "開啟我的鏡頭"}</button>
+        <button
+          type="button"
+          onClick={() => camera.status === "active" ? camera.stop() : void camera.start()}
+          disabled={camera.status === "requesting"}
+        >
+          {camera.status === "active" ? "關閉我的鏡頭" : "開啟我的鏡頭"}
+        </button>
         <button type="button" onClick={() => advanceTo(180)}>跳到第 3 分鐘</button>
         <button
           className="finish-meeting"
@@ -109,7 +140,10 @@ export function MeetingRoom({
           ) : (
             <ol className="transcript-list">
               {meeting.transcript.map((turn, index) => (
-                <li key={`${turn.speaker}-${turn.elapsedSeconds}-${index}`} className={`transcript-turn ${turn.speaker}`}>
+                <li
+                  key={`${turn.speaker}-${turn.elapsedSeconds}-${index}`}
+                  className={`transcript-turn ${turn.speaker}`}
+                >
                   <strong>{turn.speaker === "manager" ? scenario.manager.name : "你"}</strong>
                   <span>{turn.text}</span>
                 </li>
@@ -135,7 +169,6 @@ export function MeetingRoom({
             </div>
           </form>
         </section>
-
       </div>
     </section>
   );

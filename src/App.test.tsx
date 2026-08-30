@@ -28,3 +28,11 @@ test("preserves the scenario through the report retry flow and can return to set
   fireEvent.click(screen.getByRole("button", { name: "重新設定情境" }));
   expect(screen.getByRole("heading", { name: "設定這場薪資檢討" })).toBeVisible();
 });
+
+test("applies meeting-mode to the application shell during a meeting", () => {
+  render(<App />);
+
+  fireEvent.click(screen.getByRole("button", { name: "進入會議大廳" }));
+
+  expect(document.querySelector("main")).toHaveClass("meeting-mode");
+});

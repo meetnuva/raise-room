@@ -57,3 +57,9 @@ test("hands the append-only transcript to onFinish", async () => {
     },
   ]);
 });
+
+test("renders one bottom-control camera toggle when Perxona is not configured", () => {
+  render(<MeetingRoom scenario={defaultScenario} responder={simulatedResponder} />);
+
+  expect(screen.getAllByRole("button", { name: "開啟我的鏡頭" })).toHaveLength(1);
+});

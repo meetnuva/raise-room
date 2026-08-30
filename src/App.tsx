@@ -21,8 +21,10 @@ export function App() {
   };
 
   return (
-    <main>
-      <h1>Raise Room</h1>
+    <main className={appState.view === "meeting" ? "meeting-mode" : undefined}>
+      <h1 className={appState.view === "meeting" ? "meeting-mode-title" : undefined}>
+        Raise Room
+      </h1>
       {appState.view === "meeting" && (
         <MeetingRoom
           scenario={appState.scenario}

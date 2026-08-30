@@ -9,3 +9,9 @@ test("only starts the local camera after an explicit click", () => {
   fireEvent.click(screen.getByRole("button", { name: "開啟我的鏡頭" }));
   expect(start).toHaveBeenCalledOnce();
 });
+
+test("keeps its standalone explicit-click control by default", () => {
+  render(<LocalCameraTile camera={{ status: "idle", stream: null, errorMessage: null, start: vi.fn(), stop: vi.fn() }} />);
+
+  expect(screen.getByRole("button", { name: "開啟我的鏡頭" })).toBeVisible();
+});
