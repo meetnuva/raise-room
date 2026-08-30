@@ -2,6 +2,10 @@
 
 Raise Room 是以本機優先為原則的私人薪資檢討練習空間。你可以設定情境、進行文字模擬會議，並在結束後查看能回到逐字稿的教練建議。
 
+> 狀態：公開準備中的 local-first Preview。預設以未設定 Perxona 的本機 fallback 驗證；真實 Key／Chatbot、VRoid、裝置權限與完整十分鐘 E2E 都是後續獨立驗收關卡。
+
+查看 [架構](docs/architecture.md)、[貢獻指南](CONTRIBUTING.md)、[安全性政策](SECURITY.md)、[變更紀錄](CHANGELOG.md) 與 [MIT License](LICENSE)。
+
 ## 安裝
 
 ```bash
