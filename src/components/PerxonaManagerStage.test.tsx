@@ -71,3 +71,9 @@ test("places the final mobile Presenter override after shared stage rules", () =
 
   expect(finalMobileStyles).toMatch(/\.manager-stage\s*>\s*button\.manager-stage-action\s*\{[^}]*left:\s*\.5rem;[^}]*transform:\s*none;/s);
 });
+
+test("keeps the desktop compact manager status above its Presenter action", () => {
+  const styles = readFileSync("src/styles.css", "utf8");
+
+  expect(styles).toMatch(/@media \(min-width: 768px\)\s*\{[^}]*\.stage-focus-self \.manager-stage \.manager-stage-status\s*\{[^}]*bottom:\s*5\.5rem;/s);
+});

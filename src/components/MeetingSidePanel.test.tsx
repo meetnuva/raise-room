@@ -104,4 +104,7 @@ test("defines a single light panel surface with one-row tabs and readable suppor
   expect(lightPanelStyles).toMatch(/\.meeting-side-panel \[role="tablist"\]\s*\{[^}]*flex-wrap:\s*nowrap;[^}]*overflow-x:\s*auto;/s);
   expect(lightPanelStyles).toMatch(/\.meeting-side-panel \.transcript-panel,[\s\S]*?\.meeting-side-panel \.event-rail\s*\{[^}]*padding:\s*0;[^}]*border:\s*0;[^}]*background:\s*transparent;/s);
   expect(lightPanelStyles).toMatch(/\.meeting-side-panel \.empty-transcript\s*\{[^}]*color:\s*var\(--text-secondary\);/s);
+  expect(lightPanelStyles).toMatch(/\.meeting-side-panel h3\s*\{[^}]*color:\s*var\(--text-primary\);/s);
+  expect(lightPanelStyles).toMatch(/\.meeting-side-panel \.event-card p\s*\{[^}]*color:\s*var\(--text-secondary\);/s);
+  expect(lightPanelStyles).toMatch(/\.meeting-side-panel button:focus-visible\s*\{[^}]*outline-color:\s*var\(--focus-light\);/s);
 });

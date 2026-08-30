@@ -2430,3 +2430,21 @@ button {
 .meeting-side-panel .meeting-device-status p {
   color: var(--text-secondary);
 }
+
+.meeting-side-panel h3 {
+  color: var(--text-primary);
+}
+
+.meeting-side-panel .event-card p {
+  color: var(--text-secondary);
+}
+
+.meeting-side-panel button:focus-visible {
+  outline-color: var(--focus-light);
+}
+
+@media (min-width: 768px) {
+  .stage-focus-self .manager-stage .manager-stage-status {
+    bottom: 5.5rem;
+  }
+}
