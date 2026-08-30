@@ -30,7 +30,7 @@ export interface VisualSignals {
 }
 
 function isFinitePoint(value: LandmarkPoint | undefined): value is LandmarkPoint {
-  return Boolean(value) && Number.isFinite(value.x) && Number.isFinite(value.y);
+  return value !== undefined && Number.isFinite(value.x) && Number.isFinite(value.y);
 }
 
 function noFace(timestampMs: number): VisualFrameObservation {
@@ -117,8 +117,9 @@ export function addVisualObservation(
     && observation.faceAreaRatio !== null
     && observation.faceAreaRatio >= 0.08
     && observation.faceAreaRatio <= 0.45;
-  const cameraDirectionEligible = hasFace && observation.irisHorizontalOffset !== null;
-  const cameraDirection = cameraDirectionEligible && observation.irisHorizontalOffset <= 0.35;
+  const irisHorizontalOffset = observation.irisHorizontalOffset;
+  const cameraDirectionEligible = hasFace && irisHorizontalOffset !== null;
+  const cameraDirection = cameraDirectionEligible && irisHorizontalOffset !== null && irisHorizontalOffset <= 0.35;
 
   return {
     sampleCount: aggregate.sampleCount + 1,
