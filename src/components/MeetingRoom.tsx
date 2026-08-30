@@ -5,26 +5,54 @@ import {
   createMeeting,
   respondToUser,
   type ManagerResponder,
+  type TranscriptTurn,
   type TurnDelivery,
 } from "../domain/meeting";
-import type { TranscriptTurn } from "../domain/meeting";
+import type { AsrModelPresetId } from "../domain/asr-models";
+import { formatPracticeTimeRange, type ScheduledPracticeMeeting } from "../domain/practice-schedule";
+import type { Scenario } from "../domain/scenario";
 import type { VisualSignals } from "../domain/visual";
-import {
-  getEventOffsetSeconds,
-  type Scenario,
-  type ScheduledEvent,
-} from "../domain/scenario";
 import { useLocalCamera } from "../hooks/use-local-camera";
 import { useLocalVision } from "../hooks/use-local-vision";
+import { useLocalVoice } from "../hooks/use-local-voice";
+import { useMeetingClock } from "../hooks/use-meeting-clock";
 import type { PresenterRuntimeConfig } from "../lib/perxona-config";
+import type { PracticeMediaController } from "../runtime/use-practice-media";
 import { LocalCameraTile } from "./LocalCameraTile";
 import { LocalVisualControl } from "./LocalVisualControl";
 import { LocalVoiceControl } from "./LocalVoiceControl";
+import { MeetingSidePanel } from "./MeetingSidePanel";
 import { PerxonaManagerStage } from "./PerxonaManagerStage";
-import { useMeetingClock } from "../hooks/use-meeting-clock";
-import type { AsrModelPresetId } from "../domain/asr-models";
 
-const meetingLengthSeconds = 10 * 60;
+type VoiceController = ReturnType<typeof useLocalVoice>;
+type Clock = {
+  durationSeconds?: number;
+  now?: () => number;
+  intervalMs?: number;
+};
+type MeetingCamera = {
+  stream: MediaStream | null;
+  cameraActive: boolean;
+  requesting: boolean;
+  toggle(): void;
+};
+
+export type MeetingRoomProps = {
+  meeting: ScheduledPracticeMeeting;
+  scenario: Scenario;
+  camera?: PracticeMediaController;
+  voice?: VoiceController;
+  responder: ManagerResponder;
+  onFinish?: (transcript: TranscriptTurn[], visualSignals?: VisualSignals) => void;
+  presenterConfig?: PresenterRuntimeConfig;
+  clock?: Clock;
+  modelPreset?: AsrModelPresetId;
+};
+
+type MeetingRoomViewProps = Omit<MeetingRoomProps, "camera" | "voice" | "modelPreset"> & {
+  camera: MeetingCamera;
+  voice: VoiceController;
+};
 
 function formatCountdown(elapsedSeconds: number, durationSeconds: number) {
   const remainingSeconds = Math.max(0, durationSeconds - elapsedSeconds);
@@ -34,39 +62,56 @@ function formatCountdown(elapsedSeconds: number, durationSeconds: number) {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
-function eventTitle(event: ScheduledEvent) {
-  if (event.id === "budget-freeze") {
-    return "本季預算已凍結";
-  }
-
-  return event.label;
+function localCameraAdapter(camera: ReturnType<typeof useLocalCamera>): MeetingCamera {
+  return {
+    stream: camera.stream,
+    cameraActive: camera.status === "active",
+    requesting: camera.status === "requesting",
+    toggle: () => {
+      if (camera.status === "active") {
+        camera.stop();
+      } else {
+        void camera.start();
+      }
+    },
+  };
 }
 
-export function MeetingRoom({
+function injectedCameraAdapter(camera: PracticeMediaController): MeetingCamera {
+  return {
+    stream: camera.stream,
+    cameraActive: camera.cameraEnabled,
+    requesting: camera.status === "requesting",
+    toggle: () => {
+      if (camera.status === "active" && camera.stream) {
+        camera.toggleCamera();
+      } else {
+        void camera.request();
+      }
+    },
+  };
+}
+
+function MeetingRoomView({
+  meeting: scheduledMeeting,
   scenario,
+  camera,
+  voice,
   responder,
   onFinish,
   presenterConfig = { enabled: false, reason: "missing-key" },
   clock,
-  modelPreset = "quality",
-}: {
-  scenario: Scenario;
-  responder: ManagerResponder;
-  onFinish?: (transcript: TranscriptTurn[], visualSignals?: VisualSignals) => void;
-  presenterConfig?: PresenterRuntimeConfig;
-  clock?: { durationSeconds?: number; now?: () => number; intervalMs?: number };
-  modelPreset?: AsrModelPresetId;
-}) {
-  const durationSeconds = clock?.durationSeconds ?? meetingLengthSeconds;
-  const [meeting, setMeeting] = useState(() =>
-    createMeeting(scenario, durationSeconds),
-  );
+}: MeetingRoomViewProps) {
+  const durationSeconds = clock?.durationSeconds ?? scheduledMeeting.durationMinutes * 60;
+  const [meeting, setMeeting] = useState(() => createMeeting(scenario, durationSeconds));
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [managerNotice, setManagerNotice] = useState<string | null>(null);
+  const [panelOpen, setPanelOpen] = useState(true);
   const [cameraVideoElement, setCameraVideoElement] = useState<HTMLVideoElement | null>(null);
   const meetingRef = useRef(meeting);
+  const vision = useLocalVision({ videoElement: cameraVideoElement });
   const latestTurn = meeting.transcript[meeting.transcript.length - 1];
   const managerEngineStatus =
     latestTurn?.speaker === "manager"
@@ -74,14 +119,13 @@ export function MeetingRoom({
         ? "主管引擎：Perxona 動態主管"
         : "主管引擎：本機腳本 fallback"
       : "主管引擎：等待首次回覆";
-  const camera = useLocalCamera();
-  const vision = useLocalVision({ videoElement: cameraVideoElement });
 
   const finishMeeting = (transcript: TranscriptTurn[]) => {
     vision.stopObserving();
-    const visualSignals = vision.getSignals();
-    if (visualSignals.sampleCount > 0) {
-      onFinish?.(transcript, visualSignals);
+    const signals = vision.getSignals();
+
+    if (signals.sampleCount > 0) {
+      onFinish?.(transcript, signals);
     } else {
       onFinish?.(transcript);
     }
@@ -104,15 +148,14 @@ export function MeetingRoom({
   });
 
   const submitUserMessage = async (text: string, delivery: TurnDelivery) => {
-    if (!text.trim() || sending) {
-      return;
-    }
+    if (!text.trim() || sending) return;
 
     const userTurn = appendUserTurn(meetingRef.current, text.trim(), delivery);
     meetingRef.current = userTurn;
     setMeeting(userTurn);
     setSending(true);
     setSendError(null);
+
     try {
       const repliedMeeting = await respondToUser(userTurn, scenario, responder);
       const managerTurn = repliedMeeting.transcript[repliedMeeting.transcript.length - 1];
@@ -131,70 +174,92 @@ export function MeetingRoom({
     }
   };
 
-  const sendFallbackMessage = async () => {
-    const text = draft.trim();
-    if (!text) return;
+  const developmentFallback = (
+    <form
+      className="development-fallback"
+      onSubmit={(event) => {
+        event.preventDefault();
+        const text = draft.trim();
 
-    setDraft("");
-    await submitUserMessage(text, { source: "text" });
-  };
+        if (!text) return;
+        setDraft("");
+        void submitUserMessage(text, { source: "text" });
+      }}
+    >
+      <label htmlFor="development-message">開發用文字輸入</label>
+      <div>
+        <input
+          id="development-message"
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          placeholder="暫代語音輸入，僅供開發測試"
+          disabled={sending}
+        />
+        <button disabled={sending} type="submit">送出</button>
+      </div>
+    </form>
+  );
+  const firstEventOffset = scenario.events.length
+    ? Math.min(...scenario.events.map((event) => event.triggerRatio * durationSeconds))
+    : 0;
 
   return (
     <section aria-labelledby="meeting-room-title" className="meeting-room">
       <header className="meeting-header">
         <div>
           <p className="eyebrow">本機模擬會議</p>
-          <h2 id="meeting-room-title" tabIndex={-1}>薪資檢討 Raise Room</h2>
+          <h2 id="meeting-room-title" tabIndex={-1}>{scheduledMeeting.title}</h2>
+          <p className="meeting-schedule">{formatPracticeTimeRange(scheduledMeeting, "zh-TW")}</p>
         </div>
-        <p
-          className="meeting-countdown"
-          aria-label={`剩餘時間 ${formatCountdown(meeting.elapsedSeconds, durationSeconds)}`}
-        >
-          剩餘 {formatCountdown(meeting.elapsedSeconds, durationSeconds)}
-        </p>
+        <div className="meeting-header-actions">
+          <button type="button" aria-expanded={panelOpen} onClick={() => setPanelOpen(true)}>
+            會議資訊
+          </button>
+          <p
+            className="meeting-countdown"
+            aria-label={`剩餘時間 ${formatCountdown(meeting.elapsedSeconds, durationSeconds)}`}
+          >
+            剩餘 {formatCountdown(meeting.elapsedSeconds, durationSeconds)}
+          </p>
+        </div>
       </header>
       <p aria-live="polite" className="manager-engine-status">{managerEngineStatus}</p>
       {sendError && <p role="alert">{sendError}</p>}
       {managerNotice && <p role="status">{managerNotice}</p>}
 
-      <div className="meeting-stages" aria-label="會議雙人畫面">
-        <PerxonaManagerStage
-          managerName={scenario.manager.name}
-          config={presenterConfig}
-          latestManagerText={latestTurn?.speaker === "manager" ? latestTurn.text : null}
-        />
-        <aside className="meeting-sidebar">
-          <LocalCameraTile
-            camera={camera}
-            detail={`${scenario.company} · ${scenario.tenureMonths} 個月年資`}
-            showControl={false}
-            onVideoElement={setCameraVideoElement}
+      <div className={panelOpen ? "meeting-layout panel-open" : "meeting-layout"}>
+        <div className="meeting-stages" aria-label="會議雙人畫面">
+          <PerxonaManagerStage
+            managerName={scenario.manager.name}
+            config={presenterConfig}
+            latestManagerText={latestTurn?.speaker === "manager" ? latestTurn.text : null}
           />
-          <LocalVisualControl vision={vision} cameraActive={camera.status === "active"} />
-          <section className="event-rail" aria-labelledby="event-rail-title">
-            <p className="eyebrow">事件軌</p>
-            <h3 id="event-rail-title">會議壓力事件</h3>
-            <ol>
-              {scenario.events.map((event) => {
-                const emitted = meeting.emittedEventIds.includes(event.id);
-                const eventMinute = getEventOffsetSeconds(event, durationSeconds) / 60;
-
-                return (
-                  <li className={emitted ? "event-card emitted" : "event-card"} key={event.id}>
-                    <span>第 {eventMinute} 分鐘 · {emitted ? "已發生" : "待命"}</span>
-                    <strong>{eventTitle(event)}</strong>
-                    <p>{event.instruction}</p>
-                  </li>
-                );
-              })}
-            </ol>
-          </section>
-        </aside>
+          <aside className="meeting-sidebar">
+            <LocalCameraTile
+              previewStream={camera.stream}
+              detail={`${scenario.company} · ${scenario.tenureMonths} 個月年資`}
+              showControl={false}
+              onVideoElement={setCameraVideoElement}
+            />
+          </aside>
+        </div>
+        {panelOpen && (
+          <MeetingSidePanel
+            transcript={meeting.transcript}
+            events={scenario.events}
+            emittedEventIds={meeting.emittedEventIds}
+            durationSeconds={durationSeconds}
+            managerName={scenario.manager.name}
+            observationContent={<LocalVisualControl vision={vision} cameraActive={camera.cameraActive} />}
+            transcriptFallback={developmentFallback}
+            onClose={() => setPanelOpen(false)}
+          />
+        )}
       </div>
 
       <div className="meeting-controls" aria-label="會議控制">
         <LocalVoiceControl
-          modelPreset={modelPreset}
+          voice={voice}
           onTranscript={(result, editedText) => {
             void submitUserMessage(editedText, {
               source: "voice",
@@ -205,80 +270,79 @@ export function MeetingRoom({
           }}
           disabled={sending}
         />
-        <button
-          type="button"
-          onClick={() => {
-            if (camera.status === "active") {
-              camera.stop();
-            } else {
-              void camera.start();
-            }
-          }}
-          disabled={camera.status === "requesting"}
-        >
-          {camera.status === "active" ? "關閉我的鏡頭" : "開啟我的鏡頭"}
+        <button type="button" onClick={camera.toggle} disabled={camera.requesting}>
+          {camera.cameraActive ? "關閉我的鏡頭" : "開啟我的鏡頭"}
         </button>
         <button
           className="development-only"
           data-development-only="true"
           type="button"
-          onClick={() => advanceTo(180)}
+          onClick={() => advanceTo(firstEventOffset)}
         >
-          跳到第 3 分鐘
+          跳到第一個壓力事件
         </button>
-        <button
-          className="finish-meeting"
-          type="button"
-          onClick={() => finishMeeting(meeting.transcript)}
-        >
-          結束並看報告
+        <button className="finish-meeting" type="button" onClick={() => finishMeeting(meeting.transcript)}>
+          離開並查看報告
         </button>
-      </div>
-
-      <div className="meeting-details">
-        <section className="transcript-panel" aria-labelledby="transcript-title">
-          <div className="panel-heading">
-            <p className="eyebrow">逐字稿</p>
-            <h3 id="transcript-title">對話紀錄</h3>
-          </div>
-          {meeting.transcript.length === 0 ? (
-            <p className="empty-transcript">尚未有對話。你可以先說明這次的調整請求。</p>
-          ) : (
-            <ol className="transcript-list">
-              {meeting.transcript.map((turn, index) => (
-                <li
-                  key={`${turn.speaker}-${turn.elapsedSeconds}-${index}`}
-                  className={`transcript-turn ${turn.speaker}`}
-                >
-                  <strong>{turn.speaker === "manager" ? scenario.manager.name : "你"}</strong>
-                  <span>{turn.text}</span>
-                </li>
-              ))}
-            </ol>
-          )}
-          <form
-            className="development-fallback"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void sendFallbackMessage();
-            }}
-          >
-            <label htmlFor="development-message">開發用文字輸入</label>
-            <div>
-              <input
-                id="development-message"
-                value={draft}
-                onChange={(event) => setDraft(event.target.value)}
-                placeholder="暫代語音輸入，僅供開發測試"
-                disabled={sending}
-              />
-              <button disabled={sending} type="submit">
-                送出
-              </button>
-            </div>
-          </form>
-        </section>
       </div>
     </section>
   );
+}
+
+function OwnedMeetingRoom(props: Omit<MeetingRoomProps, "camera" | "voice">) {
+  const ownedCamera = useLocalCamera();
+  const ownedVoice = useLocalVoice({ modelPreset: props.modelPreset });
+  const { modelPreset: _modelPreset, ...viewProps } = props;
+
+  return (
+    <MeetingRoomView
+      {...viewProps}
+      camera={localCameraAdapter(ownedCamera)}
+      voice={ownedVoice}
+    />
+  );
+}
+
+function CameraInjectedMeetingRoom({
+  camera,
+  ...props
+}: MeetingRoomProps & { camera: PracticeMediaController }) {
+  const ownedVoice = useLocalVoice({ modelPreset: props.modelPreset });
+  const { voice: _voice, modelPreset: _modelPreset, ...viewProps } = props;
+
+  return <MeetingRoomView {...viewProps} camera={injectedCameraAdapter(camera)} voice={ownedVoice} />;
+}
+
+function VoiceInjectedMeetingRoom({
+  voice,
+  ...props
+}: MeetingRoomProps & { voice: VoiceController }) {
+  const ownedCamera = useLocalCamera();
+  const { camera: _camera, modelPreset: _modelPreset, ...viewProps } = props;
+
+  return <MeetingRoomView {...viewProps} camera={localCameraAdapter(ownedCamera)} voice={voice} />;
+}
+
+function FullyInjectedMeetingRoom({
+  camera,
+  voice,
+  ...props
+}: MeetingRoomProps & { camera: PracticeMediaController; voice: VoiceController }) {
+  const { modelPreset: _modelPreset, ...viewProps } = props;
+
+  return <MeetingRoomView {...viewProps} camera={injectedCameraAdapter(camera)} voice={voice} />;
+}
+
+export function MeetingRoom(props: MeetingRoomProps) {
+  if (props.camera && props.voice) {
+    return <FullyInjectedMeetingRoom {...props} camera={props.camera} voice={props.voice} />;
+  }
+  if (props.camera) {
+    return <CameraInjectedMeetingRoom {...props} camera={props.camera} />;
+  }
+  if (props.voice) {
+    return <VoiceInjectedMeetingRoom {...props} voice={props.voice} />;
+  }
+
+  return <OwnedMeetingRoom {...props} />;
 }

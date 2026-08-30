@@ -176,7 +176,10 @@ export function App({ now = () => new Date() }: { now?: () => Date } = {}) {
             />
           ) : (
             <MeetingRoom
+              meeting={meeting}
               scenario={scenario}
+              camera={media}
+              voice={voice}
               responder={managerResponder}
               presenterConfig={presenterConfig}
               modelPreset={voicePreset}

@@ -52,7 +52,7 @@ test("shows missing evidence and retry prompts without disguising them as links"
   expect(screen.queryByRole("button", { name: "本局未出現" })).not.toBeInTheDocument();
 });
 
-test("provides retry and reset actions", () => {
+test("provides retry-to-lobby and return-home actions", () => {
   const onRetry = vi.fn();
   const onReset = vi.fn();
   render(
@@ -65,7 +65,7 @@ test("provides retry and reset actions", () => {
   );
 
   fireEvent.click(screen.getByRole("button", { name: "再練一次" }));
-  fireEvent.click(screen.getByRole("button", { name: "重新設定情境" }));
+  fireEvent.click(screen.getByRole("button", { name: "返回首頁" }));
 
   expect(onRetry).toHaveBeenCalledOnce();
   expect(onReset).toHaveBeenCalledOnce();

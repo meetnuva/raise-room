@@ -116,7 +116,7 @@ export function CoachingReport({
 
       <div className="report-actions">
         <button className="retry-meeting" type="button" onClick={onRetry}>再練一次</button>
-        <button type="button" onClick={onReset}>重新設定情境</button>
+        <button type="button" onClick={onReset}>返回首頁</button>
       </div>
     </section>
   );

@@ -2,21 +2,30 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { App } from "./App";
 
-const appMocks = vi.hoisted(() => ({ practiceSession: vi.fn() }));
+const appMocks = vi.hoisted(() => ({ practiceSession: vi.fn(), runtime: { media: { runtime: "shared-media" }, voice: { runtime: "shared-voice" } }, lobbyProps: null as { media: object; voice: object } | null, meetingProps: null as { camera?: object; voice?: object; meeting: { title: string }; onFinish: (transcript: []) => void } | null }));
 
 vi.mock("./components/PracticeSession", () => ({
   PracticeSession: ({ children }: { children: (runtime: { media: object; voice: object }) => React.ReactNode }) => {
     appMocks.practiceSession();
-    return <>{children({ media: {}, voice: {} })}</>;
+    return <>{children(appMocks.runtime)}</>;
+  },
+}));
+vi.mock("./components/PrejoinLobby", () => ({
+  PrejoinLobby: (props: { media: object; voice: object; onJoin: () => void }) => {
+    appMocks.lobbyProps = props;
+    return <section><h2>確認你的裝置</h2><button type="button" onClick={props.onJoin}>立即進入會議室</button></section>;
   },
 }));
 vi.mock("./components/MeetingRoom", () => ({
-  MeetingRoom: ({ onFinish }: { onFinish: (transcript: []) => void }) => (
+  MeetingRoom: (props: { camera?: object; voice?: object; meeting: { title: string }; onFinish: (transcript: []) => void }) => {
+    appMocks.meetingProps = props;
+    return (
     <section aria-labelledby="meeting-room-title">
-      <h2 id="meeting-room-title" tabIndex={-1}>薪資檢討 Raise Room</h2>
-      <button type="button" onClick={() => onFinish([])}>結束並看報告</button>
+      <h2 id="meeting-room-title" tabIndex={-1}>{props.meeting.title}</h2>
+      <button type="button" onClick={() => props.onFinish([])}>離開並查看報告</button>
     </section>
-  ),
+  );
+  },
 }));
 
 function openSettings() {
@@ -36,6 +45,8 @@ beforeEach(() => {
   window.localStorage.clear();
   vi.spyOn(window, "scrollTo").mockImplementation(() => {});
   appMocks.practiceSession.mockClear();
+  appMocks.lobbyProps = null;
+  appMocks.meetingProps = null;
 });
 
 afterEach(() => {
@@ -65,15 +76,26 @@ test("navigates home to lobby to meeting, retries through lobby, and resets home
   enterLobby();
   expect(screen.getByRole("heading", { name: "確認你的裝置" })).toBeVisible();
   joinMeeting();
-  expect(screen.getByRole("heading", { name: "薪資檢討 Raise Room" })).toHaveFocus();
-  fireEvent.click(screen.getByRole("button", { name: "結束並看報告" }));
+  expect(screen.getByRole("heading", { name: "與王主管的年度調薪 1:1" })).toHaveFocus();
+  fireEvent.click(screen.getByRole("button", { name: "離開並查看報告" }));
   expect(screen.getByRole("heading", { name: "會後教練報告" })).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "再練一次" }));
   expect(screen.getByRole("heading", { name: "確認你的裝置" })).toBeVisible();
   joinMeeting();
-  fireEvent.click(screen.getByRole("button", { name: "結束並看報告" }));
-  fireEvent.click(screen.getByRole("button", { name: "重新設定情境" }));
+  fireEvent.click(screen.getByRole("button", { name: "離開並查看報告" }));
+  fireEvent.click(screen.getByRole("button", { name: "返回首頁" }));
   expect(screen.getByRole("heading", { name: "Raise Room" })).toBeVisible();
+});
+
+test("passes the same practice media and voice runtime from lobby into the meeting", () => {
+  render(<App now={() => new Date(2026, 7, 30, 17, 5)} />);
+  enterLobby();
+  const lobbyRuntime = appMocks.lobbyProps;
+  joinMeeting();
+
+  expect(appMocks.practiceSession).toHaveBeenCalledTimes(2);
+  expect(appMocks.meetingProps?.camera).toBe(lobbyRuntime?.media);
+  expect(appMocks.meetingProps?.voice).toBe(lobbyRuntime?.voice);
 });
 
 test("keeps settings edits local on cancel and returns focus to settings", () => {
