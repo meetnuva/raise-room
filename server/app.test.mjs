@@ -40,6 +40,36 @@ test("reports an unconfigured manager without exposing server settings", async (
   expect(status.headers.get("access-control-allow-origin")).toBeNull();
 });
 
+test("adds narrow safety headers without changing allowed local device behavior", async () => {
+  const app = createApp({ env: {} });
+
+  const status = await requestFrom(app, { path: "/api/manager/status", options: {} });
+
+  expect(status.headers.get("x-content-type-options")).toBe("nosniff");
+  expect(status.headers.get("referrer-policy")).toBe("no-referrer");
+  expect(status.headers.get("x-frame-options")).toBe("DENY");
+  expect(status.headers.get("content-security-policy")).toBe("frame-ancestors 'none'");
+  expect(status.headers.get("permissions-policy")).toBe("camera=(self), microphone=(self)");
+});
+
+test("returns a fixed JSON error without exposing a thrown route error", async () => {
+  const app = createApp({
+    env: {},
+    configureApp(instance) {
+      instance.get("/test/throw", () => {
+        throw new Error("private test failure");
+      });
+    },
+  });
+
+  const response = await requestFrom(app, { path: "/test/throw", options: {} });
+  const payload = await response.json();
+
+  expect(response.status).toBe(500);
+  expect(payload).toEqual({ error: { code: "INTERNAL_ERROR", message: "伺服器暫時無法完成請求。" } });
+  expect(JSON.stringify(payload)).not.toContain("private test failure");
+});
+
 test("returns only a Perxona reply and never echoes server credentials", async () => {
   const secret = "server-only-test-key";
   const fetchImpl = vi.fn().mockResolvedValue(

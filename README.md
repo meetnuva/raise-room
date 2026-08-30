@@ -46,7 +46,7 @@ npm run start
 
 可自行選擇繁中、English 或日本語，並按下「載入本機語音模型」。首次 opt-in 會從 Hugging Face Hub 下載 `onnx-community/whisper-tiny`；模型大小依量化檔而異、可能需要一段時間，完成後由瀏覽器快取供後續使用。音訊不會上傳，WebGPU 優先、沒有時使用較慢的 WASM fallback。
 
-每段錄音最多分析最後 30 秒；按下停止後會立即關閉麥克風 tracks，再在瀏覽器內轉錄。報告只讀取逐字稿中的可觀察語音 metadata；字元／分鐘不可跨語言比較。真正的 Perxona Chatbot／LLM manager 仍需要 server-only Secret Key 邊界，這個 Phase 尚未實作。
+每段錄音最多分析最後 30 秒；按下停止後會立即關閉麥克風 tracks，再在瀏覽器內轉錄。報告只讀取逐字稿中的可觀察語音 metadata；字元／分鐘不可跨語言比較。動態主管已透過 server-only Secret Key 邊界呼叫專用 Perxona Chatbot；未設定或暫時失敗時，會明確標示為本機腳本 fallback。
 
 ## Phase 4：可選本機視覺觀察
 
@@ -64,4 +64,4 @@ iris 幾何近似不等於眼神接觸；所有數值都不能作 HR、雇主或
 
 會議中的「開啟我的鏡頭」只會在你直接點擊後請求權限，影像只在本機 `<video>` 預覽。`getUserMedia` 必須在安全內容（HTTPS 或 localhost）中使用；`http://lvh.me` 不足以同時驗證鏡頭權限。
 
-若要使用 3D 主管，請由 `.env.example` 複製設定，填入 Publishable Key、Avatar、Scene、Voice ID。沒有完整設定時，文字型 deterministic 主管會照常運作。不可把 Secret Key 放入前端。
+若要使用 3D 主管，請由 `.env.example` 複製設定，填入 Publishable Key、Avatar、Scene、Voice ID。沒有完整 Presenter 設定時，3D 舞台不會啟動；會議主管仍會使用已設定的 Perxona 動態主管，或在未設定／暫時失敗時顯示本機腳本 fallback。不可把 Secret Key 放入前端。

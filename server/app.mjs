@@ -10,9 +10,23 @@ const invalidRequest = {
   error: { code: "INVALID_REQUEST", message: "請確認情境與逐字稿格式後再試一次。" },
 };
 
-export function createApp({ env = process.env, fetchImpl = fetch, staticDir } = {}) {
+const internalError = {
+  error: { code: "INTERNAL_ERROR", message: "伺服器暫時無法完成請求。" },
+};
+
+export function createApp({ env = process.env, fetchImpl = fetch, staticDir, configureApp } = {}) {
   const app = express();
   app.disable("x-powered-by");
+  app.use((_request, response, next) => {
+    response.set({
+      "Content-Security-Policy": "frame-ancestors 'none'",
+      "Permissions-Policy": "camera=(self), microphone=(self)",
+      "Referrer-Policy": "no-referrer",
+      "X-Content-Type-Options": "nosniff",
+      "X-Frame-Options": "DENY",
+    });
+    next();
+  });
   app.use(express.json({ limit: "32kb", strict: true }));
 
   const config = readManagerConfig(env);
@@ -47,12 +61,18 @@ export function createApp({ env = process.env, fetchImpl = fetch, staticDir } = 
     });
   }
 
+  configureApp?.(app);
+
   app.use((error, _request, response, next) => {
+    if (response.headersSent) {
+      next(error);
+      return;
+    }
     if (error?.type === "entity.too.large" || error?.type === "entity.parse.failed") {
       response.status(400).json(invalidRequest);
       return;
     }
-    next(error);
+    response.status(500).json(internalError);
   });
 
   return app;
