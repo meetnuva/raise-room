@@ -28,6 +28,16 @@ test("adds optional delivery metadata without changing existing turns", () => {
   });
 });
 
+test("retains only preset metadata for confirmed voice delivery", () => {
+  const state = appendUserTurn(createMeeting(defaultScenario), "已修正文字", {
+    source: "voice",
+    durationSeconds: 12,
+    modelPreset: "quality",
+  });
+  expect(state.transcript[0]).toMatchObject({ text: "已修正文字", delivery: { source: "voice", durationSeconds: 12, modelPreset: "quality" } });
+  expect(JSON.stringify(state.transcript[0])).not.toContain("rawText");
+});
+
 test("labels simulated manager replies with their visible source", async () => {
   await expect(
     simulatedResponder.reply({

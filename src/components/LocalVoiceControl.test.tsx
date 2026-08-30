@@ -17,6 +17,19 @@ test("marks active microphone clearly", () => {
   expect(screen.getByText("麥克風使用中")).toBeVisible(); expect(screen.getByRole("button", { name: "停止並轉成文字" })).toBeVisible();
 });
 
+test("shows a preview after transcription and waits for confirmation before delivering text", async () => {
+  const onTranscript = vi.fn();
+  const injected = voice("recording");
+  injected.stopAndTranscribe.mockResolvedValue({ rawText: "客户", text: "客戶", durationSeconds: 3, language: "zh", modelPreset: "quality" });
+  render(<LocalVoiceControl voice={injected} onTranscript={onTranscript} />);
+  fireEvent.click(screen.getByRole("button", { name: "停止並轉成文字" }));
+  expect(await screen.findByRole("textbox", { name: "送給主管前可修改的文字" })).toHaveValue("客戶");
+  expect(onTranscript).not.toHaveBeenCalled();
+  fireEvent.change(screen.getByRole("textbox", { name: "送給主管前可修改的文字" }), { target: { value: "客訴" } });
+  fireEvent.click(screen.getByRole("button", { name: "送給主管" }));
+  expect(onTranscript).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ rawText: "客户" }), "客訴");
+});
+
 test("does not create the owned voice hook when an injected voice is supplied", () => {
   const WorkerSpy = vi.fn(); vi.stubGlobal("Worker", WorkerSpy);
   render(<LocalVoiceControl voice={voice()} onTranscript={vi.fn()} />);

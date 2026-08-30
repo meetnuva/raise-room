@@ -18,6 +18,7 @@ import { LocalVisualControl } from "./LocalVisualControl";
 import { LocalVoiceControl } from "./LocalVoiceControl";
 import { PerxonaManagerStage } from "./PerxonaManagerStage";
 import { useMeetingClock } from "../hooks/use-meeting-clock";
+import type { AsrModelPresetId } from "../domain/asr-models";
 
 const meetingLengthSeconds = 10 * 60;
 
@@ -43,12 +44,14 @@ export function MeetingRoom({
   onFinish,
   presenterConfig = { enabled: false, reason: "missing-key" },
   clock,
+  modelPreset = "quality",
 }: {
   scenario: Scenario;
   responder: ManagerResponder;
   onFinish?: (transcript: TranscriptTurn[], visualSignals?: VisualSignals) => void;
   presenterConfig?: PresenterRuntimeConfig;
   clock?: { durationSeconds?: number; now?: () => number; intervalMs?: number };
+  modelPreset?: AsrModelPresetId;
 }) {
   const [meeting, setMeeting] = useState(() => createMeeting(scenario));
   const [draft, setDraft] = useState("");
@@ -184,10 +187,12 @@ export function MeetingRoom({
 
       <div className="meeting-controls" aria-label="會議控制">
         <LocalVoiceControl
-          onTranscript={(result) => {
-            void submitUserMessage(result.text, {
+          modelPreset={modelPreset}
+          onTranscript={(result, editedText) => {
+            void submitUserMessage(editedText, {
               source: "voice",
               durationSeconds: result.durationSeconds,
+              modelPreset: result.modelPreset,
             });
           }}
           disabled={sending}

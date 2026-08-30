@@ -1,14 +1,18 @@
+import { useState } from "react";
 import { useLocalVoice, type VoiceTranscriptResult } from "../hooks/use-local-voice";
+import type { AsrModelPresetId } from "../domain/asr-models";
+import { VoiceTranscriptPreview } from "./VoiceTranscriptPreview";
 
 type Props = {
   voice?: ReturnType<typeof useLocalVoice>;
-  onTranscript(result: VoiceTranscriptResult): void;
+  onTranscript(result: VoiceTranscriptResult, editedText: string): void;
   disabled?: boolean;
+  modelPreset?: AsrModelPresetId;
 };
 
 type ViewProps = {
   voice: ReturnType<typeof useLocalVoice>;
-  onTranscript(result: VoiceTranscriptResult): void;
+  onTranscript(result: VoiceTranscriptResult, editedText: string): void;
   disabled?: boolean;
 };
 
@@ -25,10 +29,21 @@ function getStatusText(voice: ViewProps["voice"]): string {
 }
 
 function LocalVoiceControlView({ voice, onTranscript, disabled = false }: ViewProps) {
+  const [pendingResult, setPendingResult] = useState<VoiceTranscriptResult | null>(null);
   const submit = async () => {
     const result = await voice.stopAndTranscribe();
-    if (result) onTranscript(result);
+    if (result) setPendingResult(result);
   };
+
+  if (pendingResult) {
+    return <VoiceTranscriptPreview
+      result={pendingResult}
+      disabled={disabled}
+      onConfirm={(editedText) => { onTranscript(pendingResult, editedText); setPendingResult(null); }}
+      onRetry={() => { setPendingResult(null); voice.cancel(); }}
+      onCancel={() => { setPendingResult(null); voice.cancel(); }}
+    />;
+  }
 
   if (voice.status === "idle") {
     return (
@@ -105,7 +120,7 @@ function LocalVoiceControlView({ voice, onTranscript, disabled = false }: ViewPr
 }
 
 function OwnedLocalVoiceControl(props: Omit<Props, "voice">) {
-  const voice = useLocalVoice();
+  const voice = useLocalVoice({ modelPreset: props.modelPreset });
   return <LocalVoiceControlView {...props} voice={voice} />;
 }
 

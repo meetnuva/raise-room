@@ -47,6 +47,7 @@ export function App() {
           scenario={appState.scenario}
           responder={managerResponder}
           presenterConfig={presenterConfig}
+          modelPreset={voicePreset}
           onFinish={(transcript, visualSignals) => {
             setAppState({
               view: "report",
