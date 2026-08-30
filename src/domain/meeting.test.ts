@@ -8,7 +8,7 @@ import {
 } from "./meeting";
 
 test("emits each timed event only once", () => {
-  const state = createMeeting(defaultScenario);
+  const state = createMeeting(defaultScenario, 600);
   const atMinuteThree = advanceMeeting(state, 180);
   const repeatedTick = advanceMeeting(atMinuteThree, 180);
 
@@ -16,8 +16,12 @@ test("emits each timed event only once", () => {
   expect(repeatedTick.emittedEventIds).toEqual(atMinuteThree.emittedEventIds);
 });
 
+test("retains the requested meeting duration", () => {
+  expect(createMeeting(defaultScenario, 1200).durationSeconds).toBe(1200);
+});
+
 test("adds optional delivery metadata without changing existing turns", () => {
-  const state = appendUserTurn(createMeeting(defaultScenario), "我想談調薪", {
+  const state = appendUserTurn(createMeeting(defaultScenario, 600), "我想談調薪", {
     source: "voice",
     durationSeconds: 12,
   });
@@ -29,7 +33,7 @@ test("adds optional delivery metadata without changing existing turns", () => {
 });
 
 test("retains only preset metadata for confirmed voice delivery", () => {
-  const state = appendUserTurn(createMeeting(defaultScenario), "已修正文字", {
+  const state = appendUserTurn(createMeeting(defaultScenario, 600), "已修正文字", {
     source: "voice",
     durationSeconds: 12,
     modelPreset: "quality",
@@ -67,7 +71,7 @@ test("keeps simulated manager text free of a duplicate manager-name prefix", asy
 
 test("keeps the responder source on appended manager turns", async () => {
   const userState = appendUserTurn(
-    createMeeting(defaultScenario),
+    createMeeting(defaultScenario, 600),
     "我想依成果討論調薪",
   );
 

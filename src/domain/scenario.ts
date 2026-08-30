@@ -1,6 +1,9 @@
+export const pressureEventRatios = [0.1, 0.3, 0.5, 0.7, 0.9] as const;
+export type PressureEventRatio = (typeof pressureEventRatios)[number];
+
 export interface ScheduledEvent {
   id: string;
-  minute: number;
+  triggerRatio: PressureEventRatio;
   label: string;
   instruction: string;
 }
@@ -57,43 +60,51 @@ export const defaultScenario: Scenario = {
   events: [
     {
       id: "opening-question",
-      minute: 1,
+      triggerRatio: 0.1,
       label: "要求先說明成果",
       instruction: "請對方先以具體成果說明這次請求",
     },
     {
       id: "budget-freeze",
-      minute: 3,
+      triggerRatio: 0.3,
       label: "預算暫緩",
       instruction: "告知目前預算防守較嚴格",
     },
     {
       id: "priority-shift",
-      minute: 5,
+      triggerRatio: 0.5,
       label: "優先事項改變",
       instruction: "提出團隊優先事項可能調整",
     },
     {
       id: "peer-comparison",
-      minute: 7,
+      triggerRatio: 0.7,
       label: "職級對照",
       instruction: "詢問與同職級貢獻的對照依據",
     },
     {
       id: "next-step",
-      minute: 9,
+      triggerRatio: 0.9,
       label: "確認下一步",
       instruction: "要求提出可追蹤的後續安排",
     },
   ],
 };
 
+export function getEventOffsetSeconds(
+  event: ScheduledEvent,
+  durationSeconds: number,
+): number {
+  return event.triggerRatio * durationSeconds;
+}
+
 export function eventsDueAt(
   scenario: Scenario,
   elapsedSeconds: number,
+  durationSeconds: number,
 ): ScheduledEvent[] {
   return scenario.events.filter(
-    (event) => event.minute * 60 === elapsedSeconds,
+    (event) => getEventOffsetSeconds(event, durationSeconds) === elapsedSeconds,
   );
 }
 

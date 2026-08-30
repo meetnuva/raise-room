@@ -1,7 +1,15 @@
 import { useState } from "react";
-import { defaultScenario, type Scenario } from "../domain/scenario";
-
-const draftStorageKey = "raise-room-scenario-draft";
+import {
+  defaultScenario,
+  pressureEventRatios,
+  type PressureEventRatio,
+  type Scenario,
+} from "../domain/scenario";
+import {
+  clearScenarioDraft,
+  readScenarioDraft,
+  writeScenarioDraft,
+} from "../lib/scenario-storage";
 
 const personalityFields = [
   ["budgetDefensiveness", "預算防守"],
@@ -11,29 +19,6 @@ const personalityFields = [
   ["warmth", "親和程度"],
   ["authority", "權威感"],
 ] as const;
-
-function readDraft(): Scenario {
-  try {
-    const draft = localStorage.getItem(draftStorageKey);
-    if (draft) {
-      const parsed = JSON.parse(draft) as Scenario;
-      return {
-        ...parsed,
-        manager: {
-          ...parsed.manager,
-          customInstructions:
-            typeof parsed.manager?.customInstructions === "string"
-              ? parsed.manager.customInstructions
-              : defaultScenario.manager.customInstructions,
-        },
-      };
-    }
-  } catch {
-    localStorage.removeItem(draftStorageKey);
-  }
-
-  return defaultScenario;
-}
 
 function hasRequiredFields(scenario: Scenario): boolean {
   const { compensation, manager } = scenario;
@@ -52,12 +37,14 @@ export function ScenarioWorkshop({
 }: {
   onStart: (scenario: Scenario) => void;
 }) {
-  const [scenario, setScenario] = useState<Scenario>(readDraft);
+  const [scenario, setScenario] = useState<Scenario>(() =>
+    readScenarioDraft(localStorage),
+  );
   const [showRequiredHint, setShowRequiredHint] = useState(false);
 
   const updateScenario = (nextScenario: Scenario) => {
     setScenario(nextScenario);
-    localStorage.setItem(draftStorageKey, JSON.stringify(nextScenario));
+    writeScenarioDraft(localStorage, nextScenario);
   };
 
   const updateNumber = (
@@ -78,7 +65,7 @@ export function ScenarioWorkshop({
   };
 
   const clearDraft = () => {
-    localStorage.removeItem(draftStorageKey);
+    clearScenarioDraft(localStorage);
     setScenario(defaultScenario);
     setShowRequiredHint(false);
   };
@@ -289,13 +276,20 @@ export function ScenarioWorkshop({
               <input
                 min="0"
                 type="number"
-                value={event.minute}
+                value={event.triggerRatio * 10}
                 onChange={(input) =>
                   updateScenario({
                     ...scenario,
                     events: scenario.events.map((existingEvent) =>
-                      existingEvent.id === event.id
-                        ? { ...existingEvent, minute: Number(input.target.value) }
+                      existingEvent.id === event.id &&
+                      pressureEventRatios.includes(
+                        (Number(input.target.value) / 10) as PressureEventRatio,
+                      )
+                        ? {
+                            ...existingEvent,
+                            triggerRatio: (Number(input.target.value) /
+                              10) as PressureEventRatio,
+                          }
                         : existingEvent,
                     ),
                   })

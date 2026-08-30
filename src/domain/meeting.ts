@@ -1,4 +1,8 @@
-import type { Scenario, ScheduledEvent } from "./scenario";
+import {
+  getEventOffsetSeconds,
+  type Scenario,
+  type ScheduledEvent,
+} from "./scenario";
 import type { AsrModelPresetId } from "./asr-models";
 import type { VoiceLanguage } from "../lib/local-asr";
 
@@ -30,6 +34,7 @@ export interface TurnDelivery {
 
 export interface MeetingState {
   scenario: Scenario;
+  durationSeconds: number;
   elapsedSeconds: number;
   transcript: TranscriptTurn[];
   emittedEventIds: string[];
@@ -49,9 +54,13 @@ export interface ManagerResponder {
   }): Promise<ManagerReply>;
 }
 
-export function createMeeting(scenario: Scenario): MeetingState {
+export function createMeeting(
+  scenario: Scenario,
+  durationSeconds: number,
+): MeetingState {
   return {
     scenario,
+    durationSeconds,
     elapsedSeconds: 0,
     transcript: [],
     emittedEventIds: [],
@@ -65,7 +74,7 @@ export function advanceMeeting(
   const nextElapsedSeconds = Math.max(state.elapsedSeconds, elapsedSeconds);
   const dueEvents = state.scenario.events.filter(
     (event) =>
-      event.minute * 60 <= nextElapsedSeconds &&
+      getEventOffsetSeconds(event, state.durationSeconds) <= nextElapsedSeconds &&
       !state.emittedEventIds.includes(event.id),
   );
 

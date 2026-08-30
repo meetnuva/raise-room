@@ -1,8 +1,25 @@
-import { buildManagerBrief, defaultScenario, eventsDueAt } from "./scenario";
+import {
+  buildManagerBrief,
+  defaultScenario,
+  eventsDueAt,
+  getEventOffsetSeconds,
+} from "./scenario";
 
-test("returns the budget-freeze event exactly at minute three", () => {
-  expect(eventsDueAt(defaultScenario, 180)).toEqual([
-    expect.objectContaining({ id: "budget-freeze", minute: 3 }),
+test.each([
+  [300, [30, 90, 150, 210, 270]],
+  [600, [60, 180, 300, 420, 540]],
+  [1200, [120, 360, 600, 840, 1080]],
+])("derives event offsets for %i seconds", (durationSeconds, expected) => {
+  expect(
+    defaultScenario.events.map((event) =>
+      getEventOffsetSeconds(event, durationSeconds),
+    ),
+  ).toEqual(expected);
+});
+
+test("returns the budget-freeze event at its proportional offset", () => {
+  expect(eventsDueAt(defaultScenario, 180, 600)).toEqual([
+    expect.objectContaining({ id: "budget-freeze", triggerRatio: 0.3 }),
   ]);
 });
 
