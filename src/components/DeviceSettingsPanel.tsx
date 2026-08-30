@@ -57,7 +57,7 @@ export function DeviceSettingsPanel({
           </section>
         );
       })}
-      {!supportsSetSinkId && <p>此瀏覽器不支援喇叭輸出切換。</p>}
+      {kinds.includes("audiooutput") && !supportsSetSinkId && <p>此瀏覽器不支援喇叭輸出切換。</p>}
     </section>
   );
 }

@@ -264,8 +264,8 @@ function MeetingRoomView({
     <div className="meeting-device-status">
       <p>鏡頭：{camera.cameraActive ? "已開啟" : "未開啟"}</p>
       <p>語音：{voice.status === "ready" || voice.status === "recording" ? "本機模型已就緒" : "尚未就緒"}</p>
-      <p>選擇會套用到下一次明確請求裝置權限。</p>
-      <DeviceSettingsPanel kinds={["audioinput", "audiooutput", "videoinput"]} selectedDeviceIds={selectedDeviceIds} onSelectDevice={onSelectDevice ?? (() => {})} />
+      <p>麥克風與鏡頭選擇會套用到下一次明確請求裝置權限。</p>
+      <DeviceSettingsPanel kinds={["audioinput", "videoinput"]} selectedDeviceIds={selectedDeviceIds} onSelectDevice={onSelectDevice ?? (() => {})} />
     </div>
   );
 

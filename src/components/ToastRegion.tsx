@@ -20,7 +20,7 @@ function Toast({ id, tone, message, durationMs, onDismiss }: MeetingToast & { on
     if (tone === "error" || !durationMs) return undefined;
     const timer = window.setTimeout(() => onDismissRef.current(id), durationMs);
     return () => window.clearTimeout(timer);
-  }, [durationMs, id, tone]);
+  }, [durationMs, id, message, tone]);
 
   return (
     <div className={`meeting-toast meeting-toast--${tone}`} role={tone === "error" ? "alert" : "status"}>

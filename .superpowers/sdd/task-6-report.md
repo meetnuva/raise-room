@@ -39,3 +39,14 @@
 - Focused：Task 6、DeviceSettingsPanel、App 與 Task 5 整合共 59 項測試通過。
 - 完整：`npm test` 59 個測試檔、305 個測試全部通過。
 - `npm run build` 與 `git diff --check` 通過；僅有 Vite 既有 bundle size 建議警告。
+
+## Review 修正（第三輪）
+
+- Toast timer 現在同時依 `message` 建立：同一 ID 的新訊息會重新取得完整 4000ms；既有 MeetingRoom clock test 保留，確認相同訊息的 parent re-render 不會重設期限。
+- 裝置 drawer 只傳入 `audioinput` 與 `videoinput`，通知文案只稱麥克風與鏡頭的下次明確 permission request；`DeviceSettingsPanel` 不會在未要求 audio output 的地方顯示喇叭能力提示。
+
+### 第三輪驗證
+
+- RED：同 ID 訊息在 3000ms 後更新時仍於原到期日 dismiss；drawer 也找不到更新後的麥克風／鏡頭文案。
+- Focused：ToastRegion、MeetingRoom、DeviceSettingsPanel、App 共 49 項測試通過。
+- `npm run build` 與 `git diff --check` 通過；僅有 Vite 既有 bundle size 建議警告。

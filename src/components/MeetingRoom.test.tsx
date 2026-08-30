@@ -354,7 +354,8 @@ test("returns focus to the self tile menu trigger after its device action closes
 
   fireEvent.click(opener);
   fireEvent.click(screen.getByRole("menuitem", { name: "開啟裝置設定" }));
-  expect(screen.getByText("選擇會套用到下一次明確請求裝置權限。" )).toBeVisible();
+  expect(screen.getByText("麥克風與鏡頭選擇會套用到下一次明確請求裝置權限。" )).toBeVisible();
+  expect(screen.queryByText(/喇叭/)).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "關閉資訊面板" }));
 
   expect(opener).toHaveFocus();

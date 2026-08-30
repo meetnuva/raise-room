@@ -14,6 +14,19 @@ test("dismisses a four-second notice automatically", () => {
   expect(onDismiss).toHaveBeenCalledWith("engine");
 });
 
+test("restarts a notice timer when the same toast id receives a new message", () => {
+  vi.useFakeTimers();
+  const onDismiss = vi.fn();
+  const { rerender } = render(<ToastRegion toasts={[{ id: "engine", tone: "notice", message: "主管引擎：等待首次回覆", durationMs: 4000, onDismiss }]} />);
+
+  act(() => vi.advanceTimersByTime(3000));
+  rerender(<ToastRegion toasts={[{ id: "engine", tone: "notice", message: "主管引擎：Perxona 動態主管", durationMs: 4000, onDismiss }]} />);
+  act(() => vi.advanceTimersByTime(3999));
+  expect(onDismiss).not.toHaveBeenCalled();
+  act(() => vi.advanceTimersByTime(1));
+  expect(onDismiss).toHaveBeenCalledWith("engine");
+});
+
 test("allows a notice to be manually closed", () => {
   const onDismiss = vi.fn();
   render(<ToastRegion toasts={[{ id: "notice", tone: "notice", message: "主管已更新立場", durationMs: 4000, onDismiss }]} />);
