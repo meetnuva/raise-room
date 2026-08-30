@@ -1,3 +1,4 @@
+import { StrictMode } from "react";
 import { act, renderHook } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
 import type { VisualFrameObservation } from "../domain/visual";
@@ -89,10 +90,12 @@ test("closes a bitmap created after observing stops", async () => {
 
 test("recreates an owned client after StrictMode cleanup but never destroys an injected client", () => {
   const factory = vi.fn(fakeClient);
-  const { unmount } = renderHook(() => useLocalVision({ videoElement: null, clientFactory: factory }));
-  expect(factory).toHaveBeenCalledOnce();
+  const { unmount } = renderHook(() => useLocalVision({ videoElement: null, clientFactory: factory }), {
+    wrapper: StrictMode,
+  });
+  expect(factory).toHaveBeenCalledTimes(2);
   unmount();
-  expect(factory.mock.results[0].value.destroy).toHaveBeenCalledOnce();
+  expect(factory.mock.results[1].value.destroy).toHaveBeenCalledOnce();
 
   const injected = fakeClient();
   const injectedHook = renderHook(() => useLocalVision({ videoElement: null, client: injected, clientFactory: factory }));
