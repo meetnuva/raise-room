@@ -179,8 +179,8 @@ export function readManagerConfig(env = process.env) {
 }
 
 function upstreamError(responseStatus, payload) {
-  if (responseStatus === 401 || responseStatus === 403) return new ManagerApiError("PERXONA_AUTH_REJECTED", 502);
   if (payload?.code === 1003 || payload?.code === 14005) return new ManagerApiError("PERXONA_CREDIT_UNAVAILABLE", 503);
+  if (responseStatus === 401 || responseStatus === 403) return new ManagerApiError("PERXONA_AUTH_REJECTED", 502);
   return new ManagerApiError("PERXONA_UPSTREAM_ERROR", 502);
 }
 

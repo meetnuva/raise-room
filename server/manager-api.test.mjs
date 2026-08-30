@@ -80,6 +80,7 @@ test("maps auth, subscription, chatbot failure, and timeout to fixed public erro
 
   await expect(createManagerService({ config: configured, fetchImpl: responseFor(401, {}) }).reply(validRequest)).rejects.toMatchObject({ code: "PERXONA_AUTH_REJECTED", status: 502 });
   await expect(createManagerService({ config: configured, fetchImpl: responseFor(400, { code: 1003 }) }).reply(validRequest)).rejects.toMatchObject({ code: "PERXONA_CREDIT_UNAVAILABLE", status: 503 });
+  await expect(createManagerService({ config: configured, fetchImpl: responseFor(403, { code: 14005 }) }).reply(validRequest)).rejects.toMatchObject({ code: "PERXONA_CREDIT_UNAVAILABLE", status: 503 });
   await expect(createManagerService({ config: configured, fetchImpl: responseFor(200, { id: "x", status: "failed", reply_text: null }) }).reply(validRequest)).rejects.toMatchObject({ code: "PERXONA_CHATBOT_FAILED", status: 502 });
   await expect(createManagerService({ config: configured, fetchImpl: vi.fn().mockRejectedValue(new DOMException("Timed out", "TimeoutError")) }).reply(validRequest)).rejects.toMatchObject({ code: "PERXONA_TIMEOUT", status: 504 });
 });
