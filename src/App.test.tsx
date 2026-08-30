@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, expect, vi } from "vitest";
 import { App } from "./App";
 
 test("renders Raise Room's local-first setup entry point", () => {
@@ -35,4 +36,23 @@ test("applies meeting-mode to the application shell during a meeting", () => {
   fireEvent.click(screen.getByRole("button", { name: "進入會議大廳" }));
 
   expect(document.querySelector("main")).toHaveClass("meeting-mode");
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+beforeEach(() => {
+  vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+});
+
+test("resets to the manager stage and focuses its heading when entering a meeting", () => {
+  const scrollTo = vi.mocked(window.scrollTo);
+  render(<App />);
+
+  fireEvent.click(screen.getByRole("button", { name: "進入會議大廳" }));
+
+  const heading = screen.getByRole("heading", { name: "薪資檢討 Raise Room" });
+  expect(scrollTo).toHaveBeenCalledWith({ top: 0, left: 0, behavior: "auto" });
+  expect(heading).toHaveFocus();
 });

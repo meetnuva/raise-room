@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CoachingReport } from "./components/CoachingReport";
 import { MeetingRoom } from "./components/MeetingRoom";
 import { ScenarioWorkshop } from "./components/ScenarioWorkshop";
@@ -15,6 +15,14 @@ type AppState =
 export function App() {
   const presenterConfig = readPresenterRuntimeConfig(import.meta.env);
   const [appState, setAppState] = useState<AppState>({ view: "setup" });
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+
+    if (appState.view === "meeting") {
+      document.getElementById("meeting-room-title")?.focus();
+    }
+  }, [appState.view]);
 
   const startMeeting = (scenario: Scenario) => {
     setAppState({ view: "meeting", scenario });

@@ -71,7 +71,7 @@ export function MeetingRoom({
       <header className="meeting-header">
         <div>
           <p className="eyebrow">本機模擬會議</p>
-          <h2 id="meeting-room-title">薪資檢討 Raise Room</h2>
+          <h2 id="meeting-room-title" tabIndex={-1}>薪資檢討 Raise Room</h2>
         </div>
         <p className="meeting-countdown" aria-label={`剩餘時間 ${formatCountdown(meeting.elapsedSeconds)}`}>
           剩餘 {formatCountdown(meeting.elapsedSeconds)}
