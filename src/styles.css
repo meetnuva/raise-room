@@ -599,6 +599,259 @@ button {
   color: #ffffff;
 }
 
+.nuva-brand,
+.meet-home-header,
+.meet-home-header-actions,
+.meet-home-nav,
+.meet-home-section-heading,
+.meet-home-schedule-time,
+.meet-home-schedule-card {
+  display: flex;
+  align-items: center;
+}
+
+.nuva-brand {
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.nuva-brand img {
+  display: block;
+  width: 4.75rem;
+  height: auto;
+}
+
+.nuva-brand-divider {
+  width: 1px;
+  height: 1.5rem;
+  background: #d1d5db;
+}
+
+.nuva-brand-product {
+  color: #1f2937;
+  font-size: 1rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.meet-home {
+  min-height: 100vh;
+  background: #ffffff;
+  color: #1f2937;
+}
+
+.meet-home-header {
+  box-sizing: border-box;
+  justify-content: space-between;
+  min-height: 4rem;
+  padding: 0 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.meet-home-header-actions {
+  gap: 0.75rem;
+}
+
+.meet-home-settings {
+  border-color: transparent;
+  color: #075985;
+}
+
+.meet-home-avatar {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: 50%;
+  background: #075985;
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.meet-home-layout {
+  display: grid;
+  grid-template-columns: 5.25rem minmax(0, 1fr);
+}
+
+.meet-home-nav {
+  align-items: stretch;
+  flex-direction: column;
+  min-height: calc(100vh - 4rem);
+  padding: 1rem 0;
+  border-right: 1px solid #e5e7eb;
+}
+
+.meet-home-nav button {
+  border: 0;
+  border-left: 3px solid transparent;
+  border-radius: 0;
+  color: #374151;
+  text-align: center;
+}
+
+.meet-home-nav button.active {
+  border-left-color: #0b72b9;
+  background: #e0f2fe;
+  color: #075985;
+}
+
+.meet-home-content {
+  width: min(100%, 68rem);
+  box-sizing: border-box;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+}
+
+.meet-home-content h1,
+.meet-home-content h2,
+.meet-home-content h3,
+.meet-home-content p {
+  margin-top: 0;
+}
+
+.meet-home-content h1 {
+  margin-bottom: 2.5rem;
+  color: #111827;
+  font-size: clamp(2rem, 4vw, 3rem);
+  letter-spacing: -0.03em;
+}
+
+.meet-home-schedule,
+.meet-home-empty-state {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.meet-home-section-heading,
+.meet-home-schedule-time {
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.meet-home-section-heading h2,
+.meet-home-schedule-card h3 {
+  margin-bottom: 0;
+  color: #111827;
+}
+
+.meet-home-section-heading > p,
+.meet-home-schedule-time span,
+.meet-home-schedule-card p {
+  margin-bottom: 0;
+  color: #4b5563;
+}
+
+.meet-home-kicker {
+  margin-bottom: 0.25rem;
+  color: #075985;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.meet-home-date-strip {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+
+.meet-home-date-strip button {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 0.25rem;
+  min-width: 5rem;
+  padding: 0.75rem;
+  border-color: #d1d5db;
+  color: #374151;
+  text-align: left;
+}
+
+.meet-home-date-strip button.selected {
+  border-color: #0b72b9;
+  background: #e0f2fe;
+  color: #075985;
+}
+
+.meet-home-date-strip button[aria-current="date"] strong {
+  display: inline-grid;
+  width: fit-content;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  place-items: center;
+  border-radius: 50%;
+  background: #0b72b9;
+  color: #ffffff;
+}
+
+.meet-home-schedule-card {
+  align-items: stretch;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1.5rem;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+}
+
+.meet-home-schedule-time {
+  align-items: flex-start;
+  flex-direction: column;
+  min-width: 7rem;
+}
+
+.meet-home-schedule-time time {
+  color: #075985;
+  font-size: 1.125rem;
+  font-weight: 800;
+}
+
+.meet-home-enter {
+  align-self: center;
+  border-color: #075985;
+  background: #075985;
+  color: #ffffff;
+}
+
+.meet-home-empty-state {
+  padding: 2rem;
+  border: 1px solid #d1d5db;
+  color: #4b5563;
+}
+
+.meet-home button:focus-visible {
+  outline: 3px solid #7dd3fc;
+  outline-offset: 2px;
+}
+
+@media (max-width: 48rem) {
+  .meet-home-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .meet-home-nav {
+    flex-direction: row;
+    min-height: auto;
+    padding: 0;
+    border-right: 0;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .meet-home-nav button {
+    border-left: 0;
+    border-bottom: 3px solid transparent;
+  }
+
+  .meet-home-nav button.active {
+    border-left-color: transparent;
+    border-bottom-color: #0b72b9;
+  }
+
+  .meet-home-content {
+    padding: 2rem 1rem;
+  }
+}
+
 @media (max-width: 42rem) {
   .asr-model-cards {
     grid-template-columns: 1fr;
