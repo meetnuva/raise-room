@@ -254,5 +254,5 @@ CSS root 必須定義並由本次觸及的 UI 使用：
 - `npm run release:check` 初次 RED：release-files 偵測到已被誤追蹤的 `.superpowers/sdd/task-6-report.md`。根因是 `.superpowers/` 已被 ignore，後續提交仍強制納入該內部報告。只解除該檔案追蹤、保留本機 ignored report 後，gate GREEN。
 - GREEN 全量：59 個 test files／306 tests，並通過 TypeScript、Vite production build、release-files 與已審閱依賴稽核。Vite 僅輸出既有的 500 kB bundle 建議，沒有 build error。
 - focused UI／accessibility suite：10 個 test files／78 tests 通過，覆蓋本地 icon、500ms tooltip 與 focus、keyboard menu／Escape／focus return、首頁所有 header action、lobby explicit permission、七 tabs、固定六控制列、drawer、participant actions 與 toast。
-- 靜態 CSS 檢查：27 個 root token 定義、16 個 `var()` 引用、0 個未知 token；設計指定的 960px dialog、70/30 lobby、16:9 stage、56px 不換行控制列、桌面 360px／平板 320px／手機 `min(calc(100vw - 24px), 360px)` drawer，以及 reduced-motion 規則均存在。
+- 靜態 CSS 檢查：27 個 root token 定義、16 種被引用的 token、共 73 次 `var()` 使用、0 個未知 token；設計指定的 960px dialog、70/30 lobby、16:9 stage、56px 不換行控制列、桌面 360px／平板 320px／手機 `min(calc(100vw - 24px), 360px)` drawer，以及 reduced-motion 規則均存在。
 - 未完成且不得以本段替代：Google Meet 唯讀比對、五尺寸 Chrome 實機矩陣、所有可見控制逐一 click/readback、console 檢查、permission deny、視覺 aggregate，及真正不中斷 20 分鐘 physical media／high-quality ASR／Presenter／edited voice turn／比例事件／自動 report。這些 acceptance 仍由 root browser owner pending。
