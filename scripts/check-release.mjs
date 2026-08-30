@@ -8,10 +8,15 @@ const REQUIRED_PUBLIC_FILES = new Set([
   "CONTRIBUTING.md",
   "SECURITY.md",
   "CODE_OF_CONDUCT.md",
+  "CHANGELOG.md",
   ".env.example",
+  ".nvmrc",
+  ".github/workflows/ci.yml",
 ]);
 const MAX_SCAN_BYTES = 1024 * 1024;
 const CREDENTIAL_ASSIGNMENT = /^[ \t]*(?:export[ \t]+)?(PERXONA_CONNECT_SECRET_KEY|VITE_PERXONA_CONNECT_PUBLISHABLE_KEY)[ \t]*=[ \t]*(.*?)[ \t]*$/gm;
+const WORKFLOW_PATH = /^\.github\/workflows\/.+\.ya?ml$/i;
+const WRITE_PERMISSION = /^[ \t]*(?:actions|attestations|checks|contents|deployments|discussions|id-token|issues|packages|pages|pull-requests|security-events|statuses)[ \t]*:[ \t]*write(?:[ \t]*(?:#.*)?)?$/gim;
 
 const forbiddenPathRule = (file) => {
   if ((file === ".env" || file.startsWith(".env.")) && file !== ".env.example") return "不得追蹤環境設定檔";
@@ -20,6 +25,21 @@ const forbiddenPathRule = (file) => {
   if (/(^|\/)(node_modules|dist)(\/|$)/.test(file)) return "不得追蹤 build 或 dependency 產物";
   if (/\.(pem|key)$/i.test(file)) return "不得追蹤憑證檔";
   return null;
+};
+
+const workflowErrors = (file, text) => {
+  if (!WORKFLOW_PATH.test(file)) return [];
+  const errors = [];
+  for (const line of text.split(/\r?\n/)) {
+    if (/\buses:[ \t]*/.test(line) && !/\buses:[ \t]*[^\s#]+@[a-f0-9]{40}(?:[ \t]*(?:#.*)?)?[ \t]*$/i.test(line)) {
+      errors.push(`${file}: actions uses 必須以完整 40 字元 SHA 固定`);
+    }
+  }
+  if (/\$\{\{[ \t]*secrets\./i.test(text)) errors.push(`${file}: workflow 不得引用 secrets context`);
+  if (/\bwrite-all\b/i.test(text)) errors.push(`${file}: workflow 不得使用 write-all`);
+  if (WRITE_PERMISSION.test(text)) errors.push(`${file}: workflow permissions 不得授予 write`);
+  WRITE_PERMISSION.lastIndex = 0;
+  return errors;
 };
 
 export function validateTrackedFiles(entries) {
@@ -36,6 +56,7 @@ export function validateTrackedFiles(entries) {
     for (const match of text.matchAll(CREDENTIAL_ASSIGNMENT)) {
       if (match[2].trim() !== "") errors.push(`${file}: ${match[1]} 必須維持空白 assignment`);
     }
+    errors.push(...workflowErrors(file, text));
   }
 
   for (const required of REQUIRED_PUBLIC_FILES) {
