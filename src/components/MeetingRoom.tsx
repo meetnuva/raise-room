@@ -8,6 +8,10 @@ import {
 } from "../domain/meeting";
 import type { TranscriptTurn } from "../domain/meeting";
 import type { Scenario, ScheduledEvent } from "../domain/scenario";
+import type { PresenterRuntimeConfig } from "../lib/perxona-config";
+import { LocalCameraTile } from "./LocalCameraTile";
+import { PerxonaManagerStage } from "./PerxonaManagerStage";
+import { useLocalCamera } from "../hooks/use-local-camera";
 
 const meetingLengthSeconds = 10 * 60;
 
@@ -31,13 +35,17 @@ export function MeetingRoom({
   scenario,
   responder,
   onFinish,
+  presenterConfig = { enabled: false, reason: "missing-key" },
 }: {
   scenario: Scenario;
   responder: ManagerResponder;
   onFinish?: (transcript: TranscriptTurn[]) => void;
+  presenterConfig?: PresenterRuntimeConfig;
 }) {
   const [meeting, setMeeting] = useState(() => createMeeting(scenario));
   const [draft, setDraft] = useState("");
+  const latestTurn = meeting.transcript[meeting.transcript.length - 1];
+  const camera = useLocalCamera();
 
   const advanceTo = (elapsedSeconds: number) => {
     setMeeting((current) => advanceMeeting(current, elapsedSeconds));
@@ -71,23 +79,15 @@ export function MeetingRoom({
       </header>
 
       <div className="meeting-stages" aria-label="會議雙人畫面">
-        <section className="meeting-stage manager-stage" aria-labelledby="manager-stage-title">
-          <p className="stage-label">主管畫面</p>
-          <h3 id="manager-stage-title">{scenario.manager.name}</h3>
-          <p>{scenario.role} 薪資檢討</p>
-          <span className="presence-indicator">● 準備討論</span>
-        </section>
-        <section className="meeting-stage user-stage" aria-labelledby="user-stage-title">
-          <p className="stage-label">使用者畫面</p>
-          <h3 id="user-stage-title">你</h3>
-          <p>{scenario.company} · {scenario.tenureMonths} 個月年資</p>
-          <span className="presence-indicator">● 等待你的說明</span>
-        </section>
+        <PerxonaManagerStage managerName={scenario.manager.name} config={presenterConfig} latestManagerText={latestTurn?.speaker === "manager" ? latestTurn.text : null} />
+        <aside className="meeting-sidebar"><LocalCameraTile camera={camera} detail={`${scenario.company} · ${scenario.tenureMonths} 個月年資`} /><section className="event-rail" aria-labelledby="event-rail-title">
+          <p className="eyebrow">事件軌</p><h3 id="event-rail-title">會議壓力事件</h3><ol>{scenario.events.map((event) => { const emitted = meeting.emittedEventIds.includes(event.id); return <li className={emitted ? "event-card emitted" : "event-card"} key={event.id}><span>第 {event.minute} 分鐘 · {emitted ? "已發生" : "待命"}</span><strong>{eventTitle(event)}</strong><p>{event.instruction}</p></li>; })}</ol>
+        </section></aside>
       </div>
 
       <div className="meeting-controls" aria-label="會議控制">
         <button disabled type="button">麥克風：尚未啟用</button>
-        <button disabled type="button">攝影機：尚未啟用</button>
+        <button type="button" onClick={() => camera.status === "active" ? camera.stop() : void camera.start()} disabled={camera.status === "requesting"}>{camera.status === "active" ? "關閉我的鏡頭" : "開啟我的鏡頭"}</button>
         <button type="button" onClick={() => advanceTo(180)}>跳到第 3 分鐘</button>
         <button
           className="finish-meeting"
@@ -136,22 +136,6 @@ export function MeetingRoom({
           </form>
         </section>
 
-        <aside className="event-rail" aria-labelledby="event-rail-title">
-          <p className="eyebrow">事件軌</p>
-          <h3 id="event-rail-title">會議壓力事件</h3>
-          <ol>
-            {scenario.events.map((event) => {
-              const emitted = meeting.emittedEventIds.includes(event.id);
-              return (
-                <li className={emitted ? "event-card emitted" : "event-card"} key={event.id}>
-                  <span>第 {event.minute} 分鐘 · {emitted ? "已發生" : "待命"}</span>
-                  <strong>{eventTitle(event)}</strong>
-                  <p>{event.instruction}</p>
-                </li>
-              );
-            })}
-          </ol>
-        </aside>
       </div>
     </section>
   );

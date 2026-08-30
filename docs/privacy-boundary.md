@@ -4,10 +4,11 @@ Raise Room 是私人練習工具，不是雇主評分、招募篩選、謊言偵
 
 ## 目前資料位置
 
-- 原始視訊預設不會離開裝置；第一階段 MVP 也不會讀取攝影機或建立原始視訊。
+- 原始視訊預設不會離開裝置。只有直接點擊後取得的 camera stream 會指派給本機 `<video>` 預覽；不讀取、抽樣、分析、上傳或保存 frame。
+- 關閉鏡頭與元件卸載都會停止所有 MediaStream tracks，釋放裝置。
 - 本局逐字稿只存在 React memory，關閉或重新整理頁面後就會消失。
 - 情境設定的本機草稿只保存在目前瀏覽器，方便再次開啟設定頁時使用。
-- MVP 沒有網路請求、雲端儲存或第三方資料傳送。
+- Raise Room 沒有自有後端、雲端儲存或資料傳送。明確啟用的 Perxona Presenter 會直接與其官方服務互動，使用 Publishable Key、設定 target 與 deterministic 主管回覆文字；不會傳送 camera stream 或 frame。
 
 ## 未來整合的要求
 

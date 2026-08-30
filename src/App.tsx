@@ -5,6 +5,7 @@ import { ScenarioWorkshop } from "./components/ScenarioWorkshop";
 import { simulatedResponder } from "./domain/meeting";
 import type { TranscriptTurn } from "./domain/meeting";
 import type { Scenario } from "./domain/scenario";
+import { readPresenterRuntimeConfig } from "./lib/perxona-config";
 
 type AppState =
   | { view: "setup" }
@@ -12,6 +13,7 @@ type AppState =
   | { view: "report"; scenario: Scenario; transcript: TranscriptTurn[] };
 
 export function App() {
+  const presenterConfig = readPresenterRuntimeConfig(import.meta.env);
   const [appState, setAppState] = useState<AppState>({ view: "setup" });
 
   const startMeeting = (scenario: Scenario) => {
@@ -25,6 +27,7 @@ export function App() {
         <MeetingRoom
           scenario={appState.scenario}
           responder={simulatedResponder}
+          presenterConfig={presenterConfig}
           onFinish={(transcript) => {
             setAppState({
               view: "report",
