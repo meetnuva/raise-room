@@ -6,7 +6,7 @@ import {
   WhisperForConditionalGeneration,
 } from "@huggingface/transformers";
 import { isAsrModelPresetId, type AsrModelPresetId } from "../domain/asr-models";
-import { getAsrRuntimeConfig } from "../lib/asr-runtime-config";
+import { getAsrRuntimeAttempts, getAsrRuntimeConfig, hasWebGpuSupport, type ReadyAsrRuntimeConfig } from "../lib/asr-runtime-config";
 import { normalizeAsrProgress, type AsrWorkerRequest, type VoiceLanguage } from "../lib/local-asr";
 
 const maxSamples = 16000 * 30;
@@ -37,13 +37,11 @@ function loading(progress: unknown) {
 }
 
 function hasWebGpu() {
-  return typeof navigator !== "undefined" && "gpu" in navigator;
+  return typeof navigator !== "undefined" && hasWebGpuSupport(navigator.gpu);
 }
 
-async function loadRuntime(preset: AsrModelPresetId) {
+async function loadRuntime(config: ReadyAsrRuntimeConfig) {
   const progress_callback = loading;
-  const config = getAsrRuntimeConfig(preset, hasWebGpu());
-  if (!config.ok) throw new Error(config.message);
   const [tokenizer, processor, model] = await Promise.all([
     AutoTokenizer.from_pretrained(config.modelId, { progress_callback }),
     AutoProcessor.from_pretrained(config.modelId, { progress_callback }),
@@ -67,10 +65,34 @@ async function closeRuntime() {
 async function load(preset: AsrModelPresetId) {
   try {
     if (activePreset !== preset) await closeRuntime();
-    runtime ??= await loadRuntime(preset);
-    activePreset = preset;
-    await runtime.model.generate({ input_features: full([1, 80, 3000], 0), max_new_tokens: 1 });
-    send({ type: "ready", device: runtime.device });
+    if (runtime && activePreset === preset) {
+      send({ type: "ready", device: runtime.device });
+      return;
+    }
+
+    const attempts = getAsrRuntimeAttempts(preset, hasWebGpu());
+    if (attempts.length === 0) {
+      const unavailable = getAsrRuntimeConfig(preset, false);
+      throw new Error(unavailable.ok ? "無法載入本機語音模型。" : unavailable.message);
+    }
+
+    let lastError: unknown;
+    for (const attempt of attempts) {
+      let candidate: Runtime | null = null;
+      try {
+        candidate = await loadRuntime(attempt);
+        await candidate.model.generate({ input_features: full([1, 80, 3000], 0), max_new_tokens: 1 });
+        runtime = candidate;
+        activePreset = preset;
+        send({ type: "ready", device: runtime.device });
+        return;
+      } catch (error) {
+        lastError = error;
+        const model = candidate?.model as { dispose?: () => void | Promise<void> } | undefined;
+        await model?.dispose?.();
+      }
+    }
+    throw lastError instanceof Error ? lastError : new Error("無法載入本機語音模型。");
   } catch (error) {
     send({ type: "error", message: error instanceof Error ? error.message : "無法載入本機語音模型。" });
   }

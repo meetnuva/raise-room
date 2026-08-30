@@ -9,6 +9,13 @@ export type AsrRuntimeConfig =
     }
   | { ok: false; message: string };
 
+export type ReadyAsrRuntimeConfig = Extract<AsrRuntimeConfig, { ok: true }>;
+
+export function hasWebGpuSupport(gpu: unknown): boolean {
+  return typeof gpu === "object" && gpu !== null &&
+    typeof (gpu as { requestAdapter?: unknown }).requestAdapter === "function";
+}
+
 export function getAsrRuntimeConfig(
   preset: AsrModelPresetId,
   hasWebGpu: boolean,
@@ -28,4 +35,16 @@ export function getAsrRuntimeConfig(
   }
 
   return { ok: true, modelId: model.modelId, device: "wasm", dtype: "q8" };
+}
+
+export function getAsrRuntimeAttempts(
+  preset: AsrModelPresetId,
+  hasWebGpu: boolean,
+): ReadyAsrRuntimeConfig[] {
+  const primary = getAsrRuntimeConfig(preset, hasWebGpu);
+  if (!primary.ok) return [];
+  if (preset === "quality" || !hasWebGpu) return [primary];
+
+  const wasm = getAsrRuntimeConfig(preset, false);
+  return wasm.ok ? [primary, wasm] : [primary];
 }
