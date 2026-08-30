@@ -61,7 +61,7 @@ npm run start
 
 設定頁可用繁中、English 或日本語的參考句做最長 20 秒麥克風測試，顯示正體化文字、差異與「文字吻合度」。這是兩段文字的比對，不是口音、能力或信心評分。模型選擇只保存 preset ID；測試音訊、參考句、結果和分數都只存在當前 memory，絕不送給 Perxona。
 
-會議錄音最多分析最後 30 秒；只有在使用者按「開始說話」的單一回合才建立 `MediaRecorder`。若已在 lobby 明確允許裝置，錄音會使用同一份仍啟用的麥克風 track，不再要求第二次 `getUserMedia`；停止回合只停止 recorder，不會停止 session track。辨識結果會先進入可編輯預覽，只有確認「送給主管」後，修改過的文字才會加入逐字稿並傳給動態主管。報告只讀取已確認逐字稿的可觀察 metadata；字元／分鐘不可跨語言比較。真實裝置 ASR、Presenter 與完整 20 分鐘談判仍待最終 Chrome acceptance。
+會議錄音最多分析最後 30 秒；只有在使用者按「開始說話」的單一回合才建立 `MediaRecorder`。若已在 lobby 明確允許裝置，錄音會使用同一份仍啟用的麥克風 track，不再要求第二次 `getUserMedia`；停止回合只停止 recorder，不會停止 session track。辨識結果會先進入可編輯預覽，只有確認「送給主管」後，修改過的文字才會加入逐字稿並傳給動態主管。報告只讀取已確認逐字稿的可觀察 metadata；字元／分鐘不可跨語言比較。真實 MacBook 麥克風、FaceTime 鏡頭、lobby 到 meeting 的連續預覽與高品質 ASR 可編輯預覽已在 Chrome 驗收；完整不中斷 20 分鐘談判仍待最終 acceptance。
 
 ## Phase 4：可選本機視覺觀察
 
@@ -81,4 +81,4 @@ iris 幾何近似不等於眼神接觸；所有數值都不能作 HR、雇主或
 
 若要使用 3D 主管，請由 `.env.example` 複製設定，填入 Publishable Key、共用 Scene，以及男／女主管各自的 Avatar、Voice ID。男主管的新變數未填時才會使用舊的 Avatar／Voice 變數；女主管不會使用男主管或舊變數。角色設定不完整時會被停用，不會改用另一個角色。會議主管仍會使用已設定的 Perxona 動態主管，或在未設定／暫時失敗時顯示本機腳本 fallback。Secret Key 不可放入任何 `VITE_` 前端變數。
 
-Presenter 可在 lobby 先載入 SDK 並驗證連線；真正的 Presenter stage 只在 meeting mount。這不代表真實裝置上的 Presenter、對嘴、表情、獨立動作、聲學音訊品質、鏡頭／麥克風／視覺 permission E2E 或完整 20 分鐘 session 已驗收；以上仍待最終 Chrome acceptance。
+Presenter 可在 lobby 先載入 SDK 並驗證連線；真正的 Presenter stage 只在 meeting mount。Chrome 已驗證 lobby preflight 顯示 Ready、meeting stage 可呈現，以及修正後的同源 manager API 能取得 `perxona` 回覆；這仍不代表 custom VRoid、對嘴、表情、獨立動作、聲學音訊品質、拒絕權限路徑、本機視覺 aggregate 或完整 20 分鐘 session 已驗收。

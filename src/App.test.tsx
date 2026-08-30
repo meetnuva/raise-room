@@ -181,3 +181,17 @@ test("updates the home schedule status before rolling an expired meeting", () =>
   expect(screen.getByText("19:00–19:20")).toBeVisible();
   expect(screen.getByText("即將開始")).toBeVisible();
 });
+
+test("refreshes an expired schedule immediately when returning home", () => {
+  let current = new Date(2026, 7, 30, 17, 5);
+  render(<App now={() => current} />);
+
+  enterLobby();
+  current = new Date(2026, 7, 30, 18, 20);
+  fireEvent.click(screen.getByRole("button", { name: "立即進入會議室" }));
+  fireEvent.click(screen.getByRole("button", { name: "離開並查看報告" }));
+  fireEvent.click(screen.getByRole("button", { name: "返回首頁" }));
+
+  expect(screen.getByText("19:00–19:20")).toBeVisible();
+  expect(screen.getByText("即將開始")).toBeVisible();
+});

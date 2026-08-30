@@ -13,3 +13,4 @@
 ### Fixed
 
 - Cancel stale Presenter mounts after React StrictMode cleanup so the engine-load race leaves one `sv-presenter`.
+- Validate proportional pressure-event payloads at the manager API boundary and refresh expired schedules immediately when returning home.

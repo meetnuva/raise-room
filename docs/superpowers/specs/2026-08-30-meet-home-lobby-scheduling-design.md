@@ -501,16 +501,16 @@ const offsetSeconds = Math.round(durationSeconds * ratio);
 
 ### 已完成的自動化證據
 
-- `npm run release:check` 已通過：51 個 test files、251 個 tests；TypeScript／Vite production build 成功；release file gate 與已審閱依賴 audit gate 均成功。audit 僅接受目前記錄的 `adm-zip` 與 `sharp` 已審閱 advisory，下一次審閱期限為 2026-09-30。
+- `npm run release:check` 已通過：51 個 test files、254 個 tests；TypeScript／Vite production build 成功；release file gate 與已審閱依賴 audit gate 均成功。audit 僅接受目前記錄的 `adm-zip` 與 `sharp` 已審閱 advisory，下一次審閱期限為 2026-09-30。
 - 排程 domain 測試覆蓋 17:05 的 5／10／20 分鐘視窗、整點必須移至下一個整點、跨日與 meeting 狀態。component／runtime 測試覆蓋首頁到 lobby 到 meeting 到 report、七個 settings tabs、取消不儲存、session-only device 選擇、explicit permission、共享 track／ASR runtime、單回合 recorder、男性／女性 Presenter 可用性與比例事件 offset。
 - release file gate 亦驗證 public files 與追蹤邊界，拒絕 local environment、build artifacts、credential candidates、`.superpowers/state` 與未 pinned 的 workflow action；本次文件未記錄帳號、會議代碼、電話、PIN、target ID 或完整私人逐字稿。
 
 ### 已觀察的瀏覽器畫面
 
-根代理已在既有 Chrome session 觀察並保存首頁、設定對話框、會前準備室、正式談判室的資訊側欄開啟／關閉，以及固定短視窗高度的畫面。這些是目前的視覺 readback，不等同於真實裝置、網路服務或長時間會議的完整 acceptance。
+根代理已在既有 Chrome session 觀察首頁、設定對話框、會前準備室、正式談判室的資訊側欄開啟／關閉，以及固定短視窗高度的畫面。真實 MacBook 麥克風與 FaceTime 鏡頭在選定實體裝置後取得 combined permission，影像由 lobby 延續到 meeting；高品質 ASR 已辨識一段真實繁中語音並進入可編輯預覽。Presenter lobby preflight 顯示 Ready，meeting stage 可呈現；修正比例事件 API contract 後，同源 manager API 的真實回覆來源為 `perxona`。這些是分項 readback，不等同於長時間會議的完整 acceptance。
 
 ### 仍待根代理最終驗收
 
-- 真實裝置 combined camera／microphone permission 的允許／拒絕／重試、session track 連續性、真實本機 ASR 與真實 Presenter stage／回覆。
+- 真實裝置 combined camera／microphone permission 的拒絕路徑、視覺模型與 aggregate；修正後的 `perxona` 回覆仍需再從完整 UI 回合確認。
 - 一局真實時間完整 20 分鐘談判，包含五個比例事件、voice preview、視覺 aggregate、Perxona／Presenter 與 report handoff。
-- 重新整理與 SPA 內設定的實際時鐘排程、320／375／768／1024／1440 響應式與焦點順序、console 無新增 warning／error，以及 network 不外送原始 media 的 readback。
+- 320／375／768／1024／1440 全寬度響應式與完整鍵盤焦點順序，以及 network 不外送原始 media 的 readback。既有桌面 Chrome 已驗證重新整理／SPA 排程畫面與無新增 app console error。

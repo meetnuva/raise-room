@@ -76,6 +76,8 @@ export function App({ now = () => new Date() }: { now?: () => Date } = {}) {
   const [selectedDeviceIds, setSelectedDeviceIds] = useState<Partial<Record<MediaDeviceKind, string>>>({});
   const [managerResponder] = useState(() => createHybridManagerResponder());
   const restoreSettingsFocus = useRef(false);
+  const nowRef = useRef(now);
+  nowRef.current = now;
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -93,16 +95,21 @@ export function App({ now = () => new Date() }: { now?: () => Date } = {}) {
   useEffect(() => {
     if (appState.view !== "home") return;
 
-    const interval = window.setInterval(() => {
-      const currentNow = now();
+    const refreshSchedule = () => {
+      const currentNow = nowRef.current();
       setHomeNow(currentNow);
-      if (currentNow.getTime() >= new Date(meeting.endsAt).getTime()) {
-        setMeeting(createMeeting(currentNow, scenario, practice));
-      }
-    }, 60_000);
+      setMeeting((current) => (
+        currentNow.getTime() >= new Date(current.endsAt).getTime()
+          ? createMeeting(currentNow, scenario, practice)
+          : current
+      ));
+    };
+
+    refreshSchedule();
+    const interval = window.setInterval(refreshSchedule, 60_000);
 
     return () => window.clearInterval(interval);
-  }, [appState.view, meeting.endsAt, now, practice, scenario]);
+  }, [appState.view, practice, scenario]);
 
   const settingsValue: PracticeSettingsDraft = { scenario, practice, modelPreset: voicePreset };
   const presenterConfig = selectPresenterConfig(presenterCatalog, practice.managerPresentation);
