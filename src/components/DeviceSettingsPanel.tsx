@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-type Device = Pick<MediaDeviceInfo, "deviceId" | "groupId" | "kind" | "label">;
+export type DeviceSettingsDevice = Pick<MediaDeviceInfo, "deviceId" | "groupId" | "kind" | "label">;
 
 const deviceGroupLabels = {
   audioinput: "麥克風",
@@ -9,13 +9,17 @@ const deviceGroupLabels = {
 } as const;
 
 export function DeviceSettingsPanel({
+  kinds,
   mediaDevices = typeof navigator === "undefined" ? undefined : navigator.mediaDevices,
-  onPreview,
+  selectedDeviceIds,
+  onSelectDevice,
 }: {
+  kinds: readonly MediaDeviceKind[];
   mediaDevices?: Pick<MediaDevices, "enumerateDevices">;
-  onPreview(device: Device): void;
+  selectedDeviceIds?: Partial<Record<MediaDeviceKind, string>>;
+  onSelectDevice(device: DeviceSettingsDevice): void;
 }) {
-  const [devices, setDevices] = useState<Device[] | null>(null);
+  const [devices, setDevices] = useState<DeviceSettingsDevice[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const supportsSetSinkId = typeof HTMLMediaElement !== "undefined" && "setSinkId" in HTMLMediaElement.prototype;
   const readDevices = async () => {
@@ -36,15 +40,18 @@ export function DeviceSettingsPanel({
       <p>裝置清單僅在你選擇讀取後顯示，裝置 ID 不會儲存。</p>
       <button type="button" onClick={() => void readDevices()}>讀取可用裝置</button>
       {error && <p role="alert">{error}</p>}
-      {devices && (Object.keys(deviceGroupLabels) as (keyof typeof deviceGroupLabels)[]).map((kind) => {
+      {devices && kinds.map((kind) => {
         const group = devices.filter((device) => device.kind === kind);
+        const groupLabel = deviceGroupLabels[kind as keyof typeof deviceGroupLabels];
+        if (!groupLabel) return null;
         return (
-          <section className="device-settings-group" key={kind} aria-label={deviceGroupLabels[kind]}>
-            <h3>{deviceGroupLabels[kind]}</h3>
+          <section className="device-settings-group" key={kind} aria-label={groupLabel}>
+            <h3>{groupLabel}</h3>
             {group.length === 0 ? <p>未找到可用裝置。</p> : group.map((device, index) => (
               <div key={device.deviceId || `${kind}-${index}`}>
-                <span>{device.label || `${deviceGroupLabels[kind]} ${index + 1}`}</span>
-                <button type="button" onClick={() => onPreview(device)}>預覽 {device.label || `${deviceGroupLabels[kind]} ${index + 1}`}</button>
+                <span>{device.label || `${groupLabel} ${index + 1}`}</span>
+                <button aria-pressed={selectedDeviceIds?.[kind] === device.deviceId} type="button" onClick={() => onSelectDevice(device)}>使用 {device.label || `${groupLabel} ${index + 1}`}</button>
+                {selectedDeviceIds?.[kind] === device.deviceId && <span>目前使用中</span>}
               </div>
             ))}
           </section>
