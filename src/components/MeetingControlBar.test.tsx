@@ -1,0 +1,78 @@
+import { fireEvent, render, screen } from "@testing-library/react";
+import type { ComponentProps } from "react";
+import { expect, test, vi } from "vitest";
+import { MeetingControlBar } from "./MeetingControlBar";
+
+function renderBar(overrides: Partial<ComponentProps<typeof MeetingControlBar>> = {}) {
+  const props = {
+    voiceStatus: "ready" as const,
+    cameraActive: false,
+    cameraRequesting: false,
+    panelOpen: false,
+    activePanelTab: "transcript" as const,
+    onVoiceAction: vi.fn(),
+    onCameraToggle: vi.fn(),
+    onOpenPanel: vi.fn(),
+    onFinish: vi.fn(),
+    ...overrides,
+  };
+  render(<MeetingControlBar {...props} />);
+  return props;
+}
+
+test("renders the six Meet controls in the required order with named SVG icons", () => {
+  renderBar();
+
+  const controls = screen.getByRole("toolbar", { name: "會議控制" }).querySelectorAll("button");
+  expect([...controls].map((control) => control.getAttribute("aria-label"))).toEqual([
+    "開始說話",
+    "開啟我的鏡頭",
+    "開啟逐字稿",
+    "開啟壓力事件",
+    "更多會議選項",
+    "離開並查看報告",
+  ]);
+  expect([...controls].every((control) => control.querySelector("svg"))).toBe(true);
+  expect(controls[0]).toHaveAttribute("aria-pressed", "false");
+  expect(controls[1]).toHaveAttribute("aria-pressed", "false");
+  expect(controls[5]).toHaveClass("icon-button--danger");
+});
+
+test("routes captions, events and every more-menu action to actual information content", () => {
+  const props = renderBar();
+
+  fireEvent.click(screen.getByRole("button", { name: "開啟逐字稿" }));
+  expect(props.onOpenPanel).toHaveBeenLastCalledWith("transcript");
+  fireEvent.click(screen.getByRole("button", { name: "開啟壓力事件" }));
+  expect(props.onOpenPanel).toHaveBeenLastCalledWith("events");
+  fireEvent.click(screen.getByRole("button", { name: "更多會議選項" }));
+  fireEvent.click(screen.getByRole("menuitem", { name: "語音與逐字稿" }));
+  expect(props.onOpenPanel).toHaveBeenLastCalledWith("transcript");
+  fireEvent.click(screen.getByRole("button", { name: "更多會議選項" }));
+  fireEvent.click(screen.getByRole("menuitem", { name: "本機觀察" }));
+  expect(props.onOpenPanel).toHaveBeenLastCalledWith("observations");
+  fireEvent.click(screen.getByRole("button", { name: "更多會議選項" }));
+  fireEvent.click(screen.getByRole("menuitem", { name: "裝置狀態" }));
+  expect(props.onOpenPanel).toHaveBeenLastCalledWith("devices");
+  fireEvent.click(screen.getByRole("button", { name: "更多會議選項" }));
+  fireEvent.click(screen.getByRole("menuitem", { name: "會議資訊" }));
+  expect(props.onOpenPanel).toHaveBeenLastCalledWith("transcript");
+});
+
+test("keeps microphone and camera state controlled by its owner", () => {
+  const props = renderBar({ voiceStatus: "recording", cameraActive: true });
+
+  expect(screen.getByRole("button", { name: "停止並轉成文字" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByRole("button", { name: "關閉我的鏡頭" })).toHaveAttribute("aria-pressed", "true");
+  fireEvent.click(screen.getByRole("button", { name: "停止並轉成文字" }));
+  fireEvent.click(screen.getByRole("button", { name: "關閉我的鏡頭" }));
+  expect(props.onVoiceAction).toHaveBeenCalledOnce();
+  expect(props.onCameraToggle).toHaveBeenCalledOnce();
+});
+
+test("reflects only the owner-selected information tab as pressed", () => {
+  renderBar({ panelOpen: true, activePanelTab: "events" });
+
+  expect(screen.getByRole("button", { name: "開啟逐字稿" })).toHaveAttribute("aria-pressed", "false");
+  expect(screen.getByRole("button", { name: "開啟壓力事件" })).toHaveAttribute("aria-pressed", "true");
+});

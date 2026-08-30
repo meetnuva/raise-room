@@ -14,7 +14,7 @@ test("requires an explicit model opt-in and exposes language choice", () => {
 
 test("marks active microphone clearly", () => {
   render(<LocalVoiceControl voice={voice("recording")} onTranscript={vi.fn()} />);
-  expect(screen.getByText("麥克風使用中")).toBeVisible(); expect(screen.getByRole("button", { name: "停止並轉成文字" })).toBeVisible();
+  expect(screen.getByText("麥克風使用中")).toBeVisible(); expect(screen.getByText("使用下方麥克風停止並轉成文字。")).toBeVisible();
 });
 
 test("shows a cancellable model loading status without requesting a microphone", () => {
@@ -30,12 +30,11 @@ test("shows a cancellable model loading status without requesting a microphone",
   expect(injected.startRecording).not.toHaveBeenCalled();
 });
 
-test("shows a preview after transcription and waits for confirmation before delivering text", async () => {
+test("uses the owner action callback to show a preview after transcription and waits for confirmation before delivering text", async () => {
   const onTranscript = vi.fn();
   const injected = voice("recording");
   injected.stopAndTranscribe.mockResolvedValue({ rawText: "客户", text: "客戶", durationSeconds: 3, language: "zh", modelPreset: "quality" });
-  render(<LocalVoiceControl voice={injected} onTranscript={onTranscript} />);
-  fireEvent.click(screen.getByRole("button", { name: "停止並轉成文字" }));
+  render(<LocalVoiceControl actionRequest={1} voice={injected} onTranscript={onTranscript} />);
   expect(await screen.findByRole("textbox", { name: "送給主管前可修改的文字" })).toHaveValue("客戶");
   expect(onTranscript).not.toHaveBeenCalled();
   fireEvent.change(screen.getByRole("textbox", { name: "送給主管前可修改的文字" }), { target: { value: "客訴" } });

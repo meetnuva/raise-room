@@ -21,7 +21,9 @@ import type { PracticeMediaController } from "../runtime/use-practice-media";
 import { LocalCameraTile } from "./LocalCameraTile";
 import { LocalVisualControl } from "./LocalVisualControl";
 import { LocalVoiceControl } from "./LocalVoiceControl";
+import { MeetingControlBar } from "./MeetingControlBar";
 import { MeetingSidePanel } from "./MeetingSidePanel";
+import type { MeetingPanelTab } from "./MeetingSidePanel";
 import { PerxonaManagerStage } from "./PerxonaManagerStage";
 
 type VoiceController = ReturnType<typeof useLocalVoice>;
@@ -109,8 +111,9 @@ function MeetingRoomView({
   const [sendError, setSendError] = useState<string | null>(null);
   const [managerNotice, setManagerNotice] = useState<string | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
+  const [activePanelTab, setActivePanelTab] = useState<MeetingPanelTab>("transcript");
+  const [voiceActionRequest, setVoiceActionRequest] = useState(0);
   const [cameraVideoElement, setCameraVideoElement] = useState<HTMLVideoElement | null>(null);
-  const informationButton = useRef<HTMLButtonElement>(null);
   const meetingRef = useRef(meeting);
   const vision = useLocalVision({ videoElement: cameraVideoElement });
   const latestTurn = meeting.transcript[meeting.transcript.length - 1];
@@ -203,19 +206,52 @@ function MeetingRoomView({
   const firstEventOffset = scenario.events.length
     ? Math.min(...scenario.events.map((event) => event.triggerRatio * durationSeconds))
     : 0;
+  const openPanel = (tab: MeetingPanelTab) => {
+    setActivePanelTab(tab);
+    setPanelOpen(true);
+  };
+  const closePanel = () => {
+    setPanelOpen(false);
+    const openerLabel = activePanelTab === "events" ? "開啟壓力事件" : activePanelTab === "transcript" ? "開啟逐字稿" : "更多會議選項";
+    document.querySelector<HTMLButtonElement>(`button[aria-label="${openerLabel}"]`)?.focus();
+  };
+  const voiceContent = (
+    <>
+      <section className="meeting-information-summary" aria-label="會議資訊內容">
+        <h3>會議資訊</h3>
+        <p>{managerEngineStatus}</p>
+        <p>{formatPracticeTimeRange(scheduledMeeting, "zh-TW")}</p>
+      </section>
+      <LocalVoiceControl
+        actionRequest={voiceActionRequest}
+        voice={voice}
+        onTranscript={(result, editedText) => {
+          void submitUserMessage(editedText, {
+            source: "voice",
+            durationSeconds: result.durationSeconds,
+            modelPreset: result.modelPreset,
+            language: result.language,
+          });
+        }}
+        disabled={sending}
+      />
+    </>
+  );
+  const deviceContent = (
+    <div className="meeting-device-status">
+      <p>鏡頭：{camera.cameraActive ? "已開啟" : "未開啟"}</p>
+      <p>語音：{voice.status === "ready" || voice.status === "recording" ? "本機模型已就緒" : "尚未就緒"}</p>
+      <p>可從底部控制列開啟鏡頭或語音。</p>
+    </div>
+  );
 
   return (
     <section aria-labelledby="meeting-room-title" className="meeting-room">
       <header className="meeting-header">
         <div>
-          <p className="eyebrow">本機模擬會議</p>
           <h2 id="meeting-room-title" tabIndex={-1}>{scheduledMeeting.title}</h2>
-          <p className="meeting-schedule">{formatPracticeTimeRange(scheduledMeeting, "zh-TW")}</p>
         </div>
         <div className="meeting-header-actions">
-          <button ref={informationButton} type="button" aria-expanded={panelOpen} onClick={() => setPanelOpen(true)}>
-            會議資訊
-          </button>
           <p
             className="meeting-countdown"
             aria-label={`剩餘時間 ${formatCountdown(meeting.elapsedSeconds, durationSeconds)}`}
@@ -224,7 +260,6 @@ function MeetingRoomView({
           </p>
         </div>
       </header>
-      <p aria-live="polite" className="manager-engine-status">{managerEngineStatus}</p>
       {sendError && <p role="alert">{sendError}</p>}
       {managerNotice && <p role="status">{managerNotice}</p>}
 
@@ -246,37 +281,40 @@ function MeetingRoomView({
         </div>
         {panelOpen && (
           <MeetingSidePanel
+            activeTab={activePanelTab}
+            onActiveTabChange={setActivePanelTab}
             transcript={meeting.transcript}
             events={scenario.events}
             emittedEventIds={meeting.emittedEventIds}
             durationSeconds={durationSeconds}
             managerName={scenario.manager.name}
             observationContent={<LocalVisualControl vision={vision} cameraActive={camera.cameraActive} />}
+            voiceContent={voiceContent}
+            deviceContent={deviceContent}
             transcriptFallback={developmentFallback}
-            onClose={() => {
-              informationButton.current?.focus();
-              setPanelOpen(false);
-            }}
+            onClose={closePanel}
           />
         )}
       </div>
 
-      <div className="meeting-controls" aria-label="會議控制">
-        <LocalVoiceControl
-          voice={voice}
-          onTranscript={(result, editedText) => {
-            void submitUserMessage(editedText, {
-              source: "voice",
-              durationSeconds: result.durationSeconds,
-              modelPreset: result.modelPreset,
-              language: result.language,
-            });
+      {panelOpen && <button aria-label="關閉會議資訊面板遮罩" className="meeting-panel-scrim" onClick={closePanel} type="button" />}
+      <div className="meeting-controls">
+        <MeetingControlBar
+          cameraActive={camera.cameraActive}
+          cameraRequesting={camera.requesting}
+          onCameraToggle={camera.toggle}
+          onFinish={() => finishMeeting(meeting.transcript)}
+          onOpenPanel={(tab) => {
+            openPanel(tab);
           }}
-          disabled={sending}
+          onVoiceAction={() => {
+            openPanel("transcript");
+            setVoiceActionRequest((current) => current + 1);
+          }}
+          activePanelTab={activePanelTab}
+          panelOpen={panelOpen}
+          voiceStatus={voice.status}
         />
-        <button type="button" onClick={camera.toggle} disabled={camera.requesting}>
-          {camera.cameraActive ? "關閉我的鏡頭" : "開啟我的鏡頭"}
-        </button>
         {import.meta.env.MODE === "test" && <button
           className="development-only"
           data-development-only="true"
@@ -285,9 +323,6 @@ function MeetingRoomView({
         >
           跳到第一個壓力事件
         </button>}
-        <button className="finish-meeting" type="button" onClick={() => finishMeeting(meeting.transcript)}>
-          離開並查看報告
-        </button>
       </div>
     </section>
   );

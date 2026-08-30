@@ -1,16 +1,20 @@
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect } from "react";
 import type { TranscriptTurn } from "../domain/meeting";
 import { getEventOffsetSeconds, type ScheduledEvent } from "../domain/scenario";
 
-type Tab = "transcript" | "events" | "observations";
+export type MeetingPanelTab = "transcript" | "events" | "observations" | "devices";
 
 type MeetingSidePanelProps = {
+  activeTab: MeetingPanelTab;
+  onActiveTabChange(tab: MeetingPanelTab): void;
   transcript: TranscriptTurn[];
   events: ScheduledEvent[];
   emittedEventIds: string[];
   durationSeconds: number;
   managerName: string;
   observationContent: ReactNode;
+  voiceContent: ReactNode;
+  deviceContent: ReactNode;
   transcriptFallback?: ReactNode;
   onClose: () => void;
 };
@@ -20,28 +24,40 @@ function formatOffset(seconds: number) {
 }
 
 export function MeetingSidePanel({
+  activeTab,
+  onActiveTabChange,
   transcript,
   events,
   emittedEventIds,
   durationSeconds,
   managerName,
   observationContent,
+  voiceContent,
+  deviceContent,
   transcriptFallback,
   onClose,
 }: MeetingSidePanelProps) {
-  const [activeTab, setActiveTab] = useState<Tab>("transcript");
-  const tabs: Array<{ id: Tab; label: string }> = [
+  const tabs: Array<{ id: MeetingPanelTab; label: string }> = [
     { id: "transcript", label: "逐字稿" },
     { id: "events", label: "壓力事件" },
     { id: "observations", label: "觀察" },
+    { id: "devices", label: "裝置" },
   ];
-  const selectTabFromKeyboard = (tab: Tab, key: string) => {
+  const selectTabFromKeyboard = (tab: MeetingPanelTab, key: string) => {
     const direction = key === "ArrowRight" || key === "ArrowDown" ? 1 : key === "ArrowLeft" || key === "ArrowUp" ? -1 : 0;
     if (!direction) return;
     const nextTab = tabs[(tabs.findIndex((item) => item.id === tab) + direction + tabs.length) % tabs.length];
-    setActiveTab(nextTab.id);
+    onActiveTabChange(nextTab.id);
     document.getElementById(`meeting-information-${nextTab.id}-tab`)?.focus();
   };
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
 
   return (
     <aside className="meeting-side-panel" aria-label="會議資訊">
@@ -56,7 +72,7 @@ export function MeetingSidePanel({
               aria-controls={`meeting-information-${tab.id}-panel`}
               aria-selected={activeTab === tab.id}
               tabIndex={activeTab === tab.id ? 0 : -1}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => onActiveTabChange(tab.id)}
               onKeyDown={(event) => {
                 selectTabFromKeyboard(tab.id, event.key);
                 if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) event.preventDefault();
@@ -90,6 +106,7 @@ export function MeetingSidePanel({
             </ol>
           )}
           {transcriptFallback}
+          {voiceContent}
         </section>
       )}
 
@@ -118,6 +135,13 @@ export function MeetingSidePanel({
         <section className="meeting-observations" aria-labelledby="meeting-information-observations-tab" id="meeting-information-observations-panel" role="tabpanel">
           <h3 id="observations-title">本機觀察</h3>
           {observationContent}
+        </section>
+      )}
+
+      {activeTab === "devices" && (
+        <section className="meeting-devices" aria-labelledby="meeting-information-devices-tab" id="meeting-information-devices-panel" role="tabpanel">
+          <h3>裝置狀態</h3>
+          {deviceContent}
         </section>
       )}
     </aside>

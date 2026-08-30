@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocalVoice, type VoiceTranscriptResult } from "../hooks/use-local-voice";
 import type { AsrModelPresetId } from "../domain/asr-models";
 import { VoiceTranscriptPreview } from "./VoiceTranscriptPreview";
@@ -8,12 +8,14 @@ type Props = {
   onTranscript(result: VoiceTranscriptResult, editedText: string): void;
   disabled?: boolean;
   modelPreset?: AsrModelPresetId;
+  actionRequest?: number;
 };
 
 type ViewProps = {
   voice: ReturnType<typeof useLocalVoice>;
   onTranscript(result: VoiceTranscriptResult, editedText: string): void;
   disabled?: boolean;
+  actionRequest?: number;
 };
 
 function getStatusText(voice: ViewProps["voice"]): string {
@@ -28,12 +30,25 @@ function getStatusText(voice: ViewProps["voice"]): string {
   return voice.errorMessage ?? "本機語音轉錄發生問題，仍可使用文字輸入。";
 }
 
-function LocalVoiceControlView({ voice, onTranscript, disabled = false }: ViewProps) {
+function LocalVoiceControlView({ voice, onTranscript, disabled = false, actionRequest = 0 }: ViewProps) {
   const [pendingResult, setPendingResult] = useState<VoiceTranscriptResult | null>(null);
+  const handledActionRequest = useRef(0);
   const submit = async () => {
     const result = await voice.stopAndTranscribe();
     if (result) setPendingResult(result);
   };
+
+  useEffect(() => {
+    if (actionRequest === handledActionRequest.current || disabled) return;
+    handledActionRequest.current = actionRequest;
+    if (voice.status === "ready") {
+      void voice.startRecording();
+    } else if (voice.status === "recording") {
+      void submit();
+    } else if (voice.status === "idle") {
+      voice.loadModel();
+    }
+  }, [actionRequest, disabled, voice]);
 
   if (pendingResult) {
     return <VoiceTranscriptPreview
@@ -83,9 +98,7 @@ function LocalVoiceControlView({ voice, onTranscript, disabled = false }: ViewPr
   if (voice.status === "ready") {
     return (
       <div className="local-voice-control">
-        <button disabled={disabled} type="button" onClick={() => void voice.startRecording()}>
-          開始說話
-        </button>
+        <p>本機語音模型已就緒。使用下方麥克風開始說話。</p>
       </div>
     );
   }
@@ -94,10 +107,7 @@ function LocalVoiceControlView({ voice, onTranscript, disabled = false }: ViewPr
     return (
       <div className="local-voice-control recording">
         <strong>麥克風使用中</strong>
-        <button type="button" onClick={() => void submit()}>
-          停止並轉成文字
-        </button>
-        <button type="button" onClick={voice.cancel}>取消</button>
+        <p>使用下方麥克風停止並轉成文字。</p>
       </div>
     );
   }

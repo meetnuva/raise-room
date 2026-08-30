@@ -114,8 +114,7 @@ test("emits all proportional events at exact M:SS offsets for a scheduled twenty
       clock={{ now: () => now, intervalMs: 1 }}
     />,
   );
-  fireEvent.click(screen.getByRole("button", { name: "會議資訊" }));
-  fireEvent.click(screen.getByRole("tab", { name: "壓力事件" }));
+  fireEvent.click(screen.getByRole("button", { name: "開啟壓力事件" }));
 
   for (const [offsetSeconds, expected] of [[120, "2:00"], [360, "6:00"], [600, "10:00"], [840, "14:00"], [1080, "18:00"]] as const) {
     now = offsetSeconds * 1000;
@@ -128,25 +127,44 @@ test("emits all proportional events at exact M:SS offsets for a scheduled twenty
 test("formats five minute half-minute pressure offsets without decimal minutes", () => {
   render(<MeetingRoom meeting={scheduledMeeting(5)} scenario={defaultScenario} responder={simulatedResponder} />);
 
-  fireEvent.click(screen.getByRole("button", { name: "會議資訊" }));
-  fireEvent.click(screen.getByRole("tab", { name: "壓力事件" }));
+  fireEvent.click(screen.getByRole("button", { name: "開啟壓力事件" }));
 
   expect(screen.getByText("0:30 · 待命")).toBeVisible();
   expect(screen.getByText("1:30 · 待命")).toBeVisible();
   expect(screen.queryByText(/第 0\.5 分鐘/)).toBeNull();
 });
 
-test("starts with information closed and returns focus to its opener after close", () => {
+test("starts with information closed and returns focus to its control-bar opener after close", () => {
   const { container } = render(<MeetingRoom meeting={scheduledMeeting(10)} scenario={defaultScenario} responder={simulatedResponder} />);
 
-  const opener = screen.getByRole("button", { name: "會議資訊" });
-  expect(opener).toHaveAttribute("aria-expanded", "false");
+  const opener = screen.getByRole("button", { name: "開啟逐字稿" });
   expect(container.querySelector(".meeting-layout")).not.toHaveClass("panel-open");
   fireEvent.click(opener);
   expect(container.querySelector(".meeting-layout")).toHaveClass("panel-open");
   fireEvent.click(screen.getByRole("button", { name: "關閉資訊面板" }));
   expect(opener).toHaveFocus();
   expect(container.querySelector(".meeting-layout")).not.toHaveClass("panel-open");
+});
+
+test("opens the responsive drawer from the fixed control bar and restores focus after Escape", () => {
+  render(<MeetingRoom meeting={scheduledMeeting(10)} scenario={defaultScenario} responder={simulatedResponder} />);
+
+  const opener = screen.getByRole("button", { name: "開啟逐字稿" });
+  fireEvent.click(opener);
+  expect(screen.getByRole("complementary", { name: "會議資訊" })).toBeVisible();
+  expect(screen.getByRole("button", { name: "關閉資訊面板" })).toBeVisible();
+  fireEvent.keyDown(screen.getByRole("complementary", { name: "會議資訊" }), { key: "Escape" });
+  expect(opener).toHaveFocus();
+});
+
+test("places voice controls inside the transcript content and keeps one microphone button in the fixed bar", () => {
+  const idleVoice = injectedVoice();
+  idleVoice.status = "idle";
+  render(<MeetingRoom meeting={scheduledMeeting(10)} scenario={defaultScenario} responder={simulatedResponder} voice={idleVoice} />);
+
+  expect(screen.getAllByRole("button", { name: "開始說話" })).toHaveLength(1);
+  fireEvent.click(screen.getByRole("button", { name: "開啟逐字稿" }));
+  expect(screen.getByText("音訊不會上傳，模型檔首次由 Hugging Face 下載")).toBeVisible();
 });
 
 test("requests the injected lobby media when its stream has not been granted, then toggles only an active stream", () => {
@@ -204,15 +222,15 @@ test("keeps the local visual control out of the transcript tab and renders it on
   );
 
   expect(screen.queryByRole("button", { name: "開始本機視覺觀察" })).toBeNull();
-  fireEvent.click(screen.getByRole("button", { name: "會議資訊" }));
-  fireEvent.click(screen.getByRole("tab", { name: "觀察" }));
+  fireEvent.click(screen.getByRole("button", { name: "更多會議選項" }));
+  fireEvent.click(screen.getByRole("menuitem", { name: "本機觀察" }));
   expect(screen.getAllByRole("button", { name: "開始本機視覺觀察" })).toHaveLength(1);
 });
 
 test("shows the first pressure card when the development jump is used", () => {
   render(<MeetingRoom meeting={scheduledMeeting(10)} scenario={defaultScenario} responder={simulatedResponder} />);
 
-  fireEvent.click(screen.getByRole("button", { name: "會議資訊" }));
+  fireEvent.click(screen.getByRole("button", { name: "開啟逐字稿" }));
   fireEvent.click(screen.getByRole("button", { name: "跳到第一個壓力事件" }));
   fireEvent.click(screen.getByRole("tab", { name: "壓力事件" }));
 
@@ -228,7 +246,7 @@ test("keeps a timed event after the development fallback receives a reply", asyn
   };
   render(<MeetingRoom meeting={scheduledMeeting(10)} scenario={defaultScenario} responder={delayedResponder} />);
 
-  fireEvent.click(screen.getByRole("button", { name: "會議資訊" }));
+  fireEvent.click(screen.getByRole("button", { name: "開啟逐字稿" }));
   fireEvent.change(screen.getByLabelText("開發用文字輸入"), {
     target: { value: "我想依成果討論調薪" },
   });
@@ -251,7 +269,7 @@ test("hands the append-only transcript to onFinish", async () => {
     />,
   );
 
-  fireEvent.click(screen.getByRole("button", { name: "會議資訊" }));
+  fireEvent.click(screen.getByRole("button", { name: "開啟逐字稿" }));
   fireEvent.change(screen.getByLabelText("開發用文字輸入"), {
     target: { value: "我想依成果討論調薪" },
   });
@@ -294,7 +312,7 @@ test("renders one bottom-control camera toggle when Perxona is not configured", 
 test("marks text fallback turns and disables a second submission while replying", async () => {
   let resolveReply = (_reply: { text: string; source: "simulated" }) => {};
   render(<MeetingRoom meeting={scheduledMeeting(10)} scenario={defaultScenario} responder={{ reply: () => new Promise((resolve) => { resolveReply = resolve; }) }} />);
-  fireEvent.click(screen.getByRole("button", { name: "會議資訊" }));
+  fireEvent.click(screen.getByRole("button", { name: "開啟逐字稿" }));
   fireEvent.change(screen.getByLabelText("開發用文字輸入"), { target: { value: "文字回合" } }); fireEvent.click(screen.getByRole("button", { name: "送出" }));
   expect(screen.getByRole("button", { name: "送出" })).toBeDisabled(); await act(async () => resolveReply({ text: "收到", source: "simulated" }));
   fireEvent.click(screen.getByRole("button", { name: "離開並查看報告" }));
@@ -303,7 +321,7 @@ test("marks text fallback turns and disables a second submission while replying"
 test("auto-completion hands the latest append-only transcript to onFinish exactly once", async () => {
   vi.useFakeTimers(); let now = 0; let resolveReply = (_reply: { text: string; source: "simulated" }) => {}; const onFinish = vi.fn();
   render(<MeetingRoom meeting={scheduledMeeting(10)} scenario={defaultScenario} responder={{ reply: () => new Promise<{ text: string; source: "simulated" }>((resolve) => { resolveReply = resolve; }) }} onFinish={onFinish} clock={{ durationSeconds: 2, now: () => now, intervalMs: 250 }} />);
-  fireEvent.click(screen.getByRole("button", { name: "會議資訊" }));
+  fireEvent.click(screen.getByRole("button", { name: "開啟逐字稿" }));
   fireEvent.change(screen.getByLabelText("開發用文字輸入"), { target: { value: "最新回合" } }); fireEvent.click(screen.getByRole("button", { name: "送出" })); await act(async () => resolveReply({ text: "主管回覆", source: "simulated" }));
   now = 2_000; act(() => vi.advanceTimersByTime(250));
   expect(onFinish).toHaveBeenCalledTimes(1); expect(onFinish).toHaveBeenCalledWith([
@@ -313,7 +331,7 @@ test("auto-completion hands the latest append-only transcript to onFinish exactl
 
 test("unlocks text input and shows a visible error when the manager responder rejects", async () => {
   render(<MeetingRoom meeting={scheduledMeeting(10)} scenario={defaultScenario} responder={{ reply: () => Promise.reject(new Error("offline")) }} />);
-  fireEvent.click(screen.getByRole("button", { name: "會議資訊" }));
+  fireEvent.click(screen.getByRole("button", { name: "開啟逐字稿" }));
   fireEvent.change(screen.getByLabelText("開發用文字輸入"), { target: { value: "重試" } }); fireEvent.click(screen.getByRole("button", { name: "送出" }));
   expect(await screen.findByRole("alert")).toHaveTextContent("主管回覆暫時無法取得，請重新送出。"); expect(screen.getByRole("button", { name: "送出" })).not.toBeDisabled();
 });
@@ -327,8 +345,8 @@ test("announces the Perxona manager source after a successful reply", async () =
     />,
   );
 
+  fireEvent.click(screen.getByRole("button", { name: "開啟逐字稿" }));
   expect(screen.getByText("主管引擎：等待首次回覆")).toBeVisible();
-  fireEvent.click(screen.getByRole("button", { name: "會議資訊" }));
   fireEvent.change(screen.getByLabelText("開發用文字輸入"), { target: { value: "我的請求" } });
   fireEvent.click(screen.getByRole("button", { name: "送出" }));
 
@@ -350,7 +368,7 @@ test("shows a non-blocking fallback notice without placing it in the transcript"
     />,
   );
 
-  fireEvent.click(screen.getByRole("button", { name: "會議資訊" }));
+  fireEvent.click(screen.getByRole("button", { name: "開啟逐字稿" }));
   fireEvent.change(screen.getByLabelText("開發用文字輸入"), { target: { value: "我的請求" } });
   fireEvent.click(screen.getByRole("button", { name: "送出" }));
 
