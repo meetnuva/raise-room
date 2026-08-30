@@ -122,6 +122,13 @@ test("bounds the 16:9 manager stage for short desktop viewports without a mobile
   expect(styles).not.toMatch(/@media \(max-width: 42rem\)[\s\S]*?\.manager-stage\s*\{[^}]*min-height:\s*22rem;/);
 });
 
+test("offsets the desktop self tile by the centered manager-stage margin at both height branches", () => {
+  const styles = readFileSync("src/styles.css", "utf8");
+
+  expect(styles).toMatch(/@media \(min-width: 768px\) and \(max-height: 899px\)\s*\{[^}]*\.meeting-sidebar\s*\{[^}]*right:\s*max\(1rem,\s*calc\(\(100%\s*-\s*58rem\)\s*\/\s*2\s*\+\s*1rem\)\);/);
+  expect(styles).toMatch(/@media \(min-width: 768px\) and \(min-height: 900px\)\s*\{[^}]*\.meeting-sidebar\s*\{[^}]*right:\s*max\(1rem,\s*calc\(\(100%\s*-\s*72rem\)\s*\/\s*2\s*\+\s*1rem\)\);/);
+});
+
 test("emits all proportional events at exact M:SS offsets for a scheduled twenty minute meeting", () => {
   vi.useFakeTimers();
   let now = 0;
