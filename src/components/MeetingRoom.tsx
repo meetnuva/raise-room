@@ -6,6 +6,7 @@ import {
   respondToUser,
   type ManagerResponder,
 } from "../domain/meeting";
+import type { TranscriptTurn } from "../domain/meeting";
 import type { Scenario, ScheduledEvent } from "../domain/scenario";
 
 const meetingLengthSeconds = 10 * 60;
@@ -33,7 +34,7 @@ export function MeetingRoom({
 }: {
   scenario: Scenario;
   responder: ManagerResponder;
-  onFinish?: () => void;
+  onFinish?: (transcript: TranscriptTurn[]) => void;
 }) {
   const [meeting, setMeeting] = useState(() => createMeeting(scenario));
   const [draft, setDraft] = useState("");
@@ -88,7 +89,13 @@ export function MeetingRoom({
         <button disabled type="button">麥克風：尚未啟用</button>
         <button disabled type="button">攝影機：尚未啟用</button>
         <button type="button" onClick={() => advanceTo(180)}>跳到第 3 分鐘</button>
-        <button className="finish-meeting" type="button" onClick={onFinish}>結束並看報告</button>
+        <button
+          className="finish-meeting"
+          type="button"
+          onClick={() => onFinish?.(meeting.transcript)}
+        >
+          結束並看報告
+        </button>
       </div>
 
       <div className="meeting-details">

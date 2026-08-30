@@ -1,43 +1,53 @@
 import { useState } from "react";
+import { CoachingReport } from "./components/CoachingReport";
 import { MeetingRoom } from "./components/MeetingRoom";
 import { ScenarioWorkshop } from "./components/ScenarioWorkshop";
 import { simulatedResponder } from "./domain/meeting";
+import type { TranscriptTurn } from "./domain/meeting";
 import type { Scenario } from "./domain/scenario";
 
+type AppState =
+  | { view: "setup" }
+  | { view: "meeting"; scenario: Scenario }
+  | { view: "report"; scenario: Scenario; transcript: TranscriptTurn[] };
+
 export function App() {
-  const [startedScenario, setStartedScenario] = useState<Scenario | null>(null);
-  const [meetingFinished, setMeetingFinished] = useState(false);
+  const [appState, setAppState] = useState<AppState>({ view: "setup" });
 
   const startMeeting = (scenario: Scenario) => {
-    setMeetingFinished(false);
-    setStartedScenario(scenario);
+    setAppState({ view: "meeting", scenario });
   };
-
-  if (startedScenario) {
-    return (
-      <main>
-        <MeetingRoom
-          scenario={startedScenario}
-          responder={simulatedResponder}
-          onFinish={() => {
-            setStartedScenario(null);
-            setMeetingFinished(true);
-          }}
-        />
-      </main>
-    );
-  }
 
   return (
     <main>
       <h1>Raise Room</h1>
-      <p>你的練習資料預設只留在這台裝置。</p>
-      <p>視覺 coaching 尚未啟用</p>
-      <ScenarioWorkshop onStart={startMeeting} />
-      {meetingFinished && (
-        <p role="status">
-          會議已結束，可回到設定調整情境後再練習。
-        </p>
+      {appState.view === "meeting" && (
+        <MeetingRoom
+          scenario={appState.scenario}
+          responder={simulatedResponder}
+          onFinish={(transcript) => {
+            setAppState({
+              view: "report",
+              scenario: appState.scenario,
+              transcript,
+            });
+          }}
+        />
+      )}
+      {appState.view === "report" && (
+        <CoachingReport
+          scenario={appState.scenario}
+          transcript={appState.transcript}
+          onRetry={() => setAppState({ view: "meeting", scenario: appState.scenario })}
+          onReset={() => setAppState({ view: "setup" })}
+        />
+      )}
+      {appState.view === "setup" && (
+        <>
+          <p>你的練習資料預設只留在這台裝置。</p>
+          <p>視覺教練功能尚未啟用</p>
+          <ScenarioWorkshop onStart={startMeeting} />
+        </>
       )}
     </main>
   );
