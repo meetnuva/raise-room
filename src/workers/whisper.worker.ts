@@ -7,6 +7,7 @@ import {
 } from "@huggingface/transformers";
 import { isAsrModelPresetId, type AsrModelPresetId } from "../domain/asr-models";
 import { getAsrRuntimeAttempts, getAsrRuntimeConfig, hasWebGpuSupport, type ReadyAsrRuntimeConfig } from "../lib/asr-runtime-config";
+import { getAsrAttemptLoadingMessage } from "../lib/asr-loading";
 import { normalizeAsrProgress, type AsrWorkerRequest, type VoiceLanguage } from "../lib/local-asr";
 
 const maxSamples = 16000 * 30;
@@ -15,6 +16,7 @@ let processing = false;
 type Runtime = Awaited<ReturnType<typeof loadRuntime>>;
 let runtime: Runtime | null = null;
 let activePreset: AsrModelPresetId | null = null;
+let loadingContext = "正在載入本機模型";
 
 function send(message: unknown) {
   self.postMessage(message);
@@ -22,7 +24,7 @@ function send(message: unknown) {
 
 function loading(progress: unknown) {
   const value = progress as { progress?: unknown; status?: unknown; file?: unknown };
-  const message =
+  const detail =
     typeof value.file === "string"
       ? value.file
       : typeof value.status === "string"
@@ -32,7 +34,7 @@ function loading(progress: unknown) {
   send({
     type: "loading",
     progress: normalizeAsrProgress(value.progress),
-    message,
+    message: `${loadingContext} · ${detail}`,
   });
 }
 
@@ -77,9 +79,11 @@ async function load(preset: AsrModelPresetId) {
     }
 
     let lastError: unknown;
-    for (const attempt of attempts) {
+    for (const [index, attempt] of attempts.entries()) {
       let candidate: Runtime | null = null;
       try {
+        loadingContext = getAsrAttemptLoadingMessage(preset, attempt.device, index > 0);
+        send({ type: "loading", progress: null, message: loadingContext });
         candidate = await loadRuntime(attempt);
         await candidate.model.generate({ input_features: full([1, 80, 3000], 0), max_new_tokens: 1 });
         runtime = candidate;

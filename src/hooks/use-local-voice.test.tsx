@@ -3,7 +3,7 @@ import { expect, test, vi } from "vitest";
 import { useLocalVoice } from "./use-local-voice";
 import type { LocalAsrClient } from "../lib/local-asr";
 
-function asr(): LocalAsrClient & { emit(event: { type: "ready"; device: "wasm" }): void } {
+function asr(): LocalAsrClient & { emit(event: { type: "ready"; device: "wasm" } | { type: "loading"; progress: number | null; message: string } | { type: "error"; message: string }): void } {
   let listener = (_event: never) => {}; return {
     subscribe: vi.fn((next) => { listener = next as never; return () => {}; }), load: vi.fn(), destroy: vi.fn(),
     transcribe: vi.fn().mockResolvedValue(" 本機文字 "), emit: (event) => listener(event as never),
@@ -25,6 +25,20 @@ test("shows denied permission without automatic retry", async () => {
   const { result } = renderHook(() => useLocalVoice({ modelPreset: "fast", asrClient: client, mediaDevices: { getUserMedia } }));
   act(() => client.emit({ type: "ready", device: "wasm" })); await act(() => result.current.startRecording());
   expect(result.current.status).toBe("denied"); expect(getUserMedia).toHaveBeenCalledOnce();
+});
+
+test("keeps the worker loading message only for the active model lifecycle", () => {
+  const client = asr();
+  const { result } = renderHook(() => useLocalVoice({ modelPreset: "fast", asrClient: client }));
+  act(() => client.emit({ type: "loading", progress: 0.42, message: "快速模型 · WebGPU" }));
+  expect(result.current.loadingMessage).toBe("快速模型 · WebGPU");
+  act(() => client.emit({ type: "ready", device: "wasm" }));
+  expect(result.current.loadingMessage).toBeNull();
+  act(() => client.emit({ type: "loading", progress: null, message: "快速模型 · WASM" }));
+  act(() => client.emit({ type: "error", message: "下載失敗" }));
+  expect(result.current.loadingMessage).toBeNull();
+  act(() => result.current.releaseModel());
+  expect(result.current.loadingMessage).toBeNull();
 });
 
 test("recreates an owned client after the StrictMode effect lifecycle", () => {

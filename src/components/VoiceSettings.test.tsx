@@ -76,4 +76,14 @@ test("caps reference input to avoid an unbounded comparison matrix", () => {
   expect(screen.getByRole("textbox", { name: "參考句" })).toHaveAttribute("maxlength", "500");
 });
 
+test("shows worker loading details and allows cancelling without microphone access", () => {
+  const releaseModel = vi.fn();
+  const voice = { status: "loading-model", progress: 0.42, loadingMessage: "快速模型（fast）· WebGPU", partialText: "", errorMessage: null, language: "zh", setLanguage: vi.fn(), device: null, loadModel: vi.fn(), startRecording: vi.fn(), stopAndTranscribe: vi.fn(), cancel: vi.fn(), releaseModel } as unknown as Parameters<typeof VoiceSettings>[0]["voice"];
+  render(<VoiceSettings savedPreset="fast" onSave={vi.fn()} onBack={vi.fn()} hasWebGpu voice={voice} />);
+  expect(screen.getByText("快速模型（fast）· WebGPU")).toBeVisible();
+  expect(screen.getByText("42%")).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "取消載入" }));
+  expect(releaseModel).toHaveBeenCalledOnce();
+});
+
 afterEach(() => vi.useRealTimers());

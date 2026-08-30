@@ -58,6 +58,7 @@ export function useLocalVoice(input?: LocalVoiceInput) {
     return typeof Worker === "undefined" ? "unsupported" : "idle";
   });
   const [progress, setProgress] = useState<number | null>(null);
+  const [loadingMessage, setLoadingMessage] = useState<string | null>(null);
   const [partialText, setPartialText] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [language, setLanguage] = useState<VoiceLanguage>("zh");
@@ -101,11 +102,13 @@ export function useLocalVoice(input?: LocalVoiceInput) {
       if (event.type === "loading") {
         setStatus("loading-model");
         setProgress(event.progress);
+        setLoadingMessage(event.message);
       }
 
       if (event.type === "ready") {
         setStatus("ready");
         setProgress(null);
+        setLoadingMessage(null);
         setErrorMessage(null);
         setDevice(event.device);
       }
@@ -117,6 +120,7 @@ export function useLocalVoice(input?: LocalVoiceInput) {
       if (event.type === "error") {
         setStatus("error");
         setErrorMessage(event.message);
+        setLoadingMessage(null);
       }
     });
 
@@ -144,6 +148,7 @@ export function useLocalVoice(input?: LocalVoiceInput) {
     activePreset.current = modelPreset;
     setStatus("idle");
     setProgress(null);
+    setLoadingMessage(null);
     setPartialText("");
     setErrorMessage(null);
     setDevice(null);
@@ -159,6 +164,7 @@ export function useLocalVoice(input?: LocalVoiceInput) {
 
     setStatus("loading-model");
     setProgress(null);
+    setLoadingMessage(null);
     setErrorMessage(null);
     asr.load(modelPreset);
   }, [client, modelPreset]);
@@ -279,6 +285,7 @@ export function useLocalVoice(input?: LocalVoiceInput) {
     if (mounted.current) {
       setStatus("idle");
       setProgress(null);
+      setLoadingMessage(null);
       setPartialText("");
       setErrorMessage(null);
       setDevice(null);
@@ -288,6 +295,7 @@ export function useLocalVoice(input?: LocalVoiceInput) {
   return {
     status,
     progress,
+    loadingMessage,
     partialText,
     errorMessage,
     language,

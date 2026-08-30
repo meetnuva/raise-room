@@ -1,9 +1,9 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
 import { LocalVoiceControl } from "./LocalVoiceControl";
-import type { VoiceTranscriptResult } from "../hooks/use-local-voice";
+import type { VoiceStatus, VoiceTranscriptResult } from "../hooks/use-local-voice";
 
-const voice = (status: "idle" | "ready" | "recording" = "idle") => ({ status, progress: null, partialText: "", errorMessage: null, language: "zh" as const, setLanguage: vi.fn(), loadModel: vi.fn(), startRecording: vi.fn(), stopAndTranscribe: vi.fn(), cancel: vi.fn(), device: null, releaseModel: vi.fn() });
+const voice = (status: VoiceStatus = "idle") => ({ status, progress: null as number | null, loadingMessage: null as string | null, partialText: "", errorMessage: null, language: "zh" as const, setLanguage: vi.fn(), loadModel: vi.fn(), startRecording: vi.fn(), stopAndTranscribe: vi.fn(), cancel: vi.fn(), device: null, releaseModel: vi.fn() });
 
 test("requires an explicit model opt-in and exposes language choice", () => {
   const injected = voice(); render(<LocalVoiceControl voice={injected} onTranscript={vi.fn<(result: VoiceTranscriptResult) => void>()} />);
@@ -15,6 +15,19 @@ test("requires an explicit model opt-in and exposes language choice", () => {
 test("marks active microphone clearly", () => {
   render(<LocalVoiceControl voice={voice("recording")} onTranscript={vi.fn()} />);
   expect(screen.getByText("麥克風使用中")).toBeVisible(); expect(screen.getByRole("button", { name: "停止並轉成文字" })).toBeVisible();
+});
+
+test("shows a cancellable model loading status without requesting a microphone", () => {
+  const injected = voice();
+  injected.status = "loading-model";
+  injected.progress = 0.37;
+  injected.loadingMessage = "快速模型（fast）· WASM";
+  render(<LocalVoiceControl voice={injected} onTranscript={vi.fn()} />);
+  expect(screen.getByText("快速模型（fast）· WASM")).toBeVisible();
+  expect(screen.getByText("37%")).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "取消載入" }));
+  expect(injected.releaseModel).toHaveBeenCalledOnce();
+  expect(injected.startRecording).not.toHaveBeenCalled();
 });
 
 test("shows a preview after transcription and waits for confirmation before delivering text", async () => {

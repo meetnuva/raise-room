@@ -137,7 +137,12 @@ function VoiceSettingsView({
         </label>
         <div aria-live="polite">
           {voice.status === "idle" && <button disabled={unavailable} type="button" onClick={voice.loadModel}>載入並測試</button>}
-          {voice.status === "loading-model" && <p>正在載入 {model.label} 模型</p>}
+          {voice.status === "loading-model" && <>
+            <p>正在載入 {model.label} 模型</p>
+            {voice.loadingMessage && <p>{voice.loadingMessage}</p>}
+            {voice.progress !== null && <p>{Math.round(voice.progress * 100)}%</p>}
+            <button type="button" onClick={voice.releaseModel}>取消載入</button>
+          </>}
           {voice.status === "ready" && <button type="button" onClick={() => { setRemainingSeconds(20); void voice.startRecording(); }}>開始測試</button>}
           {voice.status === "recording" && <><p>測試剩餘 {remainingSeconds} 秒</p><button type="button" onClick={() => void stopTest()}>停止測試</button></>}
           {voice.status === "transcribing" && <p>正在本機轉錄</p>}

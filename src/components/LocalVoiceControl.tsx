@@ -70,14 +70,12 @@ function LocalVoiceControlView({ voice, onTranscript, disabled = false }: ViewPr
   }
 
   if (voice.status === "loading-model") {
-    const loadingText = voice.progress === null
-      ? "正在載入本機模型"
-      : `正在下載模型 ${Math.round(voice.progress * 100)}%`;
-
     return (
       <div className="local-voice-control" role="status">
-        <p>{loadingText}</p>
+        <p>{voice.loadingMessage ?? "正在載入本機模型"}</p>
+        {voice.progress !== null && <p>{Math.round(voice.progress * 100)}%</p>}
         <p>首次會下載模型，之後由瀏覽器快取。</p>
+        <button type="button" onClick={voice.releaseModel}>取消載入</button>
       </div>
     );
   }
