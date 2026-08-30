@@ -60,6 +60,26 @@ test("uses entering, entered, and leaving motion states before handing close bac
   expect(onClose).toHaveBeenCalledOnce();
 });
 
+test("blocks every save and clear mutation while its 180ms close handoff is leaving", () => {
+  vi.useFakeTimers();
+  const { onClear, onClose, onSave } = renderDialog({ initialTab: "privacy" });
+
+  fireEvent.click(screen.getByRole("button", { name: "清除本機設定與草稿" }));
+  fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+
+  expect(screen.getByRole("dialog")).toHaveAttribute("data-motion", "leaving");
+  expect(screen.getByRole("tabpanel")).toHaveAttribute("inert");
+  fireEvent.click(screen.getByRole("button", { name: "確認清除", hidden: true }));
+  fireEvent.click(screen.getByRole("button", { name: "儲存" }));
+  expect(onClear).not.toHaveBeenCalled();
+  expect(onSave).not.toHaveBeenCalled();
+
+  act(() => vi.advanceTimersByTime(179));
+  expect(onClose).not.toHaveBeenCalled();
+  act(() => vi.advanceTimersByTime(1));
+  expect(onClose).toHaveBeenCalledOnce();
+});
+
 test("uses roving tabs with linked panels and keyboard navigation", () => {
   renderDialog();
 

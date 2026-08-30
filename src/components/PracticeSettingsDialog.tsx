@@ -128,11 +128,20 @@ export function PracticeSettingsDialog({
 
   if (!open) return null;
 
-  const updateScenario = (scenario: Scenario) => setDraft((current) => ({ ...current, scenario }));
-  const updatePractice = (practice: PracticeSettings) => setDraft((current) => ({ ...current, practice }));
+  const isClosing = motion === "leaving";
+  const updateScenario = (scenario: Scenario) => {
+    if (isClosing) return;
+    setDraft((current) => ({ ...current, scenario }));
+  };
+  const updatePractice = (practice: PracticeSettings) => {
+    if (isClosing) return;
+    setDraft((current) => ({ ...current, practice }));
+  };
+  const selectTab = (tab: SettingsTarget) => {
+    if (!isClosing) setSelectedTab(tab);
+  };
   const close = () => {
     if (closeTimer.current !== null) return;
-    setClearConfirmation(false);
     setMotion("leaving");
     closeTimer.current = window.setTimeout(() => {
       closeTimer.current = null;
@@ -140,6 +149,7 @@ export function PracticeSettingsDialog({
     }, 180);
   };
   const validateAndSave = () => {
+    if (isClosing) return;
     if (!draft.scenario.role.trim()) {
       setSelectedTab("manager");
       setFocusTarget("role");
@@ -167,19 +177,28 @@ export function PracticeSettingsDialog({
     }
     onSave(draft);
   };
+  const requestClear = () => {
+    if (!isClosing) setClearConfirmation(true);
+  };
+  const confirmClear = () => {
+    if (isClosing) return;
+    onClear();
+    setClearConfirmation(false);
+  };
   const selectTabFromKeyboard = (tab: SettingsTarget, key: string) => {
+    if (isClosing) return;
     const direction = key === "ArrowDown" || key === "ArrowRight" ? 1 : key === "ArrowUp" || key === "ArrowLeft" ? -1 : 0;
     if (!direction) return;
     const tabIndex = tabs.findIndex(({ id }) => id === tab);
     const nextTab = tabs[(tabIndex + direction + tabs.length) % tabs.length].id;
-    setSelectedTab(nextTab);
+    selectTab(nextTab);
   };
 
   return (
     <dialog ref={dialog} className="practice-settings-dialog" data-motion={motion} open={supportsNativeModal ? undefined : true} aria-label="練習設定" onCancel={(event) => { event.preventDefault(); close(); }} onKeyDown={(event) => { if (event.key === "Escape") { event.preventDefault(); close(); } }}>
       <header className="practice-settings-header">
         <h2 id="practice-settings-title">練習設定</h2>
-        <button aria-label="關閉設定" type="button" onClick={close}>×</button>
+        <button aria-label="關閉設定" disabled={isClosing} type="button" onClick={close}>×</button>
       </header>
       <div aria-label="練習設定分頁" className="practice-settings-tabs" role="tablist">
         {tabs.map((tab) => (
@@ -192,7 +211,8 @@ export function PracticeSettingsDialog({
             role="tab"
             tabIndex={selectedTab === tab.id ? 0 : -1}
             type="button"
-            onClick={() => setSelectedTab(tab.id)}
+            disabled={isClosing}
+            onClick={() => selectTab(tab.id)}
             onKeyDown={(event) => {
               selectTabFromKeyboard(tab.id, event.key);
               if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) event.preventDefault();
@@ -200,31 +220,31 @@ export function PracticeSettingsDialog({
           ><Icon name={tab.icon} size={20} /><span>{tab.label}</span></button>
         ))}
       </div>
-      <section aria-labelledby={`practice-settings-tab-${selectedTab}`} className="practice-settings-content" id={`practice-settings-${selectedTab}`} role="tabpanel">
-        {selectedTab === "audio" && <><DeviceSettingsPanel kinds={["audioinput"]} selectedDeviceIds={selectedDeviceIds} onSelectDevice={onSelectDevice} /><p>3D 主管聲音使用系統預設輸出裝置</p></>}
-        {selectedTab === "video" && <DeviceSettingsPanel kinds={["videoinput"]} selectedDeviceIds={selectedDeviceIds} onSelectDevice={onSelectDevice} />}
-        {selectedTab === "voice" && <VoiceSettingsPanel hasWebGpu={typeof navigator !== "undefined" && hasWebGpuSupport(navigator.gpu)} selectedPreset={draft.modelPreset} onSelectedPresetChange={(modelPreset) => setDraft((current) => ({ ...current, modelPreset }))} />}
+      <section aria-labelledby={`practice-settings-tab-${selectedTab}`} className="practice-settings-content" id={`practice-settings-${selectedTab}`} inert={isClosing} role="tabpanel">
+        {selectedTab === "audio" && <><DeviceSettingsPanel kinds={["audioinput"]} selectedDeviceIds={selectedDeviceIds} onSelectDevice={(device) => { if (!isClosing) onSelectDevice(device); }} /><p>3D 主管聲音使用系統預設輸出裝置</p></>}
+        {selectedTab === "video" && <DeviceSettingsPanel kinds={["videoinput"]} selectedDeviceIds={selectedDeviceIds} onSelectDevice={(device) => { if (!isClosing) onSelectDevice(device); }} />}
+        {selectedTab === "voice" && <VoiceSettingsPanel hasWebGpu={typeof navigator !== "undefined" && hasWebGpuSupport(navigator.gpu)} selectedPreset={draft.modelPreset} onSelectedPresetChange={(modelPreset) => { if (!isClosing) setDraft((current) => ({ ...current, modelPreset })); }} />}
         {selectedTab === "manager" && <>
-          <fieldset><legend>主管角色</legend>
+          <fieldset disabled={isClosing}><legend>主管角色</legend>
             {(["male", "female"] as const).map((presentation) => {
               const available = isPresenterPresentationAvailable(presenterCatalog, presentation);
               const label = presentation === "male" ? "男性主管" : "女性主管";
-              return <label key={presentation}><input checked={draft.practice.managerPresentation === presentation} disabled={!available} name="manager-presentation" type="radio" value={presentation} onChange={() => updatePractice({ ...draft.practice, managerPresentation: presentation })} />{label}{!available && " 此角色尚未設定"}</label>;
+              return <label key={presentation}><input checked={draft.practice.managerPresentation === presentation} disabled={!available || isClosing} name="manager-presentation" type="radio" value={presentation} onChange={() => updatePractice({ ...draft.practice, managerPresentation: presentation })} />{label}{!available && " 此角色尚未設定"}</label>;
             })}
           </fieldset>
           <div className="practice-settings-fields">
-            <label>主管姓名<input ref={managerInput} required value={draft.scenario.manager.name} onChange={(event) => updateScenario({ ...draft.scenario, manager: { ...draft.scenario.manager, name: event.target.value } })} /></label>
+            <label>主管姓名<input ref={managerInput} disabled={isClosing} required value={draft.scenario.manager.name} onChange={(event) => updateScenario({ ...draft.scenario, manager: { ...draft.scenario.manager, name: event.target.value } })} /></label>
           </div>
           <ScenarioSettingsPanel section="scenario" inputRefs={{ role: roleInput, reason: reasonInput, currentMonthlySalary: currentSalaryInput, requestedMonthlySalary: requestedSalaryInput }} value={draft.scenario} durationMinutes={draft.practice.durationMinutes} onChange={updateScenario} />
         </>}
         {selectedTab === "personality" && <ScenarioSettingsPanel section="managerPersonality" value={draft.scenario} durationMinutes={draft.practice.durationMinutes} onChange={updateScenario} />}
         {selectedTab === "meeting" && <>
-          <fieldset><legend>會議長度</legend>{([5, 10, 20] as const).map((durationMinutes) => <label key={durationMinutes}><input checked={draft.practice.durationMinutes === durationMinutes} name="duration" type="radio" onChange={() => updatePractice({ ...draft.practice, durationMinutes })} />{durationMinutes} 分鐘</label>)}</fieldset>
+          <fieldset disabled={isClosing}><legend>會議長度</legend>{([5, 10, 20] as const).map((durationMinutes) => <label key={durationMinutes}><input checked={draft.practice.durationMinutes === durationMinutes} name="duration" type="radio" onChange={() => updatePractice({ ...draft.practice, durationMinutes })} />{durationMinutes} 分鐘</label>)}</fieldset>
           <ScenarioSettingsPanel section="events" value={draft.scenario} durationMinutes={draft.practice.durationMinutes} onChange={updateScenario} />
         </>}
-        {selectedTab === "privacy" && <section className="practice-settings-privacy"><p>設定與草稿只儲存在這台裝置。</p><p>不會在未經你操作下讀取裝置、請求權限或載入語音模型。</p>{clearConfirmation ? <div className="practice-settings-danger-confirmation"><p>確定要清除本機設定與草稿嗎？</p><button ref={clearCancel} type="button" onClick={() => setClearConfirmation(false)}>取消清除</button><button className="practice-settings-danger-button" type="button" onClick={() => { onClear(); setClearConfirmation(false); }}>確認清除</button></div> : <div className="practice-settings-danger-zone"><button type="button" onClick={() => setClearConfirmation(true)}>清除本機設定與草稿</button></div>}</section>}
+        {selectedTab === "privacy" && <section className="practice-settings-privacy"><p>設定與草稿只儲存在這台裝置。</p><p>不會在未經你操作下讀取裝置、請求權限或載入語音模型。</p>{clearConfirmation ? <div className="practice-settings-danger-confirmation"><p>確定要清除本機設定與草稿嗎？</p><button ref={clearCancel} disabled={isClosing} type="button" onClick={() => { if (!isClosing) setClearConfirmation(false); }}>取消清除</button><button className="practice-settings-danger-button" disabled={isClosing} type="button" onClick={confirmClear}>確認清除</button></div> : <div className="practice-settings-danger-zone"><button disabled={isClosing} type="button" onClick={requestClear}>清除本機設定與草稿</button></div>}</section>}
       </section>
-      <footer className="practice-settings-actions"><button type="button" onClick={close}>取消</button><button type="button" onClick={validateAndSave}>儲存</button></footer>
+      <footer className="practice-settings-actions"><button disabled={isClosing} type="button" onClick={close}>取消</button><button disabled={isClosing} type="button" onClick={validateAndSave}>儲存</button></footer>
     </dialog>
   );
 }

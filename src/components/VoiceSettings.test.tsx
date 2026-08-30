@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import { readFileSync } from "node:fs";
 import { useState } from "react";
 import { afterEach, expect, test, vi, type Mock } from "vitest";
 import { VoiceSettings, VoiceSettingsPanel } from "./VoiceSettings";
@@ -29,6 +30,13 @@ test("renders all allowlisted model choices as one selectable list with a detail
   expect(screen.getByTestId("voice-model-detail")).toHaveTextContent("高品質");
   expect(document.querySelector(".asr-model-cards")).toBeNull();
   expect(onSave).not.toHaveBeenCalled();
+});
+
+test("keeps the desktop preset list and selected-model detail in the same grid row", () => {
+  const styles = readFileSync("src/styles.css", "utf8");
+
+  expect(styles).toMatch(/\.asr-model-options\s*\{[^}]*grid-column:\s*1;/s);
+  expect(styles).toMatch(/\.voice-model-detail\s*\{[^}]*grid-column:\s*2;[^}]*grid-row:\s*1;/s);
 });
 
 test("keeps a quality selection disabled with an explicit WebGPU explanation", () => {
