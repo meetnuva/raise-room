@@ -84,3 +84,23 @@ test("releases an owned model before switching preset and can recreate it after 
   act(() => result.current.loadModel());
   expect(third.load).toHaveBeenCalledExactlyOnceWith("balanced");
 });
+
+test("subscribes to a recreated owned client after explicit model release", () => {
+  const first = asr();
+  const second = asr();
+  const factory = vi.fn().mockReturnValueOnce(first).mockReturnValueOnce(second);
+  const { result } = renderHook(() => useLocalVoice({ modelPreset: "fast", asrClientFactory: factory }));
+
+  act(() => result.current.loadModel());
+  expect(first.subscribe).toHaveBeenCalledOnce();
+  act(() => result.current.releaseModel());
+  expect(first.destroy).toHaveBeenCalledOnce();
+
+  act(() => result.current.loadModel());
+  expect(second.subscribe).toHaveBeenCalledOnce();
+  expect(second.load).toHaveBeenCalledExactlyOnceWith("fast");
+  act(() => second.emit({ type: "loading", progress: 0.4, message: "快速模型（fast）· WebGPU" }));
+  expect(result.current.loadingMessage).toBe("快速模型（fast）· WebGPU");
+  act(() => second.emit({ type: "ready", device: "wasm" }));
+  expect(result.current).toMatchObject({ status: "ready", device: "wasm", loadingMessage: null });
+});

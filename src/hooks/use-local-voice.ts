@@ -52,6 +52,8 @@ export function useLocalVoice(input?: LocalVoiceInput) {
   const context = useRef<AudioContext | null>(null);
   const startedAt = useRef<number | null>(null);
   const chunks = useRef<Blob[]>([]);
+  const unsubscribeRef = useRef<(() => void) | null>(null);
+  const subscribedClientRef = useRef<LocalAsrClient | null>(null);
 
   const [status, setStatus] = useState<VoiceStatus>(() => {
     if (input?.asrClient) return "idle";
@@ -64,6 +66,45 @@ export function useLocalVoice(input?: LocalVoiceInput) {
   const [language, setLanguage] = useState<VoiceLanguage>("zh");
   const [device, setDevice] = useState<"webgpu" | "wasm" | null>(null);
   const activePreset = useRef(modelPreset);
+
+  const handleAsrEvent = useCallback((event: AsrWorkerEvent) => {
+    if (!mounted.current) return;
+
+    if (event.type === "loading") {
+      setStatus("loading-model");
+      setProgress(event.progress);
+      setLoadingMessage(event.message);
+    }
+
+    if (event.type === "ready") {
+      setStatus("ready");
+      setProgress(null);
+      setLoadingMessage(null);
+      setErrorMessage(null);
+      setDevice(event.device);
+    }
+
+    if (event.type === "partial") setPartialText(event.text);
+
+    if (event.type === "error") {
+      setStatus("error");
+      setErrorMessage(event.message);
+      setLoadingMessage(null);
+    }
+  }, []);
+
+  const detachClient = useCallback(() => {
+    unsubscribeRef.current?.();
+    unsubscribeRef.current = null;
+    subscribedClientRef.current = null;
+  }, []);
+
+  const subscribeClient = useCallback((asr: LocalAsrClient) => {
+    if (subscribedClientRef.current === asr) return;
+    detachClient();
+    subscribedClientRef.current = asr;
+    unsubscribeRef.current = asr.subscribe(handleAsrEvent);
+  }, [detachClient, handleAsrEvent]);
 
   const stopTracks = useCallback(() => {
     stream.current?.getTracks().forEach((track) => track.stop());
@@ -86,47 +127,21 @@ export function useLocalVoice(input?: LocalVoiceInput) {
 
     if (!clientRef.current && canCreateClient) {
       clientRef.current = clientFactory.current();
+      subscribeClient(clientRef.current);
     }
 
     return clientRef.current;
-  }, [input?.asrClientFactory]);
+  }, [input?.asrClientFactory, subscribeClient]);
 
   useEffect(() => {
     mounted.current = true;
     const asr = client();
     if (!asr) return;
-
-    const unsubscribe = asr.subscribe((event: AsrWorkerEvent) => {
-      if (!mounted.current) return;
-
-      if (event.type === "loading") {
-        setStatus("loading-model");
-        setProgress(event.progress);
-        setLoadingMessage(event.message);
-      }
-
-      if (event.type === "ready") {
-        setStatus("ready");
-        setProgress(null);
-        setLoadingMessage(null);
-        setErrorMessage(null);
-        setDevice(event.device);
-      }
-
-      if (event.type === "partial") {
-        setPartialText(event.text);
-      }
-
-      if (event.type === "error") {
-        setStatus("error");
-        setErrorMessage(event.message);
-        setLoadingMessage(null);
-      }
-    });
+    subscribeClient(asr);
 
     return () => {
       mounted.current = false;
-      unsubscribe();
+      detachClient();
       release();
 
       if (!injectedClient.current && clientRef.current === asr) {
@@ -134,7 +149,7 @@ export function useLocalVoice(input?: LocalVoiceInput) {
         clientRef.current = null;
       }
     };
-  }, [client, release]);
+  }, [client, detachClient, release, subscribeClient]);
 
   useEffect(() => {
     if (activePreset.current === modelPreset) return;
@@ -142,6 +157,7 @@ export function useLocalVoice(input?: LocalVoiceInput) {
     if (recorder.current?.state === "recording") recorder.current.stop();
     release();
     if (!injectedClient.current && clientRef.current) {
+      detachClient();
       clientRef.current.destroy();
       clientRef.current = null;
     }
@@ -152,7 +168,7 @@ export function useLocalVoice(input?: LocalVoiceInput) {
     setPartialText("");
     setErrorMessage(null);
     setDevice(null);
-  }, [modelPreset, release]);
+  }, [detachClient, modelPreset, release]);
 
   const loadModel = useCallback(() => {
     const asr = client();
@@ -279,6 +295,7 @@ export function useLocalVoice(input?: LocalVoiceInput) {
     if (recorder.current?.state === "recording") recorder.current.stop();
     release();
     if (!injectedClient.current && clientRef.current) {
+      detachClient();
       clientRef.current.destroy();
       clientRef.current = null;
     }
@@ -290,7 +307,7 @@ export function useLocalVoice(input?: LocalVoiceInput) {
       setErrorMessage(null);
       setDevice(null);
     }
-  }, [release]);
+  }, [detachClient, release]);
 
   return {
     status,
