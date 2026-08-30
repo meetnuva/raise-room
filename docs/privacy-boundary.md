@@ -14,7 +14,8 @@ Raise Room 是私人練習工具，不是雇主評分、招募篩選、謊言偵
 - 報告只由逐字稿 delivery metadata 推導語音秒數、字元／分鐘與固定填充詞計數；字元／分鐘不可跨繁中、英文、日文比較，且不產生自信、誠實、情緒或任何心理／人格分數。
 - 本局逐字稿只存在 React memory，關閉或重新整理頁面後就會消失。
 - 情境設定的本機草稿只保存在目前瀏覽器，方便再次開啟設定頁時使用。
-- Raise Room 沒有自有後端、雲端儲存或資料傳送。明確啟用的 Perxona Presenter 會直接與其官方服務互動，使用 Publishable Key、設定 target 與 deterministic 主管回覆文字；不會傳送 camera stream 或 frame。
+- Raise Room 沒有雲端儲存。它有一個只監聽 `127.0.0.1` 的本機 Node server；未設定動態主管時不會傳送會議資料。設定專用 Perxona Chatbot 後，這個 server 才會以 server-only Secret Key 將情境設定、目前逐字稿與已發生壓力事件送到 Perxona Chatbot，並且不記錄 request body、情境、逐字稿或 upstream response。browser 不會收到 Secret Key、Chatbot ID 或 API base URL。
+- 明確啟用的 Perxona Presenter 會直接與其官方服務互動，使用 Publishable Key、設定 target 與主管回覆文字；不會傳送 camera stream 或 frame。
 
 ## 未來整合的要求
 

@@ -6,26 +6,31 @@ Raise Room 是以本機優先為原則的私人薪資檢討練習空間。你可
 
 ```bash
 npm install
+cp .env.example .env.local
 ```
 
 ## 開發
 
 ```bash
 npm run dev
-npm run dev -- --host
 ```
+
+開發 server 固定只監聽 `127.0.0.1`，不支援 `--host` 或跨網路存取。未建立或未設定 Perxona Chatbot 時，會議仍可完整使用本機腳本 fallback，並明確顯示來源。
 
 ## 測試與建置
 
 ```bash
 npm test
 npm run build
+npm run start
 ```
+
+需要 Node `>=24.13.1`。`npm run start` 會從 `dist` 提供 production build，仍只監聽 loopback。
 
 ## 目前 MVP 能力
 
 - 在瀏覽器內設定薪資檢討情境與本機草稿。
-- 透過文字輸入進行 deterministic 模擬會議，保留本局逐字稿。
+- 透過文字輸入進行模擬會議，保留本局逐字稿；已設定的 Perxona Chatbot 可作為動態主管，否則使用明確標示的本機腳本 fallback。
 - 依逐字稿中的具體請求、量化成果、拒絕後回應與下一步，產生附證據連結的會後教練報告。
 - 用同一情境再練一次，或回到設定頁重新開始。
 
@@ -35,7 +40,7 @@ npm run build
 
 ## Local-first
 
-會議逐字稿只保留在目前的 React memory；關閉或重新整理頁面後不會保留。情境草稿只存在此瀏覽器的本機草稿。詳見 [資料與隱私邊界](docs/privacy-boundary.md) 與 [Perxona 整合邊界](docs/perxona-integration.md)。
+會議逐字稿只保留在目前的 React memory；關閉或重新整理頁面後不會保留。情境草稿只存在此瀏覽器的本機草稿。Perxona 動態主管啟用時，browser 只會同源呼叫本機 server；Secret Key 只在 Node process environment。詳見 [資料與隱私邊界](docs/privacy-boundary.md)、[Perxona 整合邊界](docs/perxona-integration.md) 與 [Chatbot setup contract](docs/perxona-chatbot-setup.md)。
 
 ## Phase 3：可選本機語音
 
