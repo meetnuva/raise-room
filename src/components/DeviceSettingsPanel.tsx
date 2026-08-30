@@ -66,11 +66,14 @@ export function DeviceSettingsPanel({
   useEffect(() => {
     if (previewVideo.current) previewVideo.current.srcObject = previewStream;
   }, [previewStream]);
-  useEffect(() => () => {
-    mounted.current = false;
-    requestVersion.current += 1;
-    activePreview.current?.getTracks().forEach((track) => track.stop());
-    activePreview.current = null;
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      requestVersion.current += 1;
+      activePreview.current?.getTracks().forEach((track) => track.stop());
+      activePreview.current = null;
+    };
   }, []);
 
   return (

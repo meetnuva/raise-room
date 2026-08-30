@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import type { PresenterRuntimeConfig } from "../lib/perxona-config";
 import { usePerxonaPresenter } from "../hooks/use-perxona-presenter";
 import type { PresenterClient } from "../lib/perxona-presenter";
@@ -62,9 +62,13 @@ export function PerxonaManagerStage({
     "key-rejected": "Perxona 金鑰遭拒絕",
     error: "3D 主管無法使用",
   }[status];
+  const activateTile = (event: MouseEvent<HTMLElement>) => {
+    if ((event.target as Element).closest("button, a, input, select, textarea")) return;
+    setMenuRequest((current) => current + 1);
+  };
 
   return (
-    <section className="manager-stage" aria-labelledby="manager-stage-title">
+    <section className="manager-stage" aria-labelledby="manager-stage-title" onClick={activateTile}>
       <button aria-label="開啟主管參與者選單" className="participant-tile-hit-target" type="button" onClick={() => setMenuRequest((current) => current + 1)} />
       <div className="participant-tile-overlay">
         <div><p className="stage-label">主管畫面{pinned && <><Icon name="pin" size={16} /><span>已釘選</span></>}</p><h3 id="manager-stage-title">{managerName}</h3></div>

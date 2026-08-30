@@ -256,3 +256,10 @@ CSS root 必須定義並由本次觸及的 UI 使用：
 - focused UI／accessibility suite：10 個 test files／78 tests 通過，覆蓋本地 icon、500ms tooltip 與 focus、keyboard menu／Escape／focus return、首頁所有 header action、lobby explicit permission、七 tabs、固定六控制列、drawer、participant actions 與 toast。
 - 靜態 CSS 檢查：27 個 root token 定義、16 種被引用的 token、共 73 次 `var()` 使用、0 個未知 token；設計指定的 960px dialog、70/30 lobby、16:9 stage、56px 不換行控制列、桌面 360px／平板 320px／手機 `min(calc(100vw - 24px), 360px)` drawer，以及 reduced-motion 規則均存在。
 - 未完成且不得以本段替代：Google Meet 唯讀比對、五尺寸 Chrome 實機矩陣、所有可見控制逐一 click/readback、console 檢查、permission deny、視覺 aggregate，及真正不中斷 20 分鐘 physical media／high-quality ASR／Presenter／edited voice turn／比例事件／自動 report。這些 acceptance 仍由 root browser owner pending。
+
+### Final re-review evidence (2026-08-30)
+
+- Fresh full gate: 59 test files／320 tests passed; TypeScript/Vite build、release-files 與 `git diff --check` passed. Vite only retained its existing large-chunk advisory.
+- Fresh CSS token scan: 34 custom-property definitions, 19 referenced token types, 79 `var()` uses, and 0 unknown references. This re-review made `--surface-canvas`、`--accent-hover`、`--scrim` live in the touched UI rules.
+- StrictMode regression coverage verifies explicit microphone/camera requests remain usable after effect replay, late camera resolution is stopped after unmount, and successful preview streams stop on real unmount. Meeting drawer keeps device selection only and does not offer a second raw media request.
+- Full-surface participant triggers are sibling semantic buttons; Presenter canvas, local video, and real controls sit above the hit target while noninteractive surface clicks open the menu. Browser-level pointer hit testing remains part of root Chrome acceptance.

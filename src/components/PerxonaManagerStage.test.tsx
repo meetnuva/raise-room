@@ -35,6 +35,6 @@ test("only speaks each ready manager reply once with an injected client", async 
 });
 test("opens the manager participant menu from the tile surface", async () => {
   render(<PerxonaManagerStage managerName="王主管" config={{ enabled: false, reason: "missing-key" }} latestManagerText={null} />);
-  fireEvent.click(screen.getByRole("button", { name: "開啟主管參與者選單" }));
+  fireEvent.click(screen.getByLabelText("Perxona 3D 主管舞台"));
   expect(await screen.findByRole("menu")).toBeVisible();
 });

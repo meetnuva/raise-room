@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, type MouseEvent, type ReactNode } from "react";
 import { useLocalCamera } from "../hooks/use-local-camera";
 import { Icon } from "./ui/Icons";
 type Camera = ReturnType<typeof useLocalCamera>;
@@ -52,9 +52,13 @@ function LocalCameraTileView({
         : camera.status === "error"
           ? "無法啟動攝影機"
           : "鏡頭尚未開啟";
+  const activateTile = (event: MouseEvent<HTMLElement>) => {
+    if ((event.target as Element).closest("button, a, input, select, textarea")) return;
+    onTileActivate?.();
+  };
 
   return (
-    <section className="local-camera-tile" aria-label="你的本機鏡頭">
+    <section className="local-camera-tile" aria-label="你的本機鏡頭" onClick={activateTile}>
       {onTileActivate && <button aria-label="開啟你的參與者選單" className="participant-tile-hit-target" type="button" onClick={onTileActivate} />}
       <div className="participant-tile-overlay">
         <p className="stage-label">你 · 本機預覽{pinned && <><Icon name="pin" size={16} /><span>已釘選</span></>}</p>

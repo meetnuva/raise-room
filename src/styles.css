@@ -2032,7 +2032,7 @@ button {
 
 .participant-tile-overlay {
   position: relative;
-  z-index: 2;
+  z-index: 3;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2052,6 +2052,19 @@ button {
   border: 0;
   background: transparent;
   cursor: pointer;
+}
+
+.manager-stage .presenter-canvas,
+.local-camera-tile video,
+.local-camera-tile .camera-placeholder {
+  position: relative;
+  z-index: 2;
+}
+
+.manager-stage > button:not(.participant-tile-hit-target),
+.local-camera-tile > button:not(.participant-tile-hit-target) {
+  position: relative;
+  z-index: 4;
 }
 
 .participant-tile-hit-target:focus-visible {

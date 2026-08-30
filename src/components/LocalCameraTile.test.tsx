@@ -78,3 +78,14 @@ test("makes an injected self tile keyboard-operable without creating an owned co
   fireEvent.click(trigger);
   expect(onTileActivate).toHaveBeenCalledOnce();
 });
+
+test("opens its menu from a noninteractive preview click without forwarding inner button clicks", () => {
+  const onTileActivate = vi.fn();
+  const onInnerAction = vi.fn();
+  render(<LocalCameraTile previewStream={{} as MediaStream} showControl={false} onTileActivate={onTileActivate} tileActions={<button type="button" onClick={onInnerAction}>內部操作</button>} />);
+  fireEvent.click(screen.getByLabelText("本機鏡頭預覽"));
+  expect(onTileActivate).toHaveBeenCalledOnce();
+  fireEvent.click(screen.getByRole("button", { name: "內部操作" }));
+  expect(onInnerAction).toHaveBeenCalledOnce();
+  expect(onTileActivate).toHaveBeenCalledOnce();
+});

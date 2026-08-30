@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import { StrictMode } from "react";
 import { vi } from "vitest";
 import { DeviceSettingsPanel } from "./DeviceSettingsPanel";
 
@@ -37,4 +38,21 @@ test("stops a late camera preview after unmount and never exposes media tests wh
   render(<DeviceSettingsPanel allowMediaTest={false} kinds={["audioinput", "videoinput"]} mediaDevices={{ enumerateDevices: vi.fn(), getUserMedia }} onSelectDevice={vi.fn()} />);
   expect(screen.queryByRole("button", { name: /測試麥克風|預覽攝影機/ })).toBeNull();
   expect(getUserMedia).toHaveBeenCalledOnce();
+});
+
+test("keeps explicit media requests live after StrictMode replay and stops the resulting preview on unmount", async () => {
+  const microphoneTrack = { stop: vi.fn() };
+  const cameraTrack = { stop: vi.fn() };
+  const getUserMedia = vi.fn()
+    .mockResolvedValueOnce({ getTracks: () => [microphoneTrack] } as unknown as MediaStream)
+    .mockResolvedValueOnce({ getTracks: () => [cameraTrack] } as unknown as MediaStream);
+  const { unmount } = render(
+    <StrictMode><DeviceSettingsPanel kinds={["audioinput", "videoinput"]} mediaDevices={{ enumerateDevices: vi.fn(), getUserMedia }} onSelectDevice={vi.fn()} /></StrictMode>,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "測試麥克風" }));
+  expect(await screen.findByText("麥克風測試完成。")).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "預覽攝影機" }));
+  expect(await screen.findByLabelText("攝影機預覽")).toBeVisible();
+  unmount();
+  expect(cameraTrack.stop).toHaveBeenCalledOnce();
 });
