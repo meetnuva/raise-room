@@ -68,6 +68,7 @@ test("opens settings from the functional home more menu", () => {
   fireEvent.click(screen.getByRole("menuitem", { name: "查看本機資料與隱私" }));
 
   expect(screen.getByRole("dialog", { name: "練習設定" })).toBeVisible();
+  expect(screen.getByRole("tab", { name: "隱私" })).toHaveAttribute("aria-selected", "true");
 });
 
 test("saves five minutes without moving the start hour", () => {
@@ -108,12 +109,14 @@ test("passes the same practice media and voice runtime from lobby into the meeti
 });
 
 test("keeps settings edits local on cancel and returns focus to settings", () => {
+  vi.useFakeTimers();
   window.localStorage.setItem("raise-room-meeting-settings-v1", JSON.stringify({ durationMinutes: 20, managerPresentation: "male" }));
   render(<App now={() => new Date(2026, 7, 30, 17, 5)} />);
   openSettings();
   fireEvent.click(screen.getByRole("tab", { name: "會議" }));
   fireEvent.click(screen.getByRole("radio", { name: "5 分鐘" }));
   fireEvent.click(screen.getByRole("button", { name: "取消" }));
+  act(() => vi.advanceTimersByTime(180));
   expect(window.localStorage.getItem("raise-room-meeting-settings-v1")).toBe(JSON.stringify({ durationMinutes: 20, managerPresentation: "male" }));
   expect(screen.getByRole("button", { name: "設定" })).toHaveFocus();
   expect(screen.getByText("18:00–18:20")).toBeVisible();

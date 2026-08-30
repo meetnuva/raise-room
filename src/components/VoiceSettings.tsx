@@ -100,29 +100,35 @@ function VoiceSettingsView({
         <h2 id="voice-settings-title">語音模型與麥克風測試</h2>
         <p>測試音訊與文字不會送給 Perxona，也不會加入會議逐字稿。</p>
       </div>
-      <fieldset className="asr-model-cards">
+      <fieldset className="asr-model-list">
         <legend>選擇本機語音模型</legend>
-        {(Object.keys(asrModelPresets) as AsrModelPresetId[]).map((id) => {
-          const preset = asrModelPresets[id];
-          const available = isPresetAvailable(id, hasWebGpu);
-          return (
-            <label className={id === selectedPreset ? "asr-model-card selected" : "asr-model-card"} key={id}>
-              <input
-                checked={id === selectedPreset}
-                disabled={!available || testInProgress}
-                name="asr-model"
-                onChange={() => selectPreset(id)}
-                type="radio"
-                value={id}
-              />
-              <strong>{preset.label}</strong>
-              <span>{preset.approximateDownloadMb >= 1000 ? "1.5 GB" : `${preset.approximateDownloadMb} MB`}</span>
-              <span>{preset.description}</span>
-              <span>全程本機</span>
-              {!available && <span>需要 WebGPU</span>}
-            </label>
-          );
-        })}
+        <div className="asr-model-options">
+          {(Object.keys(asrModelPresets) as AsrModelPresetId[]).map((id) => {
+            const preset = asrModelPresets[id];
+            const available = isPresetAvailable(id, hasWebGpu);
+            return (
+              <label className={id === selectedPreset ? "asr-model-option selected" : "asr-model-option"} key={id}>
+                <input
+                  checked={id === selectedPreset}
+                  disabled={!available || testInProgress}
+                  name="asr-model"
+                  onChange={() => selectPreset(id)}
+                  type="radio"
+                  value={id}
+                />
+                <strong>{preset.label}</strong>
+                <span>{preset.approximateDownloadMb >= 1000 ? "1.5 GB" : `${preset.approximateDownloadMb} MB`}</span>
+                <span>全程本機</span>
+                {!available && <span>需要 WebGPU</span>}
+              </label>
+            );
+          })}
+        </div>
+        <aside className="voice-model-detail" data-testid="voice-model-detail">
+          <strong>{model.label}</strong>
+          <span>{model.description}</span>
+          {!isPresetAvailable(selectedPreset, hasWebGpu) && <span>需要 WebGPU</span>}
+        </aside>
       </fieldset>
       {!hasWebGpu && <p role="status">此裝置不支援 WebGPU，高品質模型無法使用。</p>}
       {!hasWebGpu && <p aria-label="WASM 可能很慢" role="status">平衡與快速模型將使用 WASM，可能很慢。</p>}

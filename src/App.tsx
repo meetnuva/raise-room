@@ -2,9 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { CoachingReport } from "./components/CoachingReport";
 import { MeetingRoom } from "./components/MeetingRoom";
 import { MeetHome } from "./components/MeetHome";
-import type { HomeSettingsTarget } from "./components/HomeChrome";
 import { PracticeSession } from "./components/PracticeSession";
-import { PracticeSettingsDialog, type PracticeSettingsDraft } from "./components/PracticeSettingsDialog";
+import { PracticeSettingsDialog, type PracticeSettingsDraft, type SettingsTarget } from "./components/PracticeSettingsDialog";
 import { PrejoinLobby } from "./components/PrejoinLobby";
 import { defaultAsrModelPresetId, type AsrModelPresetId } from "./domain/asr-models";
 import type { TranscriptTurn } from "./domain/meeting";
@@ -21,7 +20,7 @@ import type { DeviceSettingsDevice } from "./components/DeviceSettingsPanel";
 
 type AppState =
   | { view: "home" }
-  | { view: "settings"; target?: HomeSettingsTarget }
+  | { view: "settings"; target?: SettingsTarget }
   | { view: "practice"; phase: "lobby" | "meeting" }
   | { view: "report"; scenario: Scenario; transcript: TranscriptTurn[]; visualSignals?: VisualSignals };
 
@@ -165,6 +164,7 @@ export function App({ now = () => new Date() }: { now?: () => Date } = {}) {
           presenterCatalog={presenterCatalog}
           selectedDeviceIds={selectedDeviceIds}
           onSelectDevice={selectDevice}
+          initialTab={appState.target}
           onSave={saveSettings}
           onClear={clearSettings}
           onClose={closeSettings}

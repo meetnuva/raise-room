@@ -347,30 +347,50 @@ button:focus-visible {
   margin-top: 2rem;
 }
 
-.asr-model-cards {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+.asr-model-list {
+  grid-template-columns: minmax(0, 16rem) minmax(0, 1fr);
+  align-items: start;
 }
 
-.asr-model-card {
-  align-content: start;
-  min-width: 0;
-  padding: 1rem;
-  border: 1px solid #94a3b8;
-  border-radius: 0.5rem;
-  background: #f8fafc;
+.asr-model-options {
+  display: grid;
+  grid-column: 1;
+  gap: .5rem;
 }
 
-.asr-model-card.selected {
-  border-width: 2px;
-  border-color: #0369a1;
+.asr-model-option {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  min-height: 44px;
+  padding: .75rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
 }
 
-.asr-model-card input {
+.asr-model-option.selected {
+  border-color: var(--accent);
+  background: #e8f0fe;
+}
+
+.asr-model-option input {
   width: auto;
 }
 
-.asr-model-card input:disabled + strong {
+.asr-model-option input:disabled + strong {
   color: #64748b;
+}
+
+.voice-model-detail {
+  display: grid;
+  grid-column: 2;
+  grid-row: 2;
+  gap: .5rem;
+  min-height: 8rem;
+  padding: 1rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--surface-raised);
 }
 
 .microphone-test,
@@ -424,19 +444,34 @@ button:focus-visible {
 .practice-settings-dialog {
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: 12.5rem minmax(0, 1fr);
+  grid-template-columns: 208px minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr) auto;
-  width: min(1000px, calc(100vw - 48px));
-  max-height: calc(100vh - 48px);
+  width: min(960px, calc(100vw - 32px));
+  max-height: min(720px, calc(100dvh - 32px));
   padding: 0;
   border: 1px solid #cbd5e1;
   border-radius: 0.75rem;
   color: #1f2937;
   background: #f8fafc;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: opacity var(--motion-dialog), transform var(--motion-dialog);
 }
 
 .practice-settings-dialog::backdrop {
-  background: rgb(15 23 42 / 45%);
+  background-color: rgb(15 23 42 / 45%);
+  transition: background-color var(--motion-dialog);
+}
+
+.practice-settings-dialog[data-motion="entering"],
+.practice-settings-dialog[data-motion="leaving"] {
+  opacity: 0;
+  transform: translateY(12px) scale(.98);
+}
+
+.practice-settings-dialog[data-motion="entering"]::backdrop,
+.practice-settings-dialog[data-motion="leaving"]::backdrop {
+  background-color: rgb(15 23 42 / 0%);
 }
 
 .practice-settings-header,
@@ -444,6 +479,8 @@ button:focus-visible {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  box-sizing: border-box;
+  min-height: 64px;
   gap: 1rem;
   padding: 1rem 1.25rem;
   background: #ffffff;
@@ -477,14 +514,24 @@ button:focus-visible {
 }
 
 .practice-settings-tabs [role="tab"] {
+  display: flex;
+  align-items: center;
   flex: 0 0 auto;
+  min-height: 44px;
+  gap: .75rem;
+  padding: .75rem;
   text-align: left;
-  border-color: transparent;
+  border: 0;
+  border-left: 2px solid transparent;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .practice-settings-tabs [role="tab"][aria-selected="true"] {
-  border-color: #0369a1;
-  background: #e0f2fe;
+  border-left-color: #075985;
+  background: #e8f0fe;
+  color: #075985;
 }
 
 .practice-settings-content {
@@ -504,6 +551,20 @@ button:focus-visible {
 .practice-settings-actions button:last-child {
   background: #075985;
   color: #ffffff;
+}
+
+.practice-settings-danger-zone,
+.practice-settings-danger-confirmation {
+  display: grid;
+  gap: .75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.practice-settings-danger-button {
+  border-color: var(--danger);
+  background: var(--danger);
+  color: var(--text-inverse);
 }
 
 .device-settings-group > div {
@@ -1456,6 +1517,12 @@ button {
 
   .practice-settings-tabs [role="tab"] {
     text-align: center;
+    border-left: 0;
+    border-bottom: 2px solid transparent;
+  }
+
+  .practice-settings-tabs [role="tab"][aria-selected="true"] {
+    border-bottom-color: #075985;
   }
 
   .practice-settings-content {
@@ -1609,8 +1676,13 @@ button {
 }
 
 @media (max-width: 42rem) {
-  .asr-model-cards {
+  .asr-model-list {
     grid-template-columns: 1fr;
+  }
+
+  .voice-model-detail {
+    grid-column: 1;
+    grid-row: auto;
   }
 
   .meeting-stages,

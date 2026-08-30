@@ -16,14 +16,18 @@ function VoiceHarness({ calls }: { calls: { load: Mock<() => void>; start: Mock<
   return <VoiceSettings savedPreset="quality" onSave={vi.fn()} onBack={vi.fn()} hasWebGpu voice={voice} />;
 }
 
-test("renders all allowlisted model cards without loading a model or microphone on mount", () => {
+test("renders all allowlisted model choices as one selectable list with a detail panel without loading a model or microphone on mount", () => {
   const onSave = vi.fn();
   render(<VoiceSettings savedPreset="quality" onSave={onSave} onBack={vi.fn()} hasWebGpu />);
-  expect(screen.getByText("高品質")).toBeVisible();
+  expect(screen.getAllByText("高品質")[0]).toBeVisible();
   expect(screen.getByText("平衡")).toBeVisible();
   expect(screen.getByText("快速")).toBeVisible();
   expect(screen.getByText("1.5 GB")).toBeVisible();
   expect(screen.getAllByText("全程本機")).toHaveLength(4);
+  expect(document.querySelector(".asr-model-list")).not.toBeNull();
+  expect(document.querySelectorAll(".asr-model-options .asr-model-option")).toHaveLength(3);
+  expect(screen.getByTestId("voice-model-detail")).toHaveTextContent("高品質");
+  expect(document.querySelector(".asr-model-cards")).toBeNull();
   expect(onSave).not.toHaveBeenCalled();
 });
 
