@@ -266,7 +266,7 @@ CSS root 必須定義並由本次觸及的 UI 使用：
 
 ### Root Chrome acceptance evidence (2026-08-31)
 
-- Fresh automated gate：59 test files／338 tests；TypeScript、Vite production build、release-files、已審閱 dependency audit 與 `git diff --check` 通過。Fresh CSS scan：28 個 custom-property 定義、19 種被引用 token、100 次 `var()` 使用、0 unknown references。
+- Fresh automated gate：59 test files／344 tests；TypeScript、Vite production build、release-files、已審閱 dependency audit 與 `git diff --check` 通過。Fresh CSS scan：27 個 custom-property 定義、19 種被引用 token、100 次 `var()` 使用、0 unknown references。
 - 使用既有已登入 Google Meet 分頁唯讀觀察首頁、設定 dialog、icon hover/tooltip 與右上角控制；Raise Room 逐頁保存首頁、設定、lobby、meeting、drawer 與修正前後截圖到 Git 外的 `Perxona Connect Kit/Raise Room 驗收截圖/`。
 - 五個指定 viewport `375×812`、`768×1024`、`1280×800`、`1440×900`、`1920×1080` 的 `documentElement.scrollWidth` 均等於 viewport width，沒有水平 overflow。手機 header、設定 tabs、lobby CTA、固定控制列與 drawer 可見；主管 action、self tile、toast 與 control bar 的矩形不相交；desktop self tile 完整位於置中 manager stage 內。
 - Header help/settings/more/user、三個 more menu action、About/user popover、Escape focus return、participant canvas/self-tile click、pin、self expand/restore、drawer 與六鍵控制均有真實 DOM readback。Console 無 app error；只有既有 Perxona Presenter `react-i18next` warning。

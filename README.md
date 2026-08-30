@@ -41,7 +41,7 @@ npm run start
 
 首頁、設定、會前準備室與正式談判已使用同一組本地 SVG icons、tooltip、menu、dialog、drawer 與可見狀態；所有這些 UI state 都只保留在 React memory。設定採原生 dialog 與七個可存取 tabs；談判控制列固定為麥克風、鏡頭、逐字稿、壓力事件、更多、離開，次要工具才開啟側欄。CSS 對桌面、平板與手機分別定義 drawer 與控制列規則，並支援 reduced motion。
 
-2026-08-31 的最新自動化閘門已通過：59 個 test files／338 tests、TypeScript、Vite production build、release-files 與已審閱依賴稽核；fresh 靜態掃描確認 28 個 CSS custom-property 定義、19 種 `var()` 引用類型、共 100 次 `var()` 使用，且 0 個未知 token。
+2026-08-31 的最新自動化閘門已通過：59 個 test files／344 tests、TypeScript、Vite production build、release-files 與已審閱依賴稽核；fresh 靜態掃描確認 27 個 CSS custom-property 定義、19 種 `var()` 引用類型、共 100 次 `var()` 使用，且 0 個未知 token。
 
 同日真實 Chrome 已完成 Google Meet 首頁／設定唯讀對照、Raise Room 首頁／設定／lobby／meeting／drawer 的逐頁截圖與互動 readback，以及 375×812、768×1024、1280×800、1440×900、1920×1080 五尺寸無水平 overflow 驗收。真實 combined media 顯示 1280×720、readyState 4；高品質 WebGPU ASR 可產生可編輯 preview；Presenter 進入 Ready；本機視覺觀察運行；一局不中斷 20 分鐘在 2:00／6:00／10:00／14:00／18:00 觸發五個事件後自動進報告，報告保留 1,213 個視覺 aggregate 樣本。完整 UI Perxona 回覆仍需使用者在外送公司／職位／薪資情境前明確確認；權限拒絕與系統 reduced-motion 偏好仍以自動化邊界測試驗證，未冒充本次實機路徑。
 
@@ -69,7 +69,7 @@ npm run start
 
 設定頁可用繁中、English 或日本語的參考句做最長 20 秒麥克風測試，顯示正體化文字、差異與「文字吻合度」。這是兩段文字的比對，不是口音、能力或信心評分。模型選擇只保存 preset ID；測試音訊、參考句、結果和分數都只存在當前 memory，絕不送給 Perxona。
 
-會議錄音最多分析最後 30 秒；只有在使用者按「開始說話」的單一回合才建立 `MediaRecorder`。若已在 lobby 明確允許裝置，錄音會使用同一份仍啟用的麥克風 track，不再要求第二次 `getUserMedia`；停止回合只停止 recorder，不會停止 session track。辨識結果會先進入可編輯預覽，只有確認「送給主管」後，修改過的文字才會加入逐字稿並傳給動態主管。報告只讀取已確認逐字稿的可觀察 metadata；字元／分鐘不可跨語言比較。真實 MacBook 麥克風、FaceTime 鏡頭、lobby 到 meeting 的連續預覽與高品質 ASR 可編輯預覽已在 Chrome 驗收；完整不中斷 20 分鐘談判仍待最終 acceptance。
+會議錄音最多分析最後 30 秒；只有在使用者按「開始說話」的單一回合才建立 `MediaRecorder`。若已在 lobby 明確允許裝置，錄音會使用同一份仍啟用的麥克風 track，不再要求第二次 `getUserMedia`；停止回合只停止 recorder，不會停止 session track。辨識結果會先進入可編輯預覽，只有確認「送給主管」後，修改過的文字才會加入逐字稿並傳給動態主管。報告只讀取已確認逐字稿的可觀察 metadata；字元／分鐘不可跨語言比較。真實 MacBook 麥克風、FaceTime 鏡頭、lobby 到 meeting 的連續預覽、高品質 ASR 可編輯預覽與不中斷 20 分鐘談判均已在 Chrome 驗收；完整 UI Perxona 外送回合仍等待使用者明確確認。
 
 ## Phase 4：可選本機視覺觀察
 
@@ -89,4 +89,4 @@ iris 幾何近似不等於眼神接觸；所有數值都不能作 HR、雇主或
 
 若要使用 3D 主管，請由 `.env.example` 複製設定，填入 Publishable Key、共用 Scene，以及男／女主管各自的 Avatar、Voice ID。男主管的新變數未填時才會使用舊的 Avatar／Voice 變數；女主管不會使用男主管或舊變數。角色設定不完整時會被停用，不會改用另一個角色。會議主管仍會使用已設定的 Perxona 動態主管，或在未設定／暫時失敗時顯示本機腳本 fallback。Secret Key 不可放入任何 `VITE_` 前端變數。
 
-Presenter 可在 lobby 先載入 SDK 並驗證連線；真正的 Presenter stage 只在 meeting mount。Chrome 已驗證 lobby preflight 顯示 Ready、meeting stage 可呈現，以及修正後的同源 manager API 能取得 `perxona` 回覆；這仍不代表 custom VRoid、對嘴、表情、獨立動作、聲學音訊品質、拒絕權限路徑、本機視覺 aggregate 或完整 20 分鐘 session 已驗收。
+Presenter 可在 lobby 先載入 SDK 並驗證連線；真正的 Presenter stage 只在 meeting mount。Chrome 已驗證 lobby preflight、meeting stage Ready、本機視覺 aggregate 與完整 20 分鐘 session；修正後的同源 manager API 亦能取得 `perxona` 回覆。這仍不代表 custom VRoid、對嘴、表情、獨立動作、聲學音訊品質或真實權限拒絕路徑已驗收，完整 UI Perxona 外送回合也仍需使用者 action-time 確認。
