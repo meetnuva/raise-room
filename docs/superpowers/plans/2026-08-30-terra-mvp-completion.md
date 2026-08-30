@@ -90,7 +90,7 @@ export function formatTimestamp(elapsedSeconds: number): string;
 1. **request**：任一 user turn 包含 `scenario.compensation.requestedMonthlySalary` 的純數字或含千分位字串；當 requested salary 為 0 時，改以同時出現 `希望|期待|調整` 與數字視為提出具體請求。
 2. **achievement**：任一 user turn 含數字、百分比或明確量化詞（例如 `提升 20%`、`縮短 3 天`）。
 3. **recovery**：manager turn 含 `預算|凍結|無法|不能|沒有空間`，且後面存在 user turn，即完成拒絕後回應。
-4. **next-step**：user turn 含 `下一步|何時|時間|回覆|確認|再約|追蹤`。
+4. **next-step**：user turn 含 `下一步|何時|什麼時候|回覆|確認|再約|追蹤`。不得以單獨的「時間」判定，因為「把交付時間縮短 3 天」是成果證據，不是後續承諾。
 
 完成項目進入 `strengths`；未完成項目進入 `practiceTargets`。不得產生「自信、誠實、人格或真實情緒」分數。
 
