@@ -4,11 +4,11 @@
 
 ### Added
 
-- Local-first annual salary negotiation scenario workshop.
-- Ten-minute pressure meeting with local voice/visual observation and evidence-linked report.
-- Optional Perxona Presenter and server-only dynamic manager boundary with visible fallback.
-- Live Perxona acceptance with the active `Raise Room Manager Engine`, a temporary built-in Presenter avatar/scene/voice, and one real Chatbot turn delivered to both transcript and Presenter.
-- Allowlisted local ASR presets: WebGPU-only high-quality large-v3-turbo, balanced small and fast tiny; settings-page Taiwan Traditional microphone comparison; and editable voice preview before a manager reply.
+- Meet 式首頁、嚴格下一個整點排程與 5／10／20 分鐘的薪資談判練習。
+- 首頁 → 會前準備室 → 正式談判 → 會後報告流程，可提早開始完整一局練習。
+- 七分頁設定、session-only 裝置選擇與明確 combined camera／microphone permission。
+- 男性／女性主管呈現的可用性檢查、lobby Presenter SDK preflight，以及正式會議才 mount 的 Presenter stage。
+- 比例壓力事件、會議資訊側欄、可重回 lobby 的報告導覽，以及本機 ASR／視覺觀察與證據連結報告。
 
 ### Fixed
 
