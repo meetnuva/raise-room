@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { IconButton } from "./ui/IconButton";
 
 export type MeetingToast = {
@@ -13,11 +13,14 @@ type ToastRegionProps = {
 };
 
 function Toast({ id, tone, message, durationMs, onDismiss }: MeetingToast & { onDismiss(id: string): void }) {
+  const onDismissRef = useRef(onDismiss);
+  onDismissRef.current = onDismiss;
+
   useEffect(() => {
     if (tone === "error" || !durationMs) return undefined;
-    const timer = window.setTimeout(() => onDismiss(id), durationMs);
+    const timer = window.setTimeout(() => onDismissRef.current(id), durationMs);
     return () => window.clearTimeout(timer);
-  }, [durationMs, id, onDismiss, tone]);
+  }, [durationMs, id, tone]);
 
   return (
     <div className={`meeting-toast meeting-toast--${tone}`} role={tone === "error" ? "alert" : "status"}>

@@ -20,8 +20,8 @@ export function PerxonaManagerStage({
   clientFactory?: (url: string) => PresenterClient;
   pinned?: boolean;
   onTogglePin?: () => void;
-  onViewRole?: () => void;
-  onOpenInfo?: () => void;
+  onViewRole?: (opener: HTMLButtonElement | null) => void;
+  onOpenInfo?: (opener: HTMLButtonElement | null) => void;
   onPresenterError?: (message: string) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);

@@ -192,6 +192,8 @@ export function App({ now = () => new Date() }: { now?: () => Date } = {}) {
               responder={managerResponder}
               presenterConfig={presenterConfig}
               modelPreset={voicePreset}
+              selectedDeviceIds={selectedDeviceIds}
+              onSelectDevice={selectDevice}
               clock={{ durationSeconds: meeting.durationMinutes * 60 }}
               onFinish={(transcript, visualSignals) => {
                 setAppState({ view: "report", scenario, transcript, visualSignals });

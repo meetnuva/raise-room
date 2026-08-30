@@ -2027,7 +2027,7 @@ button {
   border-radius: .5rem;
   background: linear-gradient(to bottom, rgb(0 0 0 / 54%), transparent);
   opacity: 0;
-  transition: opacity var(--motion-default);
+  transition: opacity var(--motion-standard);
 }
 
 .manager-stage:hover .participant-tile-overlay,

@@ -93,6 +93,7 @@ test("styles the manager as a 16:9 main stage with a smaller camera overlay", ()
 
   expect(styles).toMatch(/\.manager-stage\s*\{[^}]*width:\s*100%;[^}]*aspect-ratio:\s*16\s*\/\s*9;/s);
   expect(styles).toMatch(/\.meeting-sidebar\s*\{[^}]*position:\s*absolute;[^}]*width:\s*clamp\(10rem,\s*22%,\s*16rem\);/s);
+  expect(styles).toContain("transition: opacity var(--motion-standard)");
 });
 
 test("bounds the 16:9 manager stage for short desktop viewports without a mobile height override", () => {
@@ -289,6 +290,74 @@ test("surfaces engine source and manager notices as four-second toasts", async (
   await act(async () => {});
   expect(screen.getByText("主管引擎：本機腳本 fallback")).toBeVisible();
   expect(screen.getByText("主管立場更新")).toBeVisible();
+});
+
+test("does not reset the four-second engine toast while the meeting clock rerenders", () => {
+  vi.useFakeTimers();
+  let now = 0;
+  render(<MeetingRoom meeting={scheduledMeeting(10)} scenario={defaultScenario} responder={simulatedResponder} clock={{ now: () => now, intervalMs: 1000 }} />);
+
+  expect(screen.getByText("主管引擎：等待首次回覆")).toBeVisible();
+  now = 1000;
+  act(() => vi.advanceTimersByTime(1000));
+  now = 2000;
+  act(() => vi.advanceTimersByTime(1000));
+  now = 3000;
+  act(() => vi.advanceTimersByTime(1000));
+  now = 4000;
+  act(() => vi.advanceTimersByTime(1000));
+
+  expect(screen.queryByText("主管引擎：等待首次回覆")).toBeNull();
+});
+
+test("keeps a send error through retry failures and removes it only after a successful reply", async () => {
+  let rejectRetry = (error: Error) => {};
+  const responder = {
+    reply: vi.fn()
+      .mockRejectedValueOnce(new Error("offline"))
+      .mockImplementationOnce(() => new Promise<never>((_resolve, reject) => { rejectRetry = reject; }))
+      .mockResolvedValueOnce({ text: "收到", source: "simulated" as const }),
+  };
+  render(<MeetingRoom meeting={scheduledMeeting(10)} scenario={defaultScenario} responder={responder} />);
+  fireEvent.click(screen.getByRole("button", { name: "開啟逐字稿" }));
+
+  fireEvent.change(screen.getByLabelText("開發用文字輸入"), { target: { value: "第一次" } });
+  fireEvent.click(screen.getByRole("button", { name: "送出" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("主管回覆暫時無法取得，請重新送出。");
+
+  fireEvent.change(screen.getByLabelText("開發用文字輸入"), { target: { value: "第二次" } });
+  fireEvent.click(screen.getByRole("button", { name: "送出" }));
+  expect(screen.getByRole("alert")).toHaveTextContent("主管回覆暫時無法取得，請重新送出。");
+  await act(async () => rejectRetry(new Error("offline")));
+  expect(screen.getByRole("alert")).toHaveTextContent("主管回覆暫時無法取得，請重新送出。");
+
+  fireEvent.change(screen.getByLabelText("開發用文字輸入"), { target: { value: "第三次" } });
+  fireEvent.click(screen.getByRole("button", { name: "送出" }));
+  await screen.findByText("收到");
+  expect(screen.queryByRole("alert")).toBeNull();
+});
+
+test("returns focus to the manager tile menu trigger after its information action closes", () => {
+  render(<MeetingRoom meeting={scheduledMeeting(10)} scenario={defaultScenario} responder={simulatedResponder} />);
+  const opener = screen.getByRole("button", { name: "主管更多操作" });
+
+  fireEvent.click(opener);
+  fireEvent.click(screen.getByRole("menuitem", { name: "開啟會議資訊" }));
+  fireEvent.click(screen.getByRole("button", { name: "關閉資訊面板" }));
+
+  expect(opener).toHaveFocus();
+});
+
+test("returns focus to the self tile menu trigger after its device action closes", () => {
+  render(<MeetingRoom meeting={scheduledMeeting(10)} scenario={defaultScenario} responder={simulatedResponder} />);
+  const opener = screen.getByRole("button", { name: "你的更多操作" });
+
+  fireEvent.click(opener);
+  fireEvent.click(screen.getByRole("menuitem", { name: "開啟裝置設定" }));
+  expect(screen.getByText("選擇會套用到下一次明確請求裝置權限。" )).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "關閉資訊面板" }));
+
+  expect(opener).toHaveFocus();
 });
 
 test("keeps a timed event after the development fallback receives a reply", async () => {

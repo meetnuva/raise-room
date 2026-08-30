@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { App } from "./App";
 
-const appMocks = vi.hoisted(() => ({ practiceSession: vi.fn(), practiceSessionUnmount: vi.fn(), runtime: { media: { runtime: "shared-media" }, voice: { runtime: "shared-voice" } }, lobbyProps: null as { media: object; voice: object } | null, meetingProps: null as { camera?: object; voice?: object; meeting: { title: string }; onFinish: (transcript: []) => void } | null }));
+const appMocks = vi.hoisted(() => ({ practiceSession: vi.fn(), practiceSessionUnmount: vi.fn(), runtime: { media: { runtime: "shared-media" }, voice: { runtime: "shared-voice" } }, lobbyProps: null as { media: object; voice: object } | null, meetingProps: null as { camera?: object; voice?: object; meeting: { title: string }; selectedDeviceIds?: Partial<Record<MediaDeviceKind, string>>; onSelectDevice?: (device: { deviceId: string; groupId: string; kind: MediaDeviceKind; label: string }) => void; onFinish: (transcript: []) => void } | null }));
 
 vi.mock("./components/PracticeSession", () => ({
   PracticeSession: ({ children }: { children: (runtime: { media: object; voice: object }) => React.ReactNode }) => {
@@ -19,11 +19,13 @@ vi.mock("./components/PrejoinLobby", () => ({
   },
 }));
 vi.mock("./components/MeetingRoom", () => ({
-  MeetingRoom: (props: { camera?: object; voice?: object; meeting: { title: string }; onFinish: (transcript: []) => void }) => {
+  MeetingRoom: (props: { camera?: object; voice?: object; meeting: { title: string }; selectedDeviceIds?: Partial<Record<MediaDeviceKind, string>>; onSelectDevice?: (device: { deviceId: string; groupId: string; kind: MediaDeviceKind; label: string }) => void; onFinish: (transcript: []) => void }) => {
     appMocks.meetingProps = props;
     return (
     <section aria-labelledby="meeting-room-title">
       <h2 id="meeting-room-title" tabIndex={-1}>{props.meeting.title}</h2>
+      <p>下一次攝影機：{props.selectedDeviceIds?.videoinput ?? "尚未選擇"}</p>
+      <button type="button" onClick={() => props.onSelectDevice?.({ deviceId: "next-camera", groupId: "group", kind: "videoinput", label: "下一次攝影機" })}>選擇下一次攝影機</button>
       <button type="button" onClick={() => props.onFinish([])}>離開並查看報告</button>
     </section>
   );
@@ -109,6 +111,19 @@ test("passes the same practice media and voice runtime from lobby into the meeti
   expect(appMocks.practiceSession).toHaveBeenCalledTimes(2);
   expect(appMocks.meetingProps?.camera).toBe(lobbyRuntime?.media);
   expect(appMocks.meetingProps?.voice).toBe(lobbyRuntime?.voice);
+});
+
+test("keeps a meeting device selection in memory for the next explicit request without replacing media", () => {
+  render(<App now={() => new Date(2026, 7, 30, 17, 5)} />);
+  enterLobby();
+  joinMeeting();
+  const originalMedia = appMocks.meetingProps?.camera;
+
+  expect(screen.getByText("下一次攝影機：尚未選擇")).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "選擇下一次攝影機" }));
+  expect(screen.getByText("下一次攝影機：next-camera")).toBeVisible();
+  expect(appMocks.meetingProps?.camera).toBe(originalMedia);
+  expect(window.localStorage.getItem("raise-room-meeting-settings-v1")).toBeNull();
 });
 
 test("opens lobby settings by unmounting the practice session instead of retaining its media runtime", () => {

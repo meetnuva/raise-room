@@ -19,6 +19,7 @@ import { useMeetingClock } from "../hooks/use-meeting-clock";
 import type { PresenterRuntimeConfig } from "../lib/perxona-config";
 import type { PracticeMediaController } from "../runtime/use-practice-media";
 import { LocalCameraTile } from "./LocalCameraTile";
+import { DeviceSettingsPanel, type DeviceSettingsDevice } from "./DeviceSettingsPanel";
 import { LocalVisualControl } from "./LocalVisualControl";
 import { LocalVoiceControl } from "./LocalVoiceControl";
 import { MeetingControlBar } from "./MeetingControlBar";
@@ -52,6 +53,8 @@ export type MeetingRoomProps = {
   presenterConfig?: PresenterRuntimeConfig;
   clock?: Clock;
   modelPreset?: AsrModelPresetId;
+  selectedDeviceIds?: Partial<Record<MediaDeviceKind, string>>;
+  onSelectDevice?: (device: DeviceSettingsDevice) => void;
 };
 
 type MeetingRoomViewProps = Omit<MeetingRoomProps, "camera" | "voice" | "modelPreset"> & {
@@ -106,6 +109,8 @@ function MeetingRoomView({
   onFinish,
   presenterConfig = { enabled: false, reason: "missing-key" },
   clock,
+  selectedDeviceIds,
+  onSelectDevice,
 }: MeetingRoomViewProps) {
   const durationSeconds = clock?.durationSeconds ?? scheduledMeeting.durationMinutes * 60;
   const [meeting, setMeeting] = useState(() => createMeeting(scenario, durationSeconds));
@@ -172,11 +177,11 @@ function MeetingRoomView({
     meetingRef.current = userTurn;
     setMeeting(userTurn);
     setSending(true);
-    setToasts((current) => current.filter((toast) => toast.id !== "send-error"));
 
     try {
       const repliedMeeting = await respondToUser(userTurn, scenario, responder);
       const managerTurn = repliedMeeting.transcript[repliedMeeting.transcript.length - 1];
+      setToasts((current) => current.filter((toast) => toast.id !== "send-error"));
       if (managerTurn.speaker === "manager" && managerTurn.managerNotice) {
         addToast({ id: "manager-notice", tone: "notice", message: managerTurn.managerNotice, durationMs: 4000 });
       }
@@ -259,7 +264,8 @@ function MeetingRoomView({
     <div className="meeting-device-status">
       <p>鏡頭：{camera.cameraActive ? "已開啟" : "未開啟"}</p>
       <p>語音：{voice.status === "ready" || voice.status === "recording" ? "本機模型已就緒" : "尚未就緒"}</p>
-      <p>可從底部控制列開啟鏡頭或語音。</p>
+      <p>選擇會套用到下一次明確請求裝置權限。</p>
+      <DeviceSettingsPanel kinds={["audioinput", "audiooutput", "videoinput"]} selectedDeviceIds={selectedDeviceIds} onSelectDevice={onSelectDevice ?? (() => {})} />
     </div>
   );
 
@@ -289,7 +295,7 @@ function MeetingRoomView({
             pinned={pinnedParticipant === "manager"}
             onTogglePin={() => setPinnedParticipant((current) => current === "manager" ? null : "manager")}
             onViewRole={() => addToast({ id: "manager-role", tone: "notice", message: `主管角色：${scenario.role} · 直接度${scenario.manager.directness}`, durationMs: 4000 })}
-            onOpenInfo={() => openPanel("transcript", null)}
+            onOpenInfo={(opener) => openPanel("transcript", opener)}
             onPresenterError={(message) => addToast({ id: "presenter-error", tone: "error", message })}
           />
           <aside className="meeting-sidebar">
@@ -299,7 +305,7 @@ function MeetingRoomView({
               showControl={false}
               onVideoElement={setCameraVideoElement}
               pinned={pinnedParticipant === "self"}
-              tileActions={<ParticipantMenu kind="self" pinned={pinnedParticipant === "self"} expanded={stageFocus === "self"} onToggleExpand={() => setStageFocus((current) => current === "self" ? "manager" : "self")} onTogglePin={() => setPinnedParticipant((current) => current === "self" ? null : "self")} onOpenDevices={() => openPanel("devices", null)} />}
+              tileActions={<ParticipantMenu kind="self" pinned={pinnedParticipant === "self"} expanded={stageFocus === "self"} onToggleExpand={() => setStageFocus((current) => current === "self" ? "manager" : "self")} onTogglePin={() => setPinnedParticipant((current) => current === "self" ? null : "self")} onOpenDevices={(opener) => openPanel("devices", opener)} />}
             />
           </aside>
         </div>

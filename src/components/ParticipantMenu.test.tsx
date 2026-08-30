@@ -40,3 +40,14 @@ test("self menu toggles expansion and pin, then opens device settings", () => {
   fireEvent.click(screen.getByRole("menuitem", { name: "開啟裝置設定" }));
   expect(onOpenDevices).toHaveBeenCalledOnce();
 });
+
+test("passes the actual menu trigger to a participant action that opens a panel", () => {
+  const onOpenInfo = vi.fn();
+  render(<ParticipantMenu kind="manager" pinned={false} expanded={false} onTogglePin={vi.fn()} onOpenInfo={onOpenInfo} />);
+  const opener = screen.getByRole("button", { name: "主管更多操作" });
+
+  fireEvent.click(opener);
+  fireEvent.click(screen.getByRole("menuitem", { name: "開啟會議資訊" }));
+
+  expect(onOpenInfo).toHaveBeenCalledWith(opener);
+});
