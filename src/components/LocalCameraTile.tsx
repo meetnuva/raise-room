@@ -1,24 +1,34 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useLocalCamera } from "../hooks/use-local-camera";
 type Camera = ReturnType<typeof useLocalCamera>;
 export function LocalCameraTile({
   camera: injected,
   detail,
   showControl = true,
+  onVideoElement,
 }: {
   camera?: Camera;
   detail?: string;
   showControl?: boolean;
+  onVideoElement?: (element: HTMLVideoElement | null) => void;
 }) {
   const owned = useLocalCamera();
   const camera = injected ?? owned;
   const videoRef = useRef<HTMLVideoElement>(null);
+  const setVideoRef = useCallback((element: HTMLVideoElement | null) => {
+    videoRef.current = element;
+    onVideoElement?.(element);
+  }, [onVideoElement]);
 
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.srcObject = camera.stream;
     }
   }, [camera.stream]);
+
+  useEffect(() => {
+    if (camera.status !== "active") onVideoElement?.(null);
+  }, [camera.status, onVideoElement]);
 
   const message =
     camera.status === "denied"
@@ -35,7 +45,7 @@ export function LocalCameraTile({
       {detail && <p>{detail}</p>}
       {camera.status === "active" ? (
         <>
-          <video ref={videoRef} autoPlay muted playsInline aria-label="本機鏡頭預覽" />
+          <video ref={setVideoRef} autoPlay muted playsInline aria-label="本機鏡頭預覽" />
           {showControl && <button type="button" onClick={camera.stop}>關閉我的鏡頭</button>}
         </>
       ) : (

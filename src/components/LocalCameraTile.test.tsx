@@ -15,3 +15,16 @@ test("keeps its standalone explicit-click control by default", () => {
 
   expect(screen.getByRole("button", { name: "開啟我的鏡頭" })).toBeVisible();
 });
+
+test("hands an active video element to its local consumer and clears it on unmount", () => {
+  const onVideoElement = vi.fn();
+  const { unmount } = render(
+    <LocalCameraTile
+      camera={{ status: "active", stream: {} as MediaStream, errorMessage: null, start: vi.fn(), stop: vi.fn() }}
+      onVideoElement={onVideoElement}
+    />,
+  );
+  expect(onVideoElement).toHaveBeenCalledWith(expect.any(HTMLVideoElement));
+  unmount();
+  expect(onVideoElement).toHaveBeenLastCalledWith(null);
+});
