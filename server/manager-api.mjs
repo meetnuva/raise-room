@@ -4,6 +4,7 @@ const MAX_TEXT_CHARS = 8_000;
 const RATE_LIMIT = 30;
 const RATE_WINDOW_MS = 60_000;
 const UPSTREAM_TIMEOUT_MS = 20_000;
+const ALLOWED_EVENT_TRIGGER_RATIOS = [0.1, 0.3, 0.5, 0.7, 0.9];
 
 const publicMessages = {
   INVALID_REQUEST: "請確認情境與逐字稿格式後再試一次。",
@@ -49,9 +50,12 @@ function nonNegativeNumber(value) {
 
 function parseEvent(value, strings) {
   if (!isRecord(value)) throw invalidRequest();
+  if (typeof value.triggerRatio !== "number" || !ALLOWED_EVENT_TRIGGER_RATIOS.includes(value.triggerRatio)) {
+    throw invalidRequest();
+  }
   return {
     id: trimString(value.id, strings),
-    minute: nonNegativeNumber(value.minute),
+    triggerRatio: value.triggerRatio,
     label: trimString(value.label, strings),
     instruction: trimString(value.instruction, strings),
   };
@@ -118,7 +122,7 @@ export function parseManagerRequest(value) {
 
 export function buildPerxonaMessages({ scenario, transcript, dueEvents }) {
   const eventSummary = dueEvents.length
-    ? dueEvents.map((event) => `第 ${event.minute} 分鐘：${event.label}－${event.instruction}`).join("；")
+    ? dueEvents.map((event) => `進度 ${event.triggerRatio * 100}%：${event.label}－${event.instruction}`).join("；")
     : "尚無";
   const configuration = [
     "<raise_room_scenario>",

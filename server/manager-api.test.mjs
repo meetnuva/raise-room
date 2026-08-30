@@ -28,7 +28,7 @@ const validRequest = {
     { speaker: "user", text: " 我希望調整薪資 ", elapsedSeconds: 0 },
     { speaker: "manager", text: " 請先說明成果。 ", elapsedSeconds: 0, managerSource: "simulated" },
   ],
-  dueEvents: [{ id: "budget-freeze", minute: 3, label: "預算暫緩", instruction: "告知預算防守較嚴格" }],
+  dueEvents: [{ id: "budget-freeze", triggerRatio: 0.3, label: "預算暫緩", instruction: "告知預算防守較嚴格" }],
 };
 
 test("builds stateless user and assistant messages without duplicating the newest turn", () => {
@@ -42,7 +42,46 @@ test("builds stateless user and assistant messages without duplicating the newes
   ]);
   expect(messages[0].parts[0].text).toContain("公司：nuva");
   expect(messages[0].parts[0].text).toContain("主管補充角色指令：追問數字。");
-  expect(messages[0].parts[0].text).toContain("目前已發生壓力事件：第 3 分鐘：預算暫緩－告知預算防守較嚴格");
+  expect(messages[0].parts[0].text).toContain("目前已發生壓力事件：進度 30%：預算暫緩－告知預算防守較嚴格");
+});
+
+test("accepts approved trigger ratios for scenario and due events", () => {
+  const event = { id: "budget-freeze", triggerRatio: 0.3, label: "預算暫緩", instruction: "告知預算防守較嚴格" };
+  const request = parseManagerRequest({ ...validRequest, scenario: { ...scenario, events: [event] }, dueEvents: [event] });
+
+  expect(request.scenario.events[0].triggerRatio).toBe(0.3);
+  expect(request.dueEvents[0].triggerRatio).toBe(0.3);
+  expect(buildPerxonaMessages(request)[0].parts[0].text).toContain("目前已發生壓力事件：進度 30%：預算暫緩－告知預算防守較嚴格");
+
+  for (const triggerRatio of [0.1, 0.3, 0.5, 0.7, 0.9]) {
+    expect(parseManagerRequest({ ...validRequest, dueEvents: [{ ...event, triggerRatio }] }).dueEvents[0].triggerRatio).toBe(triggerRatio);
+  }
+});
+
+test("rejects legacy minute-shaped and non-approved trigger-ratio events", () => {
+  const event = { id: "budget-freeze", triggerRatio: 0.3, label: "預算暫緩", instruction: "告知預算防守較嚴格" };
+  const invalidEvents = [
+    { id: event.id, minute: 3, label: event.label, instruction: event.instruction },
+    { ...event, triggerRatio: 0.2 },
+    { ...event, triggerRatio: -0.1 },
+    { ...event, triggerRatio: NaN },
+    { ...event, triggerRatio: "0.3" },
+    { id: event.id, label: event.label, instruction: event.instruction },
+  ];
+
+  for (const invalidEvent of invalidEvents) {
+    for (const request of [
+      { ...validRequest, dueEvents: [invalidEvent] },
+      { ...validRequest, scenario: { ...scenario, events: [invalidEvent] } },
+    ]) {
+      try {
+        parseManagerRequest(request);
+        throw new Error("expected INVALID_REQUEST");
+      } catch (error) {
+        expect(error).toMatchObject({ code: "INVALID_REQUEST", status: 400 });
+      }
+    }
+  }
 });
 
 test("rejects malformed values, overlong transcripts, and excessive total text", () => {
