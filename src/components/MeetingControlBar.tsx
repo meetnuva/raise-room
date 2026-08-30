@@ -16,13 +16,22 @@ type Props = {
   onFinish(): void;
 };
 
+const unavailableVoiceReasons: Partial<Record<VoiceStatus, string>> = {
+  "loading-model": "本機語音模型載入中，完成後即可開始說話。",
+  "requesting-microphone": "正在請求麥克風權限。",
+  transcribing: "正在本機轉錄。",
+  denied: "麥克風權限已拒絕，請改用文字輸入。",
+  unsupported: "此瀏覽器不支援本機語音，請改用文字輸入。",
+  error: "語音目前無法使用，請改用文字輸入。",
+};
+
 function voiceControl(status: VoiceStatus) {
   if (status === "recording") {
     return { icon: "microphone" as const, label: "停止並轉成文字", selected: true, disabled: false };
   }
 
   if (status === "requesting-microphone" || status === "transcribing" || status === "loading-model" || status === "denied" || status === "unsupported" || status === "error") {
-    const reason = status === "denied" ? "麥克風權限已拒絕，請改用文字輸入。" : status === "unsupported" ? "此瀏覽器不支援本機語音，請改用文字輸入。" : "語音目前無法使用，請改用文字輸入。";
+    const reason = unavailableVoiceReasons[status] ?? "語音目前無法使用，請改用文字輸入。";
     return { icon: "microphoneOff" as const, label: "開始說話", selected: false, disabled: true, reason };
   }
 

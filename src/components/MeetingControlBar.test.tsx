@@ -77,6 +77,20 @@ test("does not expose an inert voice action and marks camera off as danger", () 
   expect(screen.getByRole("button", { name: "開啟我的鏡頭" })).toHaveClass("icon-button--danger");
 });
 
+test.each([
+  ["loading-model", "本機語音模型載入中，完成後即可開始說話。"],
+  ["requesting-microphone", "正在請求麥克風權限。"],
+  ["transcribing", "正在本機轉錄。"],
+  ["denied", "麥克風權限已拒絕，請改用文字輸入。"],
+  ["unsupported", "此瀏覽器不支援本機語音，請改用文字輸入。"],
+  ["error", "語音目前無法使用，請改用文字輸入。"],
+] as const)("announces the truthful disabled voice reason for %s", (voiceStatus, reason) => {
+  renderBar({ voiceStatus });
+
+  expect(screen.getByRole("button", { name: "開始說話" })).toBeDisabled();
+  expect(screen.getByText(reason)).toBeVisible();
+});
+
 test("reflects only the owner-selected information tab as pressed", () => {
   renderBar({ panelOpen: true, activePanelTab: "events" });
 

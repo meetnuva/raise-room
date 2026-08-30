@@ -2445,6 +2445,6 @@ button {
 
 @media (min-width: 768px) {
   .stage-focus-self .manager-stage .manager-stage-status {
-    bottom: 5.5rem;
+    display: none;
   }
 }
