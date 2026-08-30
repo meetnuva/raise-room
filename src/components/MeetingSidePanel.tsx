@@ -6,7 +6,7 @@ export type MeetingPanelTab = "transcript" | "events" | "observations" | "device
 
 type MeetingSidePanelProps = {
   activeTab: MeetingPanelTab;
-  motion?: "entering" | "entered";
+  motion?: "entering" | "entered" | "leaving";
   onActiveTabChange(tab: MeetingPanelTab): void;
   transcript: TranscriptTurn[];
   events: ScheduledEvent[];

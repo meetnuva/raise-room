@@ -18,7 +18,7 @@ test("enumerates only after explicit request, filters kinds, and selects a real 
   expect(screen.queryByRole("heading", { name: "攝影機" })).toBeNull();
   expect(screen.getByText("此瀏覽器不支援喇叭輸出切換。")) .toBeVisible();
   expect(screen.getByRole("button", { name: "使用 麥克風" })).toHaveAttribute("aria-pressed", "true");
-  expect(screen.getByText("目前使用中")).toBeVisible();
+  expect(screen.getByText("已選擇，下次明確開啟時套用")).toBeVisible();
   expect(screen.queryByRole("button", { name: /預覽/ })).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "使用 喇叭" }));
   expect(onSelectDevice).toHaveBeenCalledWith(expect.objectContaining({ deviceId: "speaker-id", kind: "audiooutput" }));

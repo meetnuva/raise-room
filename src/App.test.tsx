@@ -38,7 +38,7 @@ function openSettings() {
 }
 
 function enterLobby() {
-  fireEvent.click(screen.getByRole("button", { name: "提早進入準備室" }));
+  fireEvent.click(screen.getByRole("button", { name: /進入.*準備室/ }));
 }
 
 function joinMeeting() {
@@ -77,11 +77,13 @@ test("opens settings from the functional home more menu", () => {
 });
 
 test("saves five minutes without moving the start hour", () => {
+  vi.useFakeTimers();
   render(<App now={() => new Date(2026, 7, 30, 17, 5)} />);
   openSettings();
   fireEvent.click(screen.getByRole("tab", { name: "會議" }));
   fireEvent.click(screen.getByRole("radio", { name: "5 分鐘" }));
   fireEvent.click(screen.getByRole("button", { name: "儲存" }));
+  act(() => vi.advanceTimersByTime(180));
   expect(screen.getByText("18:00–18:05")).toBeVisible();
   expect(screen.getByRole("button", { name: "設定" })).toHaveFocus();
 });
@@ -126,7 +128,7 @@ test("keeps a meeting device selection in memory for the next explicit request w
   expect(window.localStorage.getItem("raise-room-meeting-settings-v1")).toBeNull();
 });
 
-test("opens lobby settings by unmounting the practice session instead of retaining its media runtime", () => {
+test("keeps the lobby and its practice runtime mounted beneath its settings overlay", () => {
   render(<App now={() => new Date(2026, 7, 30, 17, 5)} />);
   enterLobby();
 
@@ -134,8 +136,8 @@ test("opens lobby settings by unmounting the practice session instead of retaini
 
   expect(screen.getByRole("dialog", { name: "練習設定" })).toBeVisible();
   expect(screen.getByRole("tab", { name: "音訊" })).toHaveAttribute("aria-selected", "true");
-  expect(screen.queryByRole("heading", { name: "確認你的裝置" })).toBeNull();
-  expect(appMocks.practiceSessionUnmount).toHaveBeenCalledOnce();
+  expect(screen.getByRole("heading", { name: "確認你的裝置" })).toBeVisible();
+  expect(appMocks.practiceSessionUnmount).not.toHaveBeenCalled();
 });
 
 test("keeps settings edits local on cancel and returns focus to settings", () => {
@@ -165,17 +167,20 @@ test("reads persisted boundaries once and starts no practice resource on the hom
 });
 
 test("saves exactly scenario, practice, and voice boundaries", () => {
+  vi.useFakeTimers();
   render(<App now={() => new Date(2026, 7, 30, 17, 5)} />);
   openSettings();
   fireEvent.click(screen.getByRole("tab", { name: "會議" }));
   fireEvent.click(screen.getByRole("radio", { name: "5 分鐘" }));
   fireEvent.click(screen.getByRole("button", { name: "儲存" }));
+  act(() => vi.advanceTimersByTime(180));
   expect(window.localStorage.getItem("raise-room-scenario-draft")).not.toBeNull();
   expect(window.localStorage.getItem("raise-room-meeting-settings-v1")).toBe(JSON.stringify({ durationMinutes: 5, managerPresentation: "male" }));
   expect(window.localStorage.getItem("raise-room-voice-settings-v1")).not.toBeNull();
 });
 
 test("clear confirmation removes only practice storage and returns home defaults", () => {
+  vi.useFakeTimers();
   window.localStorage.setItem("raise-room-scenario-draft", "scenario");
   window.localStorage.setItem("raise-room-meeting-settings-v1", "practice");
   window.localStorage.setItem("raise-room-voice-settings-v1", "voice");
@@ -185,6 +190,7 @@ test("clear confirmation removes only practice storage and returns home defaults
   fireEvent.click(screen.getByRole("tab", { name: "隱私" }));
   fireEvent.click(screen.getByRole("button", { name: "清除本機設定與草稿" }));
   fireEvent.click(screen.getByRole("button", { name: "確認清除" }));
+  act(() => vi.advanceTimersByTime(180));
   expect(window.localStorage.getItem("raise-room-scenario-draft")).toBeNull();
   expect(window.localStorage.getItem("raise-room-meeting-settings-v1")).toBeNull();
   expect(window.localStorage.getItem("raise-room-voice-settings-v1")).toBeNull();

@@ -1,16 +1,7 @@
 import { useCallback, useEffect, useRef, type ReactNode } from "react";
 import { useLocalCamera } from "../hooks/use-local-camera";
 type Camera = ReturnType<typeof useLocalCamera>;
-export function LocalCameraTile({
-  camera: injected,
-  detail,
-  showControl = true,
-  onVideoElement,
-  previewStream,
-  overlay,
-  pinned = false,
-  tileActions,
-}: {
+type LocalCameraTileProps = {
   camera?: Camera;
   detail?: string;
   showControl?: boolean;
@@ -19,9 +10,20 @@ export function LocalCameraTile({
   overlay?: ReactNode;
   pinned?: boolean;
   tileActions?: ReactNode;
-}) {
-  const owned = useLocalCamera();
-  const camera = injected ?? owned;
+  onTileActivate?: () => void;
+};
+
+function LocalCameraTileView({
+  camera,
+  detail,
+  showControl = true,
+  onVideoElement,
+  previewStream,
+  overlay,
+  pinned = false,
+  tileActions,
+  onTileActivate,
+}: LocalCameraTileProps & { camera: Camera }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const setVideoRef = useCallback((element: HTMLVideoElement | null) => {
     videoRef.current = element;
@@ -51,7 +53,7 @@ export function LocalCameraTile({
           : "鏡頭尚未開啟";
 
   return (
-    <section className="local-camera-tile" aria-label="你的本機鏡頭">
+    <section className="local-camera-tile" aria-label="你的本機鏡頭" tabIndex={onTileActivate ? 0 : undefined} onClick={(event) => { if (event.target === event.currentTarget) onTileActivate?.(); }} onKeyDown={(event) => { if (onTileActivate && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); onTileActivate(); } }}>
       <div className="participant-tile-overlay">
         <p className="stage-label">你 · 本機預覽{pinned ? " · 已釘選" : ""}</p>
         {tileActions}
@@ -77,4 +79,30 @@ export function LocalCameraTile({
       {overlay}
     </section>
   );
+}
+
+function OwnedLocalCameraTile(props: Omit<LocalCameraTileProps, "camera">) {
+  const camera = useLocalCamera();
+  return <LocalCameraTileView {...props} camera={camera} />;
+}
+
+function InjectedLocalCameraTile({ camera, ...props }: LocalCameraTileProps & { camera: Camera }) {
+  return <LocalCameraTileView {...props} camera={camera} />;
+}
+
+function PreviewOnlyCameraTile(props: Omit<LocalCameraTileProps, "camera">) {
+  const camera: Camera = {
+    status: "idle",
+    stream: null,
+    errorMessage: null,
+    start: async () => undefined,
+    stop: () => undefined,
+  };
+  return <LocalCameraTileView {...props} camera={camera} />;
+}
+
+export function LocalCameraTile(props: LocalCameraTileProps) {
+  if (props.camera) return <InjectedLocalCameraTile {...props} camera={props.camera} />;
+  if (props.previewStream !== undefined) return <PreviewOnlyCameraTile {...props} />;
+  return <OwnedLocalCameraTile {...props} />;
 }

@@ -129,17 +129,11 @@ export function MeetHome({
                 </div>
 
                 {selectedDateHasMeeting ? (
-                  <article
+                  <button
                     aria-label={`進入${meeting.title}準備室`}
                     className="meet-home-schedule-card"
-                    tabIndex={0}
+                    type="button"
                     onClick={onEnterLobby}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        onEnterLobby();
-                      }
-                    }}
                   >
                     <div className="meet-home-schedule-time">
                       <time>{formatPracticeTimeRange(meeting, "zh-TW")}</time>
@@ -149,15 +143,8 @@ export function MeetHome({
                       <h3 id="scheduled-meeting-title">{meeting.title}</h3>
                       <p>{meeting.company} · {meeting.role}</p>
                     </div>
-                    <button
-                      className="meet-home-enter"
-                      type="button"
-                      onClick={(event) => { event.stopPropagation(); onEnterLobby(); }}
-                      onKeyDown={(event) => event.stopPropagation()}
-                    >
-                      提早進入準備室
-                    </button>
-                  </article>
+                    <span className="meet-home-enter">提早進入準備室</span>
+                  </button>
                 ) : (
                   <p className="meet-home-empty-state">這一天沒有安排練習</p>
                 )}

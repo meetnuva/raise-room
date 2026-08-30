@@ -51,6 +51,15 @@ test("closes the local user popover before opening privacy settings", () => {
   expect(onOpenSettings).toHaveBeenCalledWith("privacy");
 });
 
+test("returns Escape focus to the actual popover opener", () => {
+  render(<HomeChrome onOpenSettings={vi.fn()} />);
+  const opener = screen.getByRole("button", { name: "說明" });
+  fireEvent.click(opener);
+  fireEvent.keyDown(opener, { key: "Escape" });
+  expect(screen.queryByRole("dialog", { name: "Raise Room 使用說明" })).toBeNull();
+  expect(opener).toHaveFocus();
+});
+
 test("uses the shared focus token for home controls", () => {
   const styles = readFileSync(resolve(process.cwd(), "src/styles.css"), "utf8");
 

@@ -32,3 +32,8 @@ test("only speaks each ready manager reply once with an injected client", async 
   await waitFor(() => expect(speak).toHaveBeenCalledWith("請說明具體成果。"));
   expect(speak).toHaveBeenCalledOnce();
 });
+test("opens the manager participant menu from the tile keyboard surface", () => {
+  render(<PerxonaManagerStage managerName="王主管" config={{ enabled: false, reason: "missing-key" }} latestManagerText={null} />);
+  fireEvent.keyDown(screen.getByLabelText("王主管"), { key: "Enter" });
+  expect(screen.getByRole("menu")).toBeVisible();
+});

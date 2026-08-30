@@ -140,14 +140,15 @@ export function PracticeSettingsDialog({
   const selectTab = (tab: SettingsTarget) => {
     if (!isClosing) setSelectedTab(tab);
   };
-  const close = () => {
+  const leave = (afterLeave: () => void) => {
     if (closeTimer.current !== null) return;
     setMotion("leaving");
     closeTimer.current = window.setTimeout(() => {
       closeTimer.current = null;
-      onClose();
+      afterLeave();
     }, 180);
   };
+  const close = () => leave(onClose);
   const validateAndSave = () => {
     if (isClosing) return;
     if (!draft.scenario.role.trim()) {
@@ -175,15 +176,14 @@ export function PracticeSettingsDialog({
       setFocusTarget("requestedMonthlySalary");
       return;
     }
-    onSave(draft);
+    leave(() => onSave(draft));
   };
   const requestClear = () => {
     if (!isClosing) setClearConfirmation(true);
   };
   const confirmClear = () => {
     if (isClosing) return;
-    onClear();
-    setClearConfirmation(false);
+    leave(() => onClear());
   };
   const selectTabFromKeyboard = (tab: SettingsTarget, key: string) => {
     if (isClosing) return;

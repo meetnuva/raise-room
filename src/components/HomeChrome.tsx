@@ -9,28 +9,34 @@ type HomePopover = "about" | "help" | "user" | null;
 export function HomeChrome({ onOpenSettings }: { onOpenSettings(target?: HomeSettingsTarget): void }) {
   const [openPopover, setOpenPopover] = useState<HomePopover>(null);
   const controlsRef = useRef<HTMLDivElement>(null);
+  const popoverOpener = useRef<HTMLElement | null>(null);
+
+  const closePopover = () => {
+    setOpenPopover(null);
+    popoverOpener.current?.focus();
+  };
 
   useEffect(() => {
     if (!openPopover) return undefined;
     const dismiss = (event: MouseEvent) => {
-      if (!controlsRef.current?.contains(event.target as Node)) setOpenPopover(null);
+      if (!controlsRef.current?.contains(event.target as Node)) closePopover();
     };
     document.addEventListener("mousedown", dismiss);
     return () => document.removeEventListener("mousedown", dismiss);
   }, [openPopover]);
 
   const openAbout = () => setOpenPopover("about");
-  const openUser = () => setOpenPopover("user");
+  const openUser = (opener: HTMLButtonElement) => { popoverOpener.current = opener; setOpenPopover("user"); };
 
   return (
     <div
       className="meet-home-header-actions"
       ref={controlsRef}
       onKeyDown={(event) => {
-        if (event.key === "Escape") setOpenPopover(null);
+        if (event.key === "Escape") { event.preventDefault(); closePopover(); }
       }}
     >
-      <IconButton aria-expanded={openPopover === "help"} icon="help" label="說明" onClick={() => setOpenPopover("help")} />
+      <IconButton aria-expanded={openPopover === "help"} icon="help" label="說明" onClick={(event) => { popoverOpener.current = event.currentTarget; setOpenPopover("help"); }} />
       <IconButton icon="settings" label="設定" title="設定" onClick={() => onOpenSettings()} />
       <ActionMenu
         items={[
@@ -45,7 +51,7 @@ export function HomeChrome({ onOpenSettings }: { onOpenSettings(target?: HomeSet
         aria-label="本機使用者"
         className="meet-home-avatar"
         type="button"
-        onClick={openUser}
+        onClick={(event) => openUser(event.currentTarget)}
       >你</button>
       {openPopover === "help" ? (
         <section aria-label="Raise Room 使用說明" className="meet-home-popover" role="dialog">

@@ -21,7 +21,7 @@ function voiceControl(status: VoiceStatus) {
     return { icon: "microphone" as const, label: "停止並轉成文字", selected: true, disabled: false };
   }
 
-  if (status === "requesting-microphone" || status === "transcribing" || status === "loading-model") {
+  if (status === "requesting-microphone" || status === "transcribing" || status === "loading-model" || status === "denied" || status === "unsupported" || status === "error") {
     return { icon: "microphoneOff" as const, label: "開始說話", selected: false, disabled: true };
   }
 
@@ -65,7 +65,7 @@ export function MeetingControlBar({
         label={cameraActive ? "關閉我的鏡頭" : "開啟我的鏡頭"}
         onClick={onCameraToggle}
         selected={cameraActive}
-        tone="inverse"
+        tone={cameraActive ? "inverse" : "danger"}
         tooltipDelayMs={500}
       />
       <IconButton

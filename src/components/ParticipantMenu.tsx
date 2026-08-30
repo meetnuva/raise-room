@@ -12,6 +12,7 @@ type ParticipantMenuProps = {
   onViewRole?: (opener: HTMLButtonElement | null) => void;
   onOpenInfo?: (opener: HTMLButtonElement | null) => void;
   onOpenDevices?: (opener: HTMLButtonElement | null) => void;
+  openRequest?: number;
 };
 
 export function ParticipantMenu({
@@ -23,6 +24,7 @@ export function ParticipantMenu({
   onViewRole,
   onOpenInfo,
   onOpenDevices,
+  openRequest,
 }: ParticipantMenuProps) {
   const isManager = kind === "manager";
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -38,5 +40,5 @@ export function ParticipantMenu({
         { id: "devices", label: "開啟裝置設定", icon: "devices" as const, onSelect: () => onOpenDevices?.(triggerRef.current) },
       ];
 
-  return <ActionMenu items={items} label={isManager ? "主管更多操作" : "你的更多操作"} tone="inverse" triggerRef={triggerRef} />;
+  return <ActionMenu items={items} label={isManager ? "主管更多操作" : "你的更多操作"} tone="inverse" triggerRef={triggerRef} openRequest={openRequest} />;
 }

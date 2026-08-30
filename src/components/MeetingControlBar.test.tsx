@@ -71,6 +71,12 @@ test("keeps microphone and camera state controlled by its owner", () => {
   expect(props.onCameraToggle).toHaveBeenCalledOnce();
 });
 
+test("does not expose an inert voice action and marks camera off as danger", () => {
+  renderBar({ voiceStatus: "denied", cameraActive: false });
+  expect(screen.getByRole("button", { name: "開始說話" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "開啟我的鏡頭" })).toHaveClass("icon-button--danger");
+});
+
 test("reflects only the owner-selected information tab as pressed", () => {
   renderBar({ panelOpen: true, activePanelTab: "events" });
 

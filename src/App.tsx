@@ -20,7 +20,6 @@ import type { DeviceSettingsDevice } from "./components/DeviceSettingsPanel";
 
 type AppState =
   | { view: "home" }
-  | { view: "settings"; target?: SettingsTarget }
   | { view: "practice"; phase: "lobby" | "meeting" }
   | { view: "report"; scenario: Scenario; transcript: TranscriptTurn[]; visualSignals?: VisualSignals };
 
@@ -67,6 +66,7 @@ function readInitialVoicePreset(): AsrModelPresetId {
 export function App({ now = () => new Date() }: { now?: () => Date } = {}) {
   const [documentNow] = useState(now);
   const [appState, setAppState] = useState<AppState>({ view: "home" });
+  const [settingsTarget, setSettingsTarget] = useState<SettingsTarget | null>(null);
   const [scenario, setScenario] = useState<Scenario>(readInitialScenario);
   const [practice, setPractice] = useState<PracticeSettings>(readInitialPractice);
   const [voicePreset, setVoicePreset] = useState<AsrModelPresetId>(readInitialVoicePreset);
@@ -86,11 +86,11 @@ export function App({ now = () => new Date() }: { now?: () => Date } = {}) {
       document.getElementById("meeting-room-title")?.focus();
     }
 
-    if (appState.view === "home" && restoreSettingsFocus.current) {
+    if (appState.view === "home" && restoreSettingsFocus.current && settingsTarget === null) {
       restoreSettingsFocus.current = false;
       document.querySelector<HTMLButtonElement>("button[aria-label='設定']")?.focus();
     }
-  }, [appState]);
+  }, [appState, settingsTarget]);
 
   useEffect(() => {
     if (appState.view !== "home") return;
@@ -115,7 +115,7 @@ export function App({ now = () => new Date() }: { now?: () => Date } = {}) {
   const presenterConfig = selectPresenterConfig(presenterCatalog, practice.managerPresentation);
   const closeSettings = () => {
     restoreSettingsFocus.current = true;
-    setAppState({ view: "home" });
+    setSettingsTarget(null);
   };
   const saveSettings = (next: PracticeSettingsDraft) => {
     if (typeof window !== "undefined") {
@@ -128,7 +128,7 @@ export function App({ now = () => new Date() }: { now?: () => Date } = {}) {
     setVoicePreset(next.modelPreset);
     setMeeting((current) => reviseMeeting(current, next.scenario, next.practice));
     restoreSettingsFocus.current = true;
-    setAppState({ view: "home" });
+    setSettingsTarget(null);
   };
   const clearSettings = () => {
     if (typeof window !== "undefined") {
@@ -141,7 +141,7 @@ export function App({ now = () => new Date() }: { now?: () => Date } = {}) {
     setVoicePreset(defaultAsrModelPresetId);
     setMeeting(createMeeting(documentNow, defaultScenario, defaultPracticeSettings));
     restoreSettingsFocus.current = true;
-    setAppState({ view: "home" });
+    setSettingsTarget(null);
   };
   const selectDevice = (device: DeviceSettingsDevice) => {
     setSelectedDeviceIds((current) => ({ ...current, [device.kind]: device.deviceId }));
@@ -149,25 +149,12 @@ export function App({ now = () => new Date() }: { now?: () => Date } = {}) {
 
   return (
     <main className={appState.view === "practice" && appState.phase === "meeting" ? "meeting-mode" : undefined}>
-      {(appState.view === "home" || appState.view === "settings") && (
+      {appState.view === "home" && (
         <MeetHome
           meeting={meeting}
           now={homeNow}
-          onOpenSettings={(target) => setAppState({ view: "settings", target })}
+          onOpenSettings={(target) => setSettingsTarget(target ?? "audio")}
           onEnterLobby={() => setAppState({ view: "practice", phase: "lobby" })}
-        />
-      )}
-      {appState.view === "settings" && (
-        <PracticeSettingsDialog
-          open
-          value={settingsValue}
-          presenterCatalog={presenterCatalog}
-          selectedDeviceIds={selectedDeviceIds}
-          onSelectDevice={selectDevice}
-          initialTab={appState.target}
-          onSave={saveSettings}
-          onClear={clearSettings}
-          onClose={closeSettings}
         />
       )}
       {appState.view === "practice" && (
@@ -181,7 +168,7 @@ export function App({ now = () => new Date() }: { now?: () => Date } = {}) {
               presenterConfig={presenterConfig}
               onJoin={() => setAppState({ view: "practice", phase: "meeting" })}
               onCancel={() => setAppState({ view: "home" })}
-              onOpenSettings={(target) => setAppState({ view: "settings", target })}
+              onOpenSettings={setSettingsTarget}
             />
           ) : (
             <MeetingRoom
@@ -201,6 +188,19 @@ export function App({ now = () => new Date() }: { now?: () => Date } = {}) {
             />
           )}
         </PracticeSession>
+      )}
+      {settingsTarget !== null && (
+        <PracticeSettingsDialog
+          open
+          value={settingsValue}
+          presenterCatalog={presenterCatalog}
+          selectedDeviceIds={selectedDeviceIds}
+          onSelectDevice={selectDevice}
+          initialTab={settingsTarget}
+          onSave={saveSettings}
+          onClear={clearSettings}
+          onClose={closeSettings}
+        />
       )}
       {appState.view === "report" && (
         <CoachingReport

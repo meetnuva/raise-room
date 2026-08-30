@@ -80,6 +80,23 @@ test("blocks every save and clear mutation while its 180ms close handoff is leav
   expect(onClose).toHaveBeenCalledOnce();
 });
 
+test("delays save and confirmed clear mutations until the leaving animation completes", () => {
+  vi.useFakeTimers();
+  const save = renderDialog();
+  fireEvent.click(screen.getByRole("button", { name: "儲存" }));
+  expect(save.onSave).not.toHaveBeenCalled();
+  expect(screen.getByRole("dialog")).toHaveAttribute("data-motion", "leaving");
+  act(() => vi.advanceTimersByTime(180));
+  expect(save.onSave).toHaveBeenCalledOnce();
+
+  const clear = renderDialog({ initialTab: "privacy" });
+  fireEvent.click(screen.getAllByRole("button", { name: "清除本機設定與草稿" })[0]);
+  fireEvent.click(screen.getByRole("button", { name: "確認清除" }));
+  expect(clear.onClear).not.toHaveBeenCalled();
+  act(() => vi.advanceTimersByTime(180));
+  expect(clear.onClear).toHaveBeenCalledOnce();
+});
+
 test("uses roving tabs with linked panels and keyboard navigation", () => {
   renderDialog();
 
@@ -183,6 +200,7 @@ test("saves one edited draft, disables unavailable female presenters, and closes
   fireEvent.click(screen.getByRole("tab", { name: "會議" }));
   fireEvent.click(screen.getByRole("radio", { name: "10 分鐘" }));
   fireEvent.click(screen.getByRole("button", { name: "儲存" }));
+  act(() => vi.advanceTimersByTime(180));
   expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ practice: expect.objectContaining({ durationMinutes: 10 }) }));
 
   fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
@@ -191,6 +209,7 @@ test("saves one edited draft, disables unavailable female presenters, and closes
 });
 
 test("discloses local-only privacy and requires a second confirmation before clearing", () => {
+  vi.useFakeTimers();
   const { onClear } = renderDialog();
 
   fireEvent.click(screen.getByRole("tab", { name: "隱私" }));
@@ -202,6 +221,7 @@ test("discloses local-only privacy and requires a second confirmation before cle
   expect(onClear).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("button", { name: "清除本機設定與草稿" }));
   fireEvent.click(screen.getByRole("button", { name: "確認清除" }));
+  act(() => vi.advanceTimersByTime(180));
   expect(onClear).toHaveBeenCalledOnce();
 });
 

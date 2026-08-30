@@ -1839,6 +1839,11 @@ button {
   transform: translateX(16px);
 }
 
+.meeting-side-panel[data-motion="leaving"] {
+  opacity: 0;
+  transform: translateX(16px);
+}
+
 .meeting-side-panel [role="tablist"] {
   flex-wrap: wrap;
 }
@@ -1919,7 +1924,8 @@ button {
 }
 
 .meeting-control-bar .icon-button--inverse.is-selected {
-  background: #ea4335;
+  background: var(--control-idle);
+  color: var(--text-primary);
 }
 
 .meeting-control-bar .icon-button--danger {
@@ -1955,6 +1961,10 @@ button {
 }
 
 .meeting-panel-scrim[data-motion="entering"] {
+  opacity: 0;
+}
+
+.meeting-panel-scrim[data-motion="leaving"] {
   opacity: 0;
 }
 
@@ -2084,11 +2094,16 @@ button {
 .toast-region {
   position: fixed;
   z-index: 40;
-  top: .75rem;
   right: .75rem;
+  bottom: .75rem;
   display: grid;
-  width: min(24rem, calc(100vw - 1.5rem));
+  width: min(360px, calc(100vw - 1.5rem));
+  max-width: 360px;
   gap: .5rem;
+}
+
+.toast-region:has(.meeting-toast--error) {
+  bottom: 5.5rem;
 }
 
 .meeting-toast {

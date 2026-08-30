@@ -38,7 +38,7 @@ test("uses the blue nuva brand and opens settings", () => {
   expect(onOpenSettings).toHaveBeenCalledOnce();
 });
 
-test("uses icon navigation and enters the lobby once from either schedule card action", () => {
+test("uses one semantic schedule button and enters the lobby once", () => {
   const onEnterLobby = vi.fn();
   render(
     <MeetHome
@@ -53,14 +53,11 @@ test("uses icon navigation and enters the lobby once from either schedule card a
     expect(button.querySelector("svg")).not.toBeNull();
   }
 
-  const card = screen.getByRole("article", { name: "進入與王主管的年度調薪 1:1準備室" });
-  fireEvent.keyDown(card, { key: "Enter" });
-  fireEvent.keyDown(card, { key: " " });
-  const enter = screen.getByRole("button", { name: "提早進入準備室" });
-  fireEvent.keyDown(enter, { key: " " });
-  expect(onEnterLobby).toHaveBeenCalledTimes(2);
-  fireEvent.click(enter);
-  expect(onEnterLobby).toHaveBeenCalledTimes(3);
+  const card = screen.getByRole("button", { name: "進入與王主管的年度調薪 1:1準備室" });
+  fireEvent.click(card);
+  expect(onEnterLobby).toHaveBeenCalledOnce();
+  expect(screen.queryByRole("button", { name: "提早進入準備室" })).toBeNull();
+  expect(screen.getByText("提早進入準備室")).toBeVisible();
 });
 
 test("shows the schedule and permits early entry", () => {
@@ -76,7 +73,7 @@ test("shows the schedule and permits early entry", () => {
 
   expect(screen.getByText("18:00–18:20")).toBeVisible();
   expect(screen.getByText("與王主管的年度調薪 1:1")).toBeVisible();
-  fireEvent.click(screen.getByRole("button", { name: "提早進入準備室" }));
+  fireEvent.click(screen.getByRole("button", { name: /進入.*準備室/ }));
   expect(onEnterLobby).toHaveBeenCalledOnce();
 });
 

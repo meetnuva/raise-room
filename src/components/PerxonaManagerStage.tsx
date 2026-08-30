@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { PresenterRuntimeConfig } from "../lib/perxona-config";
 import { usePerxonaPresenter } from "../hooks/use-perxona-presenter";
 import type { PresenterClient } from "../lib/perxona-presenter";
@@ -32,6 +32,7 @@ export function PerxonaManagerStage({
   });
   const spoken = useRef<string | null>(null);
   const reportedError = useRef<string | null>(null);
+  const [menuRequest, setMenuRequest] = useState(0);
 
   useEffect(() => {
     if (status === "ready" && latestManagerText && spoken.current !== latestManagerText) {
@@ -62,10 +63,10 @@ export function PerxonaManagerStage({
   }[status];
 
   return (
-    <section className="manager-stage" aria-labelledby="manager-stage-title">
+    <section className="manager-stage" aria-labelledby="manager-stage-title" tabIndex={0} onClick={(event) => { if (event.target === event.currentTarget) setMenuRequest((current) => current + 1); }} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setMenuRequest((current) => current + 1); } }}>
       <div className="participant-tile-overlay">
         <div><p className="stage-label">主管畫面{pinned ? " · 已釘選" : ""}</p><h3 id="manager-stage-title">{managerName}</h3></div>
-        <ParticipantMenu kind="manager" pinned={pinned} expanded={false} onTogglePin={onTogglePin ?? (() => {})} onViewRole={onViewRole} onOpenInfo={onOpenInfo} />
+        <ParticipantMenu kind="manager" pinned={pinned} expanded={false} onTogglePin={onTogglePin ?? (() => {})} onViewRole={onViewRole} onOpenInfo={onOpenInfo} openRequest={menuRequest} />
       </div>
       <div ref={containerRef} className="presenter-canvas" aria-label="Perxona 3D 主管舞台" />
       <p role="status">● {state}</p>

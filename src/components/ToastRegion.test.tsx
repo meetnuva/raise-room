@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import { readFileSync } from "node:fs";
 import { afterEach, expect, test, vi } from "vitest";
 import { ToastRegion } from "./ToastRegion";
 
@@ -45,4 +46,10 @@ test("keeps errors as dismissible persistent alerts", () => {
   expect(screen.getByRole("alert")).toHaveTextContent("主管回覆暫時無法取得");
   fireEvent.click(screen.getByRole("button", { name: "關閉通知：主管回覆暫時無法取得" }));
   expect(onDismiss).toHaveBeenCalledWith("error");
+});
+
+test("positions notices at the bottom right and persistent errors above the control bar", () => {
+  const styles = readFileSync("src/styles.css", "utf8");
+  expect(styles).toMatch(/\.toast-region\s*\{[^}]*right:\s*\.75rem;[^}]*bottom:\s*\.75rem;[^}]*max-width:\s*360px;/s);
+  expect(styles).toMatch(/\.toast-region:has\(\.meeting-toast--error\)\s*\{[^}]*bottom:\s*5\.5rem;/s);
 });

@@ -119,13 +119,15 @@ function MeetingRoomView({
   const [toasts, setToasts] = useState<MeetingToast[]>([]);
   const [stageFocus, setStageFocus] = useState<StageFocus>("manager");
   const [pinnedParticipant, setPinnedParticipant] = useState<"manager" | "self" | null>(null);
+  const [selfMenuRequest, setSelfMenuRequest] = useState(0);
   const [panelOpen, setPanelOpen] = useState(false);
-  const [panelMotion, setPanelMotion] = useState<"entering" | "entered">("entered");
+  const [panelMotion, setPanelMotion] = useState<"entering" | "entered" | "leaving">("entered");
   const [activePanelTab, setActivePanelTab] = useState<MeetingPanelTab>("transcript");
   const [voiceActionRequest, setVoiceActionRequest] = useState(0);
   const [cameraVideoElement, setCameraVideoElement] = useState<HTMLVideoElement | null>(null);
   const meetingRef = useRef(meeting);
   const panelOpener = useRef<HTMLButtonElement | null>(null);
+  const panelCloseTimer = useRef<number | null>(null);
   const vision = useLocalVision({ videoElement: cameraVideoElement });
   const latestTurn = meeting.transcript[meeting.transcript.length - 1];
   const managerEngineStatus =
@@ -197,9 +199,9 @@ function MeetingRoomView({
     }
   };
 
-  const developmentFallback = import.meta.env.MODE === "test" ? (
+  const textFallback = (
     <form
-      className="development-fallback"
+      className="text-fallback"
       onSubmit={(event) => {
         event.preventDefault();
         const text = draft.trim();
@@ -209,19 +211,19 @@ function MeetingRoomView({
         void submitUserMessage(text, { source: "text" });
       }}
     >
-      <label htmlFor="development-message">開發用文字輸入</label>
+      <label htmlFor="development-message">文字輸入</label>
       <div>
         <input
           id="development-message"
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
-          placeholder="暫代語音輸入，僅供開發測試"
+          placeholder="直接輸入你想說的內容"
           disabled={sending}
         />
         <button disabled={sending} type="submit">送出</button>
       </div>
     </form>
-  ) : undefined;
+  );
   const firstEventOffset = scenario.events.length
     ? Math.min(...scenario.events.map((event) => event.triggerRatio * durationSeconds))
     : 0;
@@ -236,8 +238,13 @@ function MeetingRoomView({
     setPanelOpen(true);
   };
   const closePanel = () => {
-    setPanelOpen(false);
-    panelOpener.current?.focus();
+    if (panelMotion === "leaving" || panelCloseTimer.current !== null) return;
+    setPanelMotion("leaving");
+    panelCloseTimer.current = window.setTimeout(() => {
+      panelCloseTimer.current = null;
+      setPanelOpen(false);
+      panelOpener.current?.focus();
+    }, 180);
   };
   const voiceContent = (
     <>
@@ -305,7 +312,8 @@ function MeetingRoomView({
               showControl={false}
               onVideoElement={setCameraVideoElement}
               pinned={pinnedParticipant === "self"}
-              tileActions={<ParticipantMenu kind="self" pinned={pinnedParticipant === "self"} expanded={stageFocus === "self"} onToggleExpand={() => setStageFocus((current) => current === "self" ? "manager" : "self")} onTogglePin={() => setPinnedParticipant((current) => current === "self" ? null : "self")} onOpenDevices={(opener) => openPanel("devices", opener)} />}
+              onTileActivate={() => setSelfMenuRequest((current) => current + 1)}
+              tileActions={<ParticipantMenu kind="self" pinned={pinnedParticipant === "self"} expanded={stageFocus === "self"} onToggleExpand={() => setStageFocus((current) => current === "self" ? "manager" : "self")} onTogglePin={() => setPinnedParticipant((current) => current === "self" ? null : "self")} onOpenDevices={(opener) => openPanel("devices", opener)} openRequest={selfMenuRequest} />}
             />
           </aside>
         </div>
@@ -322,7 +330,7 @@ function MeetingRoomView({
             observationContent={<LocalVisualControl vision={vision} cameraActive={camera.cameraActive} />}
             voiceContent={voiceContent}
             deviceContent={deviceContent}
-            transcriptFallback={developmentFallback}
+            transcriptFallback={voice.status === "denied" || voice.status === "unsupported" || voice.status === "error" || import.meta.env.MODE === "test" ? textFallback : undefined}
             onClose={closePanel}
           />
         )}

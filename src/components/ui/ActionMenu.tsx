@@ -17,9 +17,10 @@ type ActionMenuProps = {
   icon?: IconName;
   tone?: "default" | "inverse" | "danger";
   triggerRef?: Ref<HTMLButtonElement>;
+  openRequest?: number;
 };
 
-export function ActionMenu({ items, label, icon = "more", tone, triggerRef: externalTriggerRef }: ActionMenuProps) {
+export function ActionMenu({ items, label, icon = "more", tone, triggerRef: externalTriggerRef, openRequest = 0 }: ActionMenuProps) {
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -27,6 +28,7 @@ export function ActionMenu({ items, label, icon = "more", tone, triggerRef: exte
   const triggerRef = useRef<HTMLButtonElement>(null);
   const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const menuId = useId();
+  const handledOpenRequest = useRef(0);
 
   const close = (returnFocus = true) => {
     setOpen(false);
@@ -58,6 +60,12 @@ export function ActionMenu({ items, label, icon = "more", tone, triggerRef: exte
     setActiveIndex(firstEnabledIndex === -1 ? null : firstEnabledIndex);
     setOpen(true);
   };
+
+  useEffect(() => {
+    if (openRequest === 0 || openRequest === handledOpenRequest.current) return;
+    handledOpenRequest.current = openRequest;
+    openMenu();
+  }, [openRequest]);
 
   const moveActiveItem = (offset: number) => {
     if (activeIndex === null) return;
