@@ -193,6 +193,7 @@ export function MeetingRoom({
               source: "voice",
               durationSeconds: result.durationSeconds,
               modelPreset: result.modelPreset,
+              language: result.language,
             });
           }}
           disabled={sending}

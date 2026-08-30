@@ -33,8 +33,9 @@ test("retains only preset metadata for confirmed voice delivery", () => {
     source: "voice",
     durationSeconds: 12,
     modelPreset: "quality",
+    language: "zh",
   });
-  expect(state.transcript[0]).toMatchObject({ text: "已修正文字", delivery: { source: "voice", durationSeconds: 12, modelPreset: "quality" } });
+  expect(state.transcript[0]).toMatchObject({ text: "已修正文字", delivery: { source: "voice", durationSeconds: 12, modelPreset: "quality", language: "zh" } });
   expect(JSON.stringify(state.transcript[0])).not.toContain("rawText");
 });
 

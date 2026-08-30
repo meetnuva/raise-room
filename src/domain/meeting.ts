@@ -1,5 +1,6 @@
 import type { Scenario, ScheduledEvent } from "./scenario";
 import type { AsrModelPresetId } from "./asr-models";
+import type { VoiceLanguage } from "../lib/local-asr";
 
 interface BaseTranscriptTurn {
   text: string;
@@ -24,6 +25,7 @@ export interface TurnDelivery {
   source: "text" | "voice";
   durationSeconds?: number;
   modelPreset?: AsrModelPresetId;
+  language?: VoiceLanguage;
 }
 
 export interface MeetingState {
