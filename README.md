@@ -31,12 +31,18 @@ npm run build
 
 ## 尚未啟用能力
 
-- 即時語音、視覺分析與雲端儲存。
+- 視覺分析與雲端儲存。
 - 雇主評分、招募篩選、謊言偵測或心理判定。
 
 ## Local-first
 
 會議逐字稿只保留在目前的 React memory；關閉或重新整理頁面後不會保留。情境草稿只存在此瀏覽器的本機草稿。詳見 [資料與隱私邊界](docs/privacy-boundary.md) 與 [Perxona 整合邊界](docs/perxona-integration.md)。
+
+## Phase 3：可選本機語音
+
+可自行選擇繁中、English 或日本語，並按下「載入本機語音模型」。首次 opt-in 會從 Hugging Face Hub 下載 `onnx-community/whisper-tiny`；模型大小依量化檔而異、可能需要一段時間，完成後由瀏覽器快取供後續使用。音訊不會上傳，WebGPU 優先、沒有時使用較慢的 WASM fallback。
+
+每段錄音最多分析最後 30 秒；按下停止後會立即關閉麥克風 tracks，再在瀏覽器內轉錄。報告只讀取逐字稿中的可觀察語音 metadata；字元／分鐘不可跨語言比較。真正的 Perxona Chatbot／LLM manager 仍需要 server-only Secret Key 邊界，這個 Phase 尚未實作。
 
 ## Phase 2：可選鏡頭與 Perxona Presenter
 

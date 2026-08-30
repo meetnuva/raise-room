@@ -1,5 +1,6 @@
 import type { TranscriptTurn } from "./meeting";
 import type { Scenario } from "./scenario";
+import { createDeliverySignals, type DeliverySignals } from "./delivery";
 
 export interface Evidence {
   kind: "transcript" | "missing";
@@ -25,6 +26,7 @@ export interface CoachingReport {
   strengths: Recommendation[];
   practiceTargets: Recommendation[];
   negotiationMap: NegotiationMapItem[];
+  deliverySignals: DeliverySignals;
 }
 
 type RecommendationId = NegotiationMapItem["id"];
@@ -163,6 +165,7 @@ export function createCoachingReport(
       label: negotiationMapLabels[id],
       complete: Boolean(completedTurns[id]),
     })),
+    deliverySignals: createDeliverySignals(transcript),
   };
 }
 

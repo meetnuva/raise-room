@@ -83,3 +83,11 @@ test("formats transcript timestamps as MM:SS", () => {
   expect(formatTimestamp(65)).toBe("01:05");
   expect(formatTimestamp(605)).toBe("10:05");
 });
+
+test("includes delivery signals without changing recommendations", () => {
+  const report = createCoachingReport(defaultScenario, [
+    { speaker: "user", elapsedSeconds: 1, text: "嗯我期待調整 5%", delivery: { source: "voice", durationSeconds: 10 } },
+  ]);
+  expect(report.deliverySignals).toMatchObject({ voiceTurnCount: 1, fillerWordCount: 1 });
+  expect(report.strengths.map((item) => item.id)).toContain("request");
+});

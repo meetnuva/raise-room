@@ -40,6 +40,16 @@ export function CoachingReport({
         </ul>
       </section>
 
+      <section aria-labelledby="delivery-signals-title" className="report-section">
+        <h3 id="delivery-signals-title">可觀察表達訊號</h3>
+        <p>語音回合數：{report.deliverySignals.voiceTurnCount}</p>
+        <p>有效語音總秒數：{report.deliverySignals.totalVoiceDurationSeconds}</p>
+        <p>字元／分鐘：{report.deliverySignals.charactersPerMinute === null ? "本局沒有足夠語音資料" : report.deliverySignals.charactersPerMinute.toFixed(1)}</p>
+        <p>填充詞總數：{report.deliverySignals.fillerWordCount}</p>
+        <ul className="delivery-filler-words">{report.deliverySignals.fillerWords.map((item) => <li key={item.word}>{item.word}：{item.count}</li>)}</ul>
+        <p>這些是可回看的行為資料，不是自信、誠實或情緒分數；不同語言不可直接比較。</p>
+      </section>
+
       <div className="report-columns">
         <section aria-labelledby="strengths-title" className="report-section">
           <h3 id="strengths-title">做得好的地方</h3>

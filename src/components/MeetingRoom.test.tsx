@@ -49,7 +49,7 @@ test("hands the append-only transcript to onFinish", async () => {
   fireEvent.click(screen.getByRole("button", { name: "結束並看報告" }));
 
   expect(onFinish).toHaveBeenCalledWith([
-    { speaker: "user", text: "我想依成果討論調薪", elapsedSeconds: 0 },
+    { speaker: "user", text: "我想依成果討論調薪", elapsedSeconds: 0, delivery: { source: "text" } },
     {
       speaker: "manager",
       text: "王主管：請以具體成果說明這次薪資調整請求。",
@@ -62,4 +62,12 @@ test("renders one bottom-control camera toggle when Perxona is not configured", 
   render(<MeetingRoom scenario={defaultScenario} responder={simulatedResponder} />);
 
   expect(screen.getAllByRole("button", { name: "開啟我的鏡頭" })).toHaveLength(1);
+});
+
+test("marks text fallback turns and disables a second submission while replying", async () => {
+  let resolveReply = (_text: string) => {};
+  render(<MeetingRoom scenario={defaultScenario} responder={{ reply: () => new Promise((resolve) => { resolveReply = resolve; }) }} />);
+  fireEvent.change(screen.getByLabelText("開發用文字輸入"), { target: { value: "文字回合" } }); fireEvent.click(screen.getByRole("button", { name: "送出" }));
+  expect(screen.getByRole("button", { name: "送出" })).toBeDisabled(); await act(async () => resolveReply("收到"));
+  fireEvent.click(screen.getByRole("button", { name: "結束並看報告" }));
 });

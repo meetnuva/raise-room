@@ -70,3 +70,9 @@ test("provides retry and reset actions", () => {
   expect(onRetry).toHaveBeenCalledOnce();
   expect(onReset).toHaveBeenCalledOnce();
 });
+
+test("shows delivery observations without psychological claims", () => {
+  render(<CoachingReport scenario={defaultScenario} transcript={[{ speaker: "user", elapsedSeconds: 1, text: "嗯我期待調整", delivery: { source: "voice", durationSeconds: 10 } }]} onRetry={vi.fn()} onReset={vi.fn()} />);
+  expect(screen.getByRole("heading", { name: "可觀察表達訊號" })).toBeVisible();
+  expect(screen.getByText("這些是可回看的行為資料，不是自信、誠實或情緒分數；不同語言不可直接比較。")).toBeVisible();
+});

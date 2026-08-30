@@ -297,6 +297,36 @@ button {
   cursor: not-allowed;
 }
 
+.local-voice-control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.local-voice-control label,
+.local-voice-control p {
+  margin: 0;
+  color: #e2e8f0;
+}
+
+.local-voice-control select {
+  min-width: 7rem;
+}
+
+.local-voice-control.recording strong {
+  color: #fca5a5;
+}
+
+.delivery-filler-words {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0.5rem 0;
+  padding: 0;
+  list-style: none;
+}
+
 .finish-meeting {
   border-color: #0f766e;
   background: #0f766e;

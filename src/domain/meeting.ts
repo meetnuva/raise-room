@@ -4,6 +4,12 @@ export interface TranscriptTurn {
   speaker: "manager" | "user";
   text: string;
   elapsedSeconds: number;
+  delivery?: TurnDelivery;
+}
+
+export interface TurnDelivery {
+  source: "text" | "voice";
+  durationSeconds?: number;
 }
 
 export interface MeetingState {
@@ -51,12 +57,13 @@ export function advanceMeeting(
 export function appendUserTurn(
   state: MeetingState,
   text: string,
+  delivery?: TurnDelivery,
 ): MeetingState {
   return {
     ...state,
     transcript: [
       ...state.transcript,
-      { speaker: "user", text, elapsedSeconds: state.elapsedSeconds },
+      { speaker: "user", text, elapsedSeconds: state.elapsedSeconds, ...(delivery ? { delivery } : {}) },
     ],
   };
 }

@@ -1,17 +1,20 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   advanceMeeting,
   appendUserTurn,
   createMeeting,
   respondToUser,
   type ManagerResponder,
+  type TurnDelivery,
 } from "../domain/meeting";
 import type { TranscriptTurn } from "../domain/meeting";
 import type { Scenario, ScheduledEvent } from "../domain/scenario";
 import { useLocalCamera } from "../hooks/use-local-camera";
 import type { PresenterRuntimeConfig } from "../lib/perxona-config";
 import { LocalCameraTile } from "./LocalCameraTile";
+import { LocalVoiceControl } from "./LocalVoiceControl";
 import { PerxonaManagerStage } from "./PerxonaManagerStage";
+import { useMeetingClock } from "../hooks/use-meeting-clock";
 
 const meetingLengthSeconds = 10 * 60;
 
@@ -44,26 +47,44 @@ export function MeetingRoom({
 }) {
   const [meeting, setMeeting] = useState(() => createMeeting(scenario));
   const [draft, setDraft] = useState("");
+  const [sending, setSending] = useState(false);
+  const meetingRef = useRef(meeting);
   const latestTurn = meeting.transcript[meeting.transcript.length - 1];
   const camera = useLocalCamera();
 
   const advanceTo = (elapsedSeconds: number) => {
-    setMeeting((current) => advanceMeeting(current, elapsedSeconds));
+    setMeeting((current) => {
+      const next = advanceMeeting(current, elapsedSeconds);
+      meetingRef.current = next;
+      return next;
+    });
+  };
+
+  useMeetingClock({
+    durationSeconds: meetingLengthSeconds,
+    onTick: advanceTo,
+    onComplete: () => onFinish?.(meetingRef.current.transcript),
+  });
+
+  const submitUserMessage = async (text: string, delivery: TurnDelivery) => {
+    if (!text.trim() || sending) return;
+    const userTurn = appendUserTurn(meetingRef.current, text.trim(), delivery);
+    meetingRef.current = userTurn;
+    setMeeting(userTurn);
+    setSending(true);
+    const repliedMeeting = await respondToUser(userTurn, scenario, responder);
+    const managerTurn = repliedMeeting.transcript[repliedMeeting.transcript.length - 1];
+    setMeeting((current) => {
+      const next = { ...current, transcript: [...current.transcript, managerTurn] };
+      meetingRef.current = next;
+      return next;
+    });
+    setSending(false);
   };
 
   const sendFallbackMessage = async () => {
-    const text = draft.trim();
-    if (!text) return;
-
-    const userTurn = appendUserTurn(meeting, text);
-    setMeeting(userTurn);
-    setDraft("");
-    const repliedMeeting = await respondToUser(userTurn, scenario, responder);
-    const managerTurn = repliedMeeting.transcript[repliedMeeting.transcript.length - 1];
-    setMeeting((current) => ({
-      ...current,
-      transcript: [...current.transcript, managerTurn],
-    }));
+    const text = draft.trim(); if (!text) return;
+    setDraft(""); await submitUserMessage(text, { source: "text" });
   };
 
   return (
@@ -111,7 +132,10 @@ export function MeetingRoom({
       </div>
 
       <div className="meeting-controls" aria-label="會議控制">
-        <button disabled type="button">麥克風：尚未啟用</button>
+        <LocalVoiceControl
+          onTranscript={(result) => void submitUserMessage(result.text, { source: "voice", durationSeconds: result.durationSeconds })}
+          disabled={sending}
+        />
         <button
           type="button"
           onClick={() => camera.status === "active" ? camera.stop() : void camera.start()}
@@ -119,7 +143,7 @@ export function MeetingRoom({
         >
           {camera.status === "active" ? "關閉我的鏡頭" : "開啟我的鏡頭"}
         </button>
-        <button type="button" onClick={() => advanceTo(180)}>跳到第 3 分鐘</button>
+        <button className="development-only" data-development-only="true" type="button" onClick={() => advanceTo(180)}>跳到第 3 分鐘</button>
         <button
           className="finish-meeting"
           type="button"
@@ -164,8 +188,9 @@ export function MeetingRoom({
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
                 placeholder="暫代語音輸入，僅供開發測試"
+                disabled={sending}
               />
-              <button type="submit">送出</button>
+              <button disabled={sending} type="submit">送出</button>
             </div>
           </form>
         </section>
