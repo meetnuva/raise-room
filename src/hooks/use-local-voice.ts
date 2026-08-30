@@ -29,6 +29,7 @@ export interface VoiceTranscriptResult {
 
 type LocalVoiceInput = {
   modelPreset?: AsrModelPresetId;
+  sharedAudioStream?: MediaStream | null;
   asrClient?: LocalAsrClient;
   asrClientFactory?: () => LocalAsrClient;
   mediaDevices?: Pick<MediaDevices, "getUserMedia">;
@@ -48,6 +49,7 @@ export function useLocalVoice(input?: LocalVoiceInput) {
   const clientFactory = useRef(input?.asrClientFactory ?? createLocalAsrClient);
   const mounted = useRef(true);
   const stream = useRef<MediaStream | null>(null);
+  const streamIsOwned = useRef(false);
   const recorder = useRef<MediaRecorder | null>(null);
   const context = useRef<AudioContext | null>(null);
   const startedAt = useRef<number | null>(null);
@@ -107,8 +109,11 @@ export function useLocalVoice(input?: LocalVoiceInput) {
   }, [detachClient, handleAsrEvent]);
 
   const stopTracks = useCallback(() => {
-    stream.current?.getTracks().forEach((track) => track.stop());
+    if (streamIsOwned.current) {
+      stream.current?.getTracks().forEach((track) => track.stop());
+    }
     stream.current = null;
+    streamIsOwned.current = false;
   }, []);
 
   const release = useCallback(() => {
@@ -188,24 +193,37 @@ export function useLocalVoice(input?: LocalVoiceInput) {
   const startRecording = useCallback(async () => {
     if (status !== "ready") return;
 
-    const mediaDevices = input?.mediaDevices ?? navigator.mediaDevices;
-    if (!mediaDevices) {
-      setStatus("unsupported");
-      setErrorMessage("此瀏覽器不支援本機錄音。 ");
-      return;
-    }
-
     setStatus("requesting-microphone");
     setErrorMessage(null);
 
     try {
-      const next = await mediaDevices.getUserMedia({ audio: true, video: false });
-      if (!mounted.current) {
-        next.getTracks().forEach((track) => track.stop());
-        return;
+      const sharedStream = input?.sharedAudioStream;
+      if (sharedStream) {
+        const hasLiveEnabledAudio = sharedStream
+          .getAudioTracks()
+          .some((track) => track.enabled && track.readyState === "live");
+        if (!hasLiveEnabledAudio) {
+          setStatus("error");
+          setErrorMessage("麥克風目前未啟用，請先開啟麥克風。");
+          return;
+        }
+        stream.current = sharedStream;
+        streamIsOwned.current = false;
+      } else {
+        const mediaDevices = input?.mediaDevices ?? navigator.mediaDevices;
+        if (!mediaDevices) {
+          setStatus("unsupported");
+          setErrorMessage("此瀏覽器不支援本機錄音。 ");
+          return;
+        }
+        const next = await mediaDevices.getUserMedia({ audio: true, video: false });
+        if (!mounted.current) {
+          next.getTracks().forEach((track) => track.stop());
+          return;
+        }
+        stream.current = next;
+        streamIsOwned.current = true;
       }
-
-      stream.current = next;
 
       if (!input?.mediaRecorderFactory && typeof MediaRecorder === "undefined") {
         stopTracks();
@@ -214,7 +232,9 @@ export function useLocalVoice(input?: LocalVoiceInput) {
         return;
       }
 
-      const nextRecorder = input?.mediaRecorderFactory?.(next) ?? new MediaRecorder(next);
+      const recordingStream = stream.current;
+      if (!recordingStream) return;
+      const nextRecorder = input?.mediaRecorderFactory?.(recordingStream) ?? new MediaRecorder(recordingStream);
       recorder.current = nextRecorder;
       chunks.current = [];
       nextRecorder.addEventListener("dataavailable", (event) => {
@@ -230,7 +250,7 @@ export function useLocalVoice(input?: LocalVoiceInput) {
       setStatus(denied ? "denied" : "error");
       setErrorMessage(denied ? "你尚未允許麥克風權限。" : "無法啟動本機麥克風。");
     }
-  }, [input?.mediaDevices, input?.mediaRecorderFactory, input?.now, status, stopTracks]);
+  }, [input?.mediaDevices, input?.mediaRecorderFactory, input?.now, input?.sharedAudioStream, status, stopTracks]);
 
   const stopAndTranscribe = useCallback(async (): Promise<VoiceTranscriptResult | null> => {
     if (status !== "recording" || !recorder.current) return null;

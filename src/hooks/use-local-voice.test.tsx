@@ -104,3 +104,81 @@ test("subscribes to a recreated owned client after explicit model release", () =
   act(() => second.emit({ type: "ready", device: "wasm" }));
   expect(result.current).toMatchObject({ status: "ready", device: "wasm", loadingMessage: null });
 });
+
+function sharedAudioStream(input?: { enabled?: boolean; readyState?: MediaStreamTrackState }) {
+  const track = { kind: "audio", enabled: input?.enabled ?? true, readyState: input?.readyState ?? "live", stop: vi.fn() } as unknown as MediaStreamTrack;
+  return { stream: { getTracks: () => [track], getAudioTracks: () => [track] } as unknown as MediaStream, track };
+}
+
+function recorderThatFinishes() {
+  const listeners = new Map<string, (event: { data: Blob }) => void>();
+  return {
+    state: "recording",
+    mimeType: "audio/webm",
+    start: vi.fn(),
+    addEventListener: vi.fn((type, listener) => listeners.set(type, listener as never)),
+    removeEventListener: vi.fn(),
+    stop: vi.fn(() => {
+      listeners.get("dataavailable")?.({ data: new Blob(["audio"]) });
+      listeners.get("stop")?.({ data: new Blob() });
+    }),
+  } as unknown as MediaRecorder;
+}
+
+test("reuses an enabled shared audio stream across recording turns without requesting or stopping it", async () => {
+  const client = asr(); const { stream, track } = sharedAudioStream(); const getUserMedia = vi.fn(); const recorderFactory = vi.fn(() => recorderThatFinishes());
+  const contextFactory = vi.fn(() => ({ decodeAudioData: vi.fn().mockResolvedValue({ getChannelData: () => new Float32Array(1) }), close: vi.fn().mockResolvedValue(undefined) } as unknown as AudioContext));
+  const { result } = renderHook(() => useLocalVoice({ modelPreset: "fast", asrClient: client, sharedAudioStream: stream, mediaDevices: { getUserMedia }, mediaRecorderFactory: recorderFactory, audioContextFactory: contextFactory }));
+
+  act(() => client.emit({ type: "ready", device: "wasm" }));
+  await act(() => result.current.startRecording());
+  await act(async () => { await result.current.stopAndTranscribe(); });
+  await act(() => result.current.startRecording());
+  act(() => result.current.cancel());
+
+  expect(getUserMedia).not.toHaveBeenCalled();
+  expect(recorderFactory).toHaveBeenCalledTimes(2);
+  expect(track.stop).not.toHaveBeenCalled();
+});
+
+test("falls back to an owned audio stream only when no shared stream was supplied", async () => {
+  const client = asr(); const { stream } = sharedAudioStream(); const getUserMedia = vi.fn().mockResolvedValue(stream);
+  const { result } = renderHook(() => useLocalVoice({ modelPreset: "fast", asrClient: client, sharedAudioStream: null, mediaDevices: { getUserMedia }, mediaRecorderFactory: () => recorderThatFinishes() }));
+
+  act(() => client.emit({ type: "ready", device: "wasm" }));
+  await act(() => result.current.startRecording());
+
+  expect(getUserMedia).toHaveBeenCalledExactlyOnceWith({ audio: true, video: false });
+});
+
+test("does not request a second microphone when the shared audio track is disabled", async () => {
+  const client = asr(); const { stream } = sharedAudioStream({ enabled: false }); const getUserMedia = vi.fn();
+  const { result } = renderHook(() => useLocalVoice({ modelPreset: "fast", asrClient: client, sharedAudioStream: stream, mediaDevices: { getUserMedia }, mediaRecorderFactory: () => recorderThatFinishes() }));
+
+  act(() => client.emit({ type: "ready", device: "wasm" }));
+  await act(() => result.current.startRecording());
+
+  expect(getUserMedia).not.toHaveBeenCalled();
+  expect(result.current).toMatchObject({ status: "error", errorMessage: "麥克風目前未啟用，請先開啟麥克風。" });
+});
+
+test("does not request a second microphone when the shared audio track has ended", async () => {
+  const client = asr(); const { stream } = sharedAudioStream({ readyState: "ended" }); const getUserMedia = vi.fn();
+  const { result } = renderHook(() => useLocalVoice({ modelPreset: "fast", asrClient: client, sharedAudioStream: stream, mediaDevices: { getUserMedia }, mediaRecorderFactory: () => recorderThatFinishes() }));
+
+  act(() => client.emit({ type: "ready", device: "wasm" }));
+  await act(() => result.current.startRecording());
+
+  expect(getUserMedia).not.toHaveBeenCalled();
+  expect(result.current).toMatchObject({ status: "error", errorMessage: "麥克風目前未啟用，請先開啟麥克風。" });
+});
+
+test("releaseModel destroys ASR resources without stopping a shared audio track", () => {
+  const client = asr(); const { stream, track } = sharedAudioStream();
+  const { result } = renderHook(() => useLocalVoice({ modelPreset: "fast", asrClientFactory: () => client, sharedAudioStream: stream }));
+
+  act(() => result.current.releaseModel());
+
+  expect(client.destroy).toHaveBeenCalledOnce();
+  expect(track.stop).not.toHaveBeenCalled();
+});
