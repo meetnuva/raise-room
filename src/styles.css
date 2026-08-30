@@ -128,3 +128,156 @@ button {
   color: #b91c1c;
   font-weight: 700;
 }
+
+.meeting-room {
+  display: grid;
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.meeting-header,
+.meeting-controls,
+.meeting-stages,
+.meeting-details,
+.development-fallback > div {
+  display: flex;
+  gap: 1rem;
+}
+
+.meeting-header,
+.meeting-controls {
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.meeting-header h2,
+.panel-heading h3,
+.event-rail h3,
+.meeting-stage h3 {
+  margin: 0.25rem 0 0;
+}
+
+.meeting-countdown {
+  margin: 0;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #0f766e;
+  border-radius: 0.25rem;
+  color: #115e59;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+.meeting-stages > * {
+  flex: 1 1 18rem;
+}
+
+.meeting-stage {
+  min-height: 11rem;
+  padding: 1.5rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+}
+
+.manager-stage {
+  background: #ecfeff;
+}
+
+.user-stage {
+  background: #f8fafc;
+}
+
+.stage-label,
+.presence-indicator,
+.event-card span {
+  display: block;
+  color: #475569;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.presence-indicator {
+  margin-top: 2rem;
+  color: #0f766e;
+}
+
+.meeting-controls button:disabled {
+  border-color: #cbd5e1;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.finish-meeting {
+  background: #0f766e;
+  border-color: #0f766e;
+  color: #ffffff;
+}
+
+.meeting-details {
+  align-items: flex-start;
+}
+
+.transcript-panel,
+.event-rail {
+  box-sizing: border-box;
+  flex: 1 1 22rem;
+  padding: 1.25rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  background: #ffffff;
+}
+
+.empty-transcript {
+  color: #475569;
+}
+
+.transcript-list,
+.event-rail ol {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.transcript-turn,
+.event-card {
+  display: grid;
+  gap: 0.375rem;
+  padding: 0.75rem;
+  border-left: 3px solid #cbd5e1;
+  background: #f8fafc;
+}
+
+.transcript-turn.manager,
+.event-card.emitted {
+  border-left-color: #0f766e;
+  background: #f0fdfa;
+}
+
+.event-card p {
+  margin: 0;
+  color: #475569;
+}
+
+.development-fallback {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+.development-fallback > div {
+  align-items: center;
+}
+
+@media (max-width: 42rem) {
+  .meeting-stages,
+  .meeting-details {
+    flex-direction: column;
+  }
+
+  .meeting-stages > *,
+  .transcript-panel,
+  .event-rail {
+    width: 100%;
+  }
+}
