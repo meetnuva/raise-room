@@ -60,4 +60,14 @@ describe("evaluateAuditReport", () => {
     const report = { vulnerabilities: { package: { name: "package", severity: "high", via: ["missing"] } } };
     expect(evaluateAuditReport(report, { today: "2026-08-30" }).ok).toBe(false);
   });
+
+  test("拒絕沒有 terminal GHSA 的循環依賴圖", () => {
+    const report = {
+      vulnerabilities: {
+        first: { name: "first", severity: "high", via: ["second"] },
+        second: { name: "second", severity: "high", via: ["first"] },
+      },
+    };
+    expect(evaluateAuditReport(report, { today: "2026-08-30" }).ok).toBe(false);
+  });
 });

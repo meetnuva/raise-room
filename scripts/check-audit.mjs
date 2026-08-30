@@ -29,7 +29,10 @@ export function evaluateAuditReport(report, { today } = {}) {
   const visiting = new Set();
   const visit = (dependency) => {
     if (visited.has(dependency)) return;
-    if (visiting.has(dependency)) return;
+    if (visiting.has(dependency)) {
+      errors.push(`無法解析 vulnerability 依賴循環：${dependency}`);
+      return;
+    }
 
     const vulnerability = vulnerabilities[dependency];
     if (!vulnerability || typeof vulnerability !== "object") {
