@@ -33,9 +33,9 @@ test("shows the budget-freeze card when the test clock reaches three minutes", (
 });
 
 test("keeps a timed event after the development fallback receives a reply", async () => {
-  let resolveReply = (_reply: string) => {};
+  let resolveReply = (_reply: { text: string; source: "simulated" }) => {};
   const delayedResponder = {
-    reply: () => new Promise<string>((resolve) => {
+    reply: () => new Promise<{ text: string; source: "simulated" }>((resolve) => {
       resolveReply = resolve;
     }),
   };
@@ -46,7 +46,7 @@ test("keeps a timed event after the development fallback receives a reply", asyn
   });
   fireEvent.click(screen.getByRole("button", { name: "送出" }));
   fireEvent.click(screen.getByRole("button", { name: "跳到第 3 分鐘" }));
-  await act(async () => resolveReply("請說明具體成果。"));
+  await act(async () => resolveReply({ text: "請說明具體成果。", source: "simulated" }));
 
   expect(screen.getByText("第 3 分鐘 · 已發生")).toBeVisible();
 });
@@ -74,6 +74,7 @@ test("hands the append-only transcript to onFinish", async () => {
       speaker: "manager",
       text: "王主管：請以具體成果說明這次薪資調整請求。",
       elapsedSeconds: 0,
+      managerSource: "simulated",
     },
   ]);
   expect(onFinish.mock.calls[0]).toHaveLength(1);
@@ -100,20 +101,20 @@ test("renders one bottom-control camera toggle when Perxona is not configured", 
 });
 
 test("marks text fallback turns and disables a second submission while replying", async () => {
-  let resolveReply = (_text: string) => {};
+  let resolveReply = (_reply: { text: string; source: "simulated" }) => {};
   render(<MeetingRoom scenario={defaultScenario} responder={{ reply: () => new Promise((resolve) => { resolveReply = resolve; }) }} />);
   fireEvent.change(screen.getByLabelText("開發用文字輸入"), { target: { value: "文字回合" } }); fireEvent.click(screen.getByRole("button", { name: "送出" }));
-  expect(screen.getByRole("button", { name: "送出" })).toBeDisabled(); await act(async () => resolveReply("收到"));
+  expect(screen.getByRole("button", { name: "送出" })).toBeDisabled(); await act(async () => resolveReply({ text: "收到", source: "simulated" }));
   fireEvent.click(screen.getByRole("button", { name: "結束並看報告" }));
 });
 
 test("auto-completion hands the latest append-only transcript to onFinish exactly once", async () => {
-  vi.useFakeTimers(); let now = 0; let resolveReply = (_text: string) => {}; const onFinish = vi.fn();
-  render(<MeetingRoom scenario={defaultScenario} responder={{ reply: () => new Promise<string>((resolve) => { resolveReply = resolve; }) }} onFinish={onFinish} clock={{ durationSeconds: 2, now: () => now, intervalMs: 250 }} />);
-  fireEvent.change(screen.getByLabelText("開發用文字輸入"), { target: { value: "最新回合" } }); fireEvent.click(screen.getByRole("button", { name: "送出" })); await act(async () => resolveReply("主管回覆"));
+  vi.useFakeTimers(); let now = 0; let resolveReply = (_reply: { text: string; source: "simulated" }) => {}; const onFinish = vi.fn();
+  render(<MeetingRoom scenario={defaultScenario} responder={{ reply: () => new Promise<{ text: string; source: "simulated" }>((resolve) => { resolveReply = resolve; }) }} onFinish={onFinish} clock={{ durationSeconds: 2, now: () => now, intervalMs: 250 }} />);
+  fireEvent.change(screen.getByLabelText("開發用文字輸入"), { target: { value: "最新回合" } }); fireEvent.click(screen.getByRole("button", { name: "送出" })); await act(async () => resolveReply({ text: "主管回覆", source: "simulated" }));
   now = 2_000; act(() => vi.advanceTimersByTime(250));
   expect(onFinish).toHaveBeenCalledTimes(1); expect(onFinish).toHaveBeenCalledWith([
-    { speaker: "user", text: "最新回合", elapsedSeconds: 0, delivery: { source: "text" } }, { speaker: "manager", text: "主管回覆", elapsedSeconds: 0 },
+    { speaker: "user", text: "最新回合", elapsedSeconds: 0, delivery: { source: "text" } }, { speaker: "manager", text: "主管回覆", elapsedSeconds: 0, managerSource: "simulated" },
   ]); vi.useRealTimers();
 });
 

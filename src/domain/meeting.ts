@@ -1,11 +1,22 @@
 import type { Scenario, ScheduledEvent } from "./scenario";
 
-export interface TranscriptTurn {
-  speaker: "manager" | "user";
+interface BaseTranscriptTurn {
   text: string;
   elapsedSeconds: number;
   delivery?: TurnDelivery;
 }
+
+export interface UserTranscriptTurn extends BaseTranscriptTurn {
+  speaker: "user";
+  managerSource?: never;
+}
+
+export interface ManagerTranscriptTurn extends BaseTranscriptTurn {
+  speaker: "manager";
+  managerSource?: ManagerReply["source"];
+}
+
+export type TranscriptTurn = UserTranscriptTurn | ManagerTranscriptTurn;
 
 export interface TurnDelivery {
   source: "text" | "voice";
@@ -19,12 +30,18 @@ export interface MeetingState {
   emittedEventIds: string[];
 }
 
+export interface ManagerReply {
+  text: string;
+  source: "perxona" | "simulated";
+  notice?: string;
+}
+
 export interface ManagerResponder {
   reply(input: {
     scenario: Scenario;
     transcript: TranscriptTurn[];
     dueEvents: ScheduledEvent[];
-  }): Promise<string>;
+  }): Promise<ManagerReply>;
 }
 
 export function createMeeting(scenario: Scenario): MeetingState {
@@ -86,7 +103,12 @@ export async function respondToUser(
     ...state,
     transcript: [
       ...state.transcript,
-      { speaker: "manager", text: reply, elapsedSeconds: state.elapsedSeconds },
+      {
+        speaker: "manager",
+        text: reply.text,
+        elapsedSeconds: state.elapsedSeconds,
+        managerSource: reply.source,
+      },
     ],
   };
 }
@@ -96,13 +118,22 @@ export const simulatedResponder: ManagerResponder = {
     const latestEvent = dueEvents[dueEvents.length - 1];
 
     if (latestEvent) {
-      return `${scenario.manager.name}：${latestEvent.instruction}`;
+      return {
+        text: `${scenario.manager.name}：${latestEvent.instruction}`,
+        source: "simulated",
+      };
     }
 
     if (transcript[transcript.length - 1]?.speaker === "user") {
-      return `${scenario.manager.name}：請以具體成果說明這次薪資調整請求。`;
+      return {
+        text: `${scenario.manager.name}：請以具體成果說明這次薪資調整請求。`,
+        source: "simulated",
+      };
     }
 
-    return `${scenario.manager.name}：我們開始吧，請說明你希望討論的薪資調整。`;
+    return {
+      text: `${scenario.manager.name}：我們開始吧，請說明你希望討論的薪資調整。`,
+      source: "simulated",
+    };
   },
 };
