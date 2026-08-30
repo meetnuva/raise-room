@@ -17,13 +17,27 @@ test("rejects an untrusted URL before appending a script", async () => {
   expect(document.head.querySelector("script[data-perxona-presenter]")).toBeNull();
 });
 
+test("does not append a presenter after destroy wins the engine-load race", async () => {
+  const container = document.createElement("div");
+  const client = createPresenterClient(url);
+  const mounting = client.mount(container);
+
+  client.destroy();
+  document.head
+    .querySelector<HTMLScriptElement>("script[data-perxona-presenter]")!
+    .dispatchEvent(new Event("load"));
+  await mounting;
+
+  expect(container.querySelectorAll("sv-presenter")).toHaveLength(0);
+});
+
 test("mounts one presenter and tears down its event listeners", async () => {
   const container = document.createElement("div");
   const client = createPresenterClient(url);
   const listener = vi.fn();
   client.subscribe(listener);
   const load = client.mount(container);
-  document.head.querySelector<HTMLScriptElement>("script[data-perxona-presenter]")!.dispatchEvent(new Event("load"));
+  document.head.querySelector<HTMLScriptElement>("script[data-perxona-presenter]")?.dispatchEvent(new Event("load"));
   await load;
   const presenter = container.querySelector("sv-presenter")!;
   presenter.dispatchEvent(new CustomEvent("PRESENTER_STATUS", { detail: { status: "Ready" } }));

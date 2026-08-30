@@ -37,13 +37,14 @@ export function loadPresenterEngine(url: string): Promise<void> {
 
 export function createPresenterClient(url: string): PresenterClient {
   let element: PresenterElement | null = null;
+  let destroyed = false;
   const subscriptions = new Set<(event: "ready" | "key-rejected") => void>();
   let statusHandler: EventListener | null = null;
   let rejectedHandler: EventListener | null = null;
   return {
     async mount(container) {
       await loadPresenterEngine(url);
-      if (element) return;
+      if (destroyed || element) return;
       element = document.createElement("sv-presenter") as PresenterElement;
       element.style.width = "100%";
       element.style.height = "100%";
@@ -64,6 +65,7 @@ export function createPresenterClient(url: string): PresenterClient {
     async speak(text) { const content = text.trim(); return content ? element?.present(content) : undefined; },
     interrupt() { element?.interruptPresentation(); },
     destroy() {
+      destroyed = true;
       if (element && statusHandler) element.removeEventListener("PRESENTER_STATUS", statusHandler);
       if (element && rejectedHandler) element.removeEventListener("CONNECT_KEY_REJECTED", rejectedHandler);
       element?.remove(); element = null; subscriptions.clear(); statusHandler = null; rejectedHandler = null;
