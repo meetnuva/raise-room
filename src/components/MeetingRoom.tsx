@@ -72,13 +72,13 @@ export function MeetingRoom({
 
       <div className="meeting-stages" aria-label="會議雙人畫面">
         <section className="meeting-stage manager-stage" aria-labelledby="manager-stage-title">
-          <p className="stage-label">主管 stage</p>
+          <p className="stage-label">主管畫面</p>
           <h3 id="manager-stage-title">{scenario.manager.name}</h3>
           <p>{scenario.role} 薪資檢討</p>
           <span className="presence-indicator">● 準備討論</span>
         </section>
         <section className="meeting-stage user-stage" aria-labelledby="user-stage-title">
-          <p className="stage-label">使用者 stage</p>
+          <p className="stage-label">使用者畫面</p>
           <h3 id="user-stage-title">你</h3>
           <p>{scenario.company} · {scenario.tenureMonths} 個月年資</p>
           <span className="presence-indicator">● 等待你的說明</span>
@@ -137,7 +137,7 @@ export function MeetingRoom({
         </section>
 
         <aside className="event-rail" aria-labelledby="event-rail-title">
-          <p className="eyebrow">事件 rail</p>
+          <p className="eyebrow">事件軌</p>
           <h3 id="event-rail-title">會議壓力事件</h3>
           <ol>
             {scenario.events.map((event) => {
