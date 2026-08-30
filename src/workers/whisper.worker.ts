@@ -1,13 +1,13 @@
 import {
   AutoProcessor,
   AutoTokenizer,
-  full,
   TextStreamer,
   WhisperForConditionalGeneration,
 } from "@huggingface/transformers";
 import { isAsrModelPresetId, type AsrModelPresetId } from "../domain/asr-models";
 import { getAsrRuntimeAttempts, getAsrRuntimeConfig, hasWebGpuSupport, type ReadyAsrRuntimeConfig } from "../lib/asr-runtime-config";
 import { getAsrAttemptLoadingMessage } from "../lib/asr-loading";
+import { warmUpAsrModel } from "../lib/asr-warmup";
 import { normalizeAsrProgress, type AsrWorkerRequest, type VoiceLanguage } from "../lib/local-asr";
 
 const maxSamples = 16000 * 30;
@@ -85,7 +85,7 @@ async function load(preset: AsrModelPresetId) {
         loadingContext = getAsrAttemptLoadingMessage(preset, attempt.device, index > 0);
         send({ type: "loading", progress: null, message: loadingContext });
         candidate = await loadRuntime(attempt);
-        await candidate.model.generate({ input_features: full([1, 80, 3000], 0), max_new_tokens: 1 });
+        await warmUpAsrModel({ processor: candidate.processor, model: candidate.model });
         runtime = candidate;
         activePreset = preset;
         send({ type: "ready", device: runtime.device });
