@@ -50,9 +50,24 @@ test("uses compact stage overlays for presenter actions and status without block
 
 test("anchors Presenter actions away from the bottom-right self tile", () => {
   const styles = readFileSync("src/styles.css", "utf8");
-  const actionRule = styles.match(/\.manager-stage\s*>\s*button\.manager-stage-action\s*\{([^}]*)\}/s)?.[1];
+  const sharedStageStyles = styles.slice(styles.indexOf("/* Task 6:"), styles.lastIndexOf("@media (max-width: 767px)"));
+  const actionRule = sharedStageStyles.match(/\.manager-stage\s*>\s*button\.manager-stage-action\s*\{([^}]*)\}/)?.[1];
 
   expect(actionRule).toMatch(/left:\s*50%;/);
   expect(actionRule).toMatch(/transform:\s*translateX\(-50%\);/);
   expect(actionRule).not.toMatch(/right:/);
+});
+
+test("uses a mobile bottom-left Presenter action anchor clear of the self tile", () => {
+  const styles = readFileSync("src/styles.css", "utf8");
+
+  expect(styles).toMatch(/@media \(max-width: 767px\)\s*\{[\s\S]*?\.manager-stage\s*>\s*button\.manager-stage-action\s*\{[^}]*left:\s*\.5rem;[^}]*bottom:\s*\.5rem;[^}]*transform:\s*none;/s);
+  expect(styles).toMatch(/@media \(max-width: 767px\)\s*\{[\s\S]*?\.manager-stage-status\s*\{[^}]*bottom:\s*3\.5rem;/s);
+});
+
+test("places the final mobile Presenter override after shared stage rules", () => {
+  const styles = readFileSync("src/styles.css", "utf8");
+  const finalMobileStyles = styles.slice(styles.lastIndexOf("@media (max-width: 767px)"));
+
+  expect(finalMobileStyles).toMatch(/\.manager-stage\s*>\s*button\.manager-stage-action\s*\{[^}]*left:\s*\.5rem;[^}]*transform:\s*none;/s);
 });

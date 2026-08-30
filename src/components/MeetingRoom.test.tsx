@@ -105,6 +105,15 @@ test("layers the self tile above the presenter canvas while controls and partici
   expect(styles).toMatch(/\.meeting-controls\s*\{[^}]*z-index:\s*5;/s);
 });
 
+test("keeps the mobile self tile compact and preserves a readable meeting header", () => {
+  const styles = readFileSync("src/styles.css", "utf8");
+
+  expect(styles).toMatch(/@media \(max-width: 767px\)\s*\{[\s\S]*?\.meeting-sidebar \.local-camera-tile\s*\{[^}]*aspect-ratio:\s*16\s*\/\s*9;[^}]*min-height:\s*0;[^}]*overflow:\s*hidden;/s);
+  expect(styles).toMatch(/@media \(max-width: 767px\)\s*\{[\s\S]*?\.meeting-sidebar \.local-camera-tile\s*>\s*p:not\(\.stage-label\)\s*\{[^}]*position:\s*absolute;[^}]*clip:\s*rect\(0\s+0\s+0\s+0\);/s);
+  expect(styles).toMatch(/@media \(max-width: 767px\)\s*\{[\s\S]*?\.meeting-header h2\s*\{[^}]*min-width:\s*0;[^}]*text-overflow:\s*ellipsis;[^}]*white-space:\s*nowrap;/s);
+  expect(styles).toMatch(/@media \(max-width: 767px\)\s*\{[\s\S]*?\.meeting-countdown\s*\{[^}]*flex:\s*none;[^}]*white-space:\s*nowrap;/s);
+});
+
 test("bounds the 16:9 manager stage for short desktop viewports without a mobile height override", () => {
   const styles = readFileSync("src/styles.css", "utf8");
 

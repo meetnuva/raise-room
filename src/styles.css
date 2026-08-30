@@ -2045,6 +2045,62 @@ button {
     padding-inline: .5rem;
   }
 
+  .meeting-header {
+    flex-wrap: nowrap;
+    gap: .5rem;
+    min-width: 0;
+  }
+
+  .meeting-header > div:first-child {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .meeting-header h2 {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .meeting-header-actions,
+  .meeting-countdown {
+    flex: none;
+    white-space: nowrap;
+  }
+
+  .meeting-sidebar {
+    right: .5rem;
+    bottom: .5rem;
+    width: min(42%, 9.5rem);
+  }
+
+  .meeting-sidebar .local-camera-tile {
+    display: flex;
+    flex-direction: column;
+    aspect-ratio: 16 / 9;
+    min-height: 0;
+    height: auto;
+    gap: .25rem;
+    overflow: hidden;
+    padding: .5rem;
+  }
+
+  .meeting-sidebar .local-camera-tile > p:not(.stage-label) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .meeting-sidebar .camera-placeholder {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
   .meeting-side-panel {
     top: 0;
     right: 0;
@@ -2243,5 +2299,26 @@ button {
     right: .75rem;
     bottom: .75rem;
     width: min(42%, 12rem);
+  }
+
+  .manager-stage > button.manager-stage-action {
+    left: .5rem;
+    bottom: .5rem;
+    transform: none;
+  }
+
+  .manager-stage-status {
+    left: .5rem;
+    bottom: 3.5rem;
+  }
+
+  .toast-region {
+    right: .5rem;
+    bottom: 5rem;
+    width: calc(100vw - 1rem);
+  }
+
+  .toast-region:has(.meeting-toast--error) {
+    bottom: 5rem;
   }
 }

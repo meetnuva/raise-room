@@ -53,3 +53,17 @@ test("positions notices at the bottom right and persistent errors above the cont
   expect(styles).toMatch(/\.toast-region\s*\{[^}]*right:\s*\.75rem;[^}]*bottom:\s*\.75rem;[^}]*max-width:\s*360px;/s);
   expect(styles).toMatch(/\.toast-region:has\(\.meeting-toast--error\)\s*\{[^}]*bottom:\s*5\.5rem;/s);
 });
+
+test("keeps mobile notices above the fixed 56px control bar", () => {
+  const styles = readFileSync("src/styles.css", "utf8");
+
+  expect(styles).toMatch(/@media \(max-width: 767px\)\s*\{[\s\S]*?\.toast-region\s*\{[^}]*bottom:\s*5rem;[^}]*width:\s*calc\(100vw\s*-\s*1rem\);/s);
+  expect(styles).toMatch(/@media \(max-width: 767px\)\s*\{[\s\S]*?\.toast-region:has\(\.meeting-toast--error\)\s*\{[^}]*bottom:\s*5rem;/s);
+});
+
+test("places the final mobile toast override after the shared toast rule", () => {
+  const styles = readFileSync("src/styles.css", "utf8");
+  const finalMobileStyles = styles.slice(styles.lastIndexOf("@media (max-width: 767px)"));
+
+  expect(finalMobileStyles).toMatch(/\.toast-region\s*\{[^}]*bottom:\s*5rem;[^}]*width:\s*calc\(100vw\s*-\s*1rem\);/s);
+});
