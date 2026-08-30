@@ -23,6 +23,13 @@ test("starts a meeting with the configured manager and request", () => {
   );
 });
 
+test("shows the local-only setup label in Traditional Chinese", () => {
+  render(<ScenarioWorkshop onStart={vi.fn()} />);
+
+  expect(screen.getByText("僅限本機設定")).toBeInTheDocument();
+  expect(screen.queryByText("Local-only setup")).not.toBeInTheDocument();
+});
+
 test("clears the locally stored draft", () => {
   localStorage.setItem("raise-room-scenario-draft", "saved");
 

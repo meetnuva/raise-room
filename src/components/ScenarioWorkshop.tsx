@@ -76,7 +76,7 @@ export function ScenarioWorkshop({
   return (
     <section aria-labelledby="scenario-workshop-title" className="scenario-workshop">
       <div className="section-heading">
-        <p className="eyebrow">Local-only setup</p>
+        <p className="eyebrow">僅限本機設定</p>
         <h2 id="scenario-workshop-title">設定這場薪資檢討</h2>
         <p>資料只會儲存在此瀏覽器，開始後交給模擬會議使用。</p>
       </div>
