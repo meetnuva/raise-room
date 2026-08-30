@@ -9,9 +9,12 @@
   "scripts": {
     "dev": "vite",
     "test": "vitest run",
-    "build": "tsc -b && vite build"
+    "build": "tsc -b && vite build",
+    "prepare:mediapipe": "node scripts/copy-mediapipe-assets.mjs",
+    "postinstall": "npm run prepare:mediapipe"
   },
   "dependencies": {
+    "@mediapipe/tasks-vision": "1.0.1",
     "@huggingface/transformers": "4.2.0",
     "@perxona/presenter-types": "0.3.0",
     "react": "19.2.8",

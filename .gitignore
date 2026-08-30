@@ -4,5 +4,6 @@ dist/
 *.local
 *.tsbuildinfo
 .superpowers/
+public/mediapipe/wasm/
 vite.config.js
 vite.config.d.ts
