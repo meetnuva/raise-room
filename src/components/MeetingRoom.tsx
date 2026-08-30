@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   advanceMeeting,
   appendUserTurn,
@@ -111,10 +111,12 @@ function MeetingRoomView({
   const [sendError, setSendError] = useState<string | null>(null);
   const [managerNotice, setManagerNotice] = useState<string | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
+  const [panelMotion, setPanelMotion] = useState<"entering" | "entered">("entered");
   const [activePanelTab, setActivePanelTab] = useState<MeetingPanelTab>("transcript");
   const [voiceActionRequest, setVoiceActionRequest] = useState(0);
   const [cameraVideoElement, setCameraVideoElement] = useState<HTMLVideoElement | null>(null);
   const meetingRef = useRef(meeting);
+  const panelOpener = useRef<HTMLButtonElement | null>(null);
   const vision = useLocalVision({ videoElement: cameraVideoElement });
   const latestTurn = meeting.transcript[meeting.transcript.length - 1];
   const managerEngineStatus =
@@ -206,14 +208,19 @@ function MeetingRoomView({
   const firstEventOffset = scenario.events.length
     ? Math.min(...scenario.events.map((event) => event.triggerRatio * durationSeconds))
     : 0;
-  const openPanel = (tab: MeetingPanelTab) => {
+  useEffect(() => {
+    if (panelOpen && panelMotion === "entering") setPanelMotion("entered");
+  }, [panelMotion, panelOpen]);
+
+  const openPanel = (tab: MeetingPanelTab, opener: HTMLButtonElement | null) => {
+    if (opener) panelOpener.current = opener;
     setActivePanelTab(tab);
+    setPanelMotion("entering");
     setPanelOpen(true);
   };
   const closePanel = () => {
     setPanelOpen(false);
-    const openerLabel = activePanelTab === "events" ? "開啟壓力事件" : activePanelTab === "transcript" ? "開啟逐字稿" : "更多會議選項";
-    document.querySelector<HTMLButtonElement>(`button[aria-label="${openerLabel}"]`)?.focus();
+    panelOpener.current?.focus();
   };
   const voiceContent = (
     <>
@@ -282,6 +289,7 @@ function MeetingRoomView({
         {panelOpen && (
           <MeetingSidePanel
             activeTab={activePanelTab}
+            motion={panelMotion}
             onActiveTabChange={setActivePanelTab}
             transcript={meeting.transcript}
             events={scenario.events}
@@ -297,18 +305,18 @@ function MeetingRoomView({
         )}
       </div>
 
-      {panelOpen && <button aria-label="關閉會議資訊面板遮罩" className="meeting-panel-scrim" onClick={closePanel} type="button" />}
+      {panelOpen && <button aria-label="關閉會議資訊面板遮罩" className="meeting-panel-scrim" data-motion={panelMotion} onClick={closePanel} type="button" />}
       <div className="meeting-controls">
         <MeetingControlBar
           cameraActive={camera.cameraActive}
           cameraRequesting={camera.requesting}
           onCameraToggle={camera.toggle}
           onFinish={() => finishMeeting(meeting.transcript)}
-          onOpenPanel={(tab) => {
-            openPanel(tab);
+          onOpenPanel={(tab, opener) => {
+            openPanel(tab, opener);
           }}
-          onVoiceAction={() => {
-            openPanel("transcript");
+          onVoiceAction={(opener) => {
+            openPanel("transcript", opener);
             setVoiceActionRequest((current) => current + 1);
           }}
           activePanelTab={activePanelTab}

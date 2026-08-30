@@ -6,6 +6,7 @@ export type MeetingPanelTab = "transcript" | "events" | "observations" | "device
 
 type MeetingSidePanelProps = {
   activeTab: MeetingPanelTab;
+  motion?: "entering" | "entered";
   onActiveTabChange(tab: MeetingPanelTab): void;
   transcript: TranscriptTurn[];
   events: ScheduledEvent[];
@@ -25,6 +26,7 @@ function formatOffset(seconds: number) {
 
 export function MeetingSidePanel({
   activeTab,
+  motion = "entered",
   onActiveTabChange,
   transcript,
   events,
@@ -60,7 +62,7 @@ export function MeetingSidePanel({
   }, [onClose]);
 
   return (
-    <aside className="meeting-side-panel" aria-label="會議資訊">
+    <aside className="meeting-side-panel" aria-label="會議資訊" data-motion={motion}>
       <div className="meeting-side-panel-header">
         <div role="tablist" aria-label="會議資訊分頁">
           {tabs.map((tab) => (

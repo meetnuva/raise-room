@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import type { VoiceStatus } from "../hooks/use-local-voice";
 import { ActionMenu } from "./ui/ActionMenu";
 import { IconButton } from "./ui/IconButton";
@@ -9,9 +10,9 @@ type Props = {
   cameraRequesting: boolean;
   panelOpen: boolean;
   activePanelTab: MeetingPanelTab;
-  onVoiceAction(): void;
+  onVoiceAction(opener: HTMLButtonElement): void;
   onCameraToggle(): void;
-  onOpenPanel(tab: MeetingPanelTab): void;
+  onOpenPanel(tab: MeetingPanelTab, opener: HTMLButtonElement | null): void;
   onFinish(): void;
 };
 
@@ -39,11 +40,12 @@ export function MeetingControlBar({
   onFinish,
 }: Props) {
   const voice = voiceControl(voiceStatus);
+  const moreButton = useRef<HTMLButtonElement>(null);
   const moreItems = [
-    { id: "voice", label: "語音與逐字稿", icon: "captions" as const, onSelect: () => onOpenPanel("transcript") },
-    { id: "observations", label: "本機觀察", icon: "info" as const, onSelect: () => onOpenPanel("observations") },
-    { id: "devices", label: "裝置狀態", icon: "devices" as const, onSelect: () => onOpenPanel("devices") },
-    { id: "information", label: "會議資訊", icon: "info" as const, onSelect: () => onOpenPanel("transcript") },
+    { id: "voice", label: "語音與逐字稿", icon: "captions" as const, onSelect: () => onOpenPanel("transcript", moreButton.current) },
+    { id: "observations", label: "本機觀察", icon: "info" as const, onSelect: () => onOpenPanel("observations", moreButton.current) },
+    { id: "devices", label: "裝置狀態", icon: "devices" as const, onSelect: () => onOpenPanel("devices", moreButton.current) },
+    { id: "information", label: "會議資訊", icon: "info" as const, onSelect: () => onOpenPanel("transcript", moreButton.current) },
   ];
 
   return (
@@ -52,7 +54,7 @@ export function MeetingControlBar({
         disabled={voice.disabled}
         icon={voice.icon}
         label={voice.label}
-        onClick={onVoiceAction}
+        onClick={(event) => onVoiceAction(event.currentTarget)}
         selected={voice.selected}
         tone="inverse"
         tooltipDelayMs={500}
@@ -69,7 +71,7 @@ export function MeetingControlBar({
       <IconButton
         icon="captions"
         label="開啟逐字稿"
-        onClick={() => onOpenPanel("transcript")}
+        onClick={(event) => onOpenPanel("transcript", event.currentTarget)}
         selected={panelOpen && activePanelTab === "transcript"}
         tone="inverse"
         tooltipDelayMs={500}
@@ -77,12 +79,12 @@ export function MeetingControlBar({
       <IconButton
         icon="events"
         label="開啟壓力事件"
-        onClick={() => onOpenPanel("events")}
+        onClick={(event) => onOpenPanel("events", event.currentTarget)}
         selected={panelOpen && activePanelTab === "events"}
         tone="inverse"
         tooltipDelayMs={500}
       />
-      <ActionMenu items={moreItems} label="更多會議選項" tone="inverse" />
+      <ActionMenu items={moreItems} label="更多會議選項" tone="inverse" triggerRef={moreButton} />
       <IconButton icon="leave" label="離開並查看報告" onClick={onFinish} tone="danger" tooltipDelayMs={500} />
     </div>
   );

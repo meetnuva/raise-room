@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { readFileSync } from "node:fs";
 import { expect, test, vi } from "vitest";
 import { defaultScenario } from "../domain/scenario";
 import { MeetingSidePanel, type MeetingPanelTab } from "./MeetingSidePanel";
@@ -54,6 +55,7 @@ test("renders only the owner-selected tab and closes through Escape", () => {
     onActiveTabChange: vi.fn(),
   };
   const { rerender } = render(<MeetingSidePanel {...baseProps} activeTab="devices" />);
+  expect(screen.getByRole("complementary", { name: "會議資訊" })).toHaveAttribute("data-motion", "entered");
   expect(screen.getByRole("tab", { name: "裝置" })).toHaveAttribute("aria-selected", "true");
   expect(screen.getByText("鏡頭目前未開啟")).toBeVisible();
   fireEvent.keyDown(screen.getByRole("complementary", { name: "會議資訊" }), { key: "Escape" });
@@ -62,4 +64,11 @@ test("renders only the owner-selected tab and closes through Escape", () => {
   rerender(<MeetingSidePanel {...baseProps} activeTab="events" />);
   expect(screen.getByText("2:00 · 已發生")).toBeVisible();
   expect(screen.getByText("18:00 · 待命")).toBeVisible();
+});
+
+test("uses the shared drawer motion token for panel and scrim transitions", () => {
+  const styles = readFileSync("src/styles.css", "utf8");
+
+  expect(styles).toMatch(/\.meeting-side-panel\s*\{[^}]*transition:\s*opacity\s+var\(--motion-dialog\),\s*transform\s+var\(--motion-dialog\);/s);
+  expect(styles).toMatch(/\.meeting-panel-scrim\s*\{[^}]*transition:\s*opacity\s+var\(--motion-dialog\);/s);
 });

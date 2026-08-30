@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { readFileSync } from "node:fs";
 import type { ComponentProps } from "react";
 import { expect, test, vi } from "vitest";
 import { MeetingControlBar } from "./MeetingControlBar";
@@ -42,21 +43,21 @@ test("routes captions, events and every more-menu action to actual information c
   const props = renderBar();
 
   fireEvent.click(screen.getByRole("button", { name: "開啟逐字稿" }));
-  expect(props.onOpenPanel).toHaveBeenLastCalledWith("transcript");
+  expect(props.onOpenPanel).toHaveBeenLastCalledWith("transcript", expect.any(HTMLButtonElement));
   fireEvent.click(screen.getByRole("button", { name: "開啟壓力事件" }));
-  expect(props.onOpenPanel).toHaveBeenLastCalledWith("events");
+  expect(props.onOpenPanel).toHaveBeenLastCalledWith("events", expect.any(HTMLButtonElement));
   fireEvent.click(screen.getByRole("button", { name: "更多會議選項" }));
   fireEvent.click(screen.getByRole("menuitem", { name: "語音與逐字稿" }));
-  expect(props.onOpenPanel).toHaveBeenLastCalledWith("transcript");
+  expect(props.onOpenPanel).toHaveBeenLastCalledWith("transcript", expect.any(HTMLButtonElement));
   fireEvent.click(screen.getByRole("button", { name: "更多會議選項" }));
   fireEvent.click(screen.getByRole("menuitem", { name: "本機觀察" }));
-  expect(props.onOpenPanel).toHaveBeenLastCalledWith("observations");
+  expect(props.onOpenPanel).toHaveBeenLastCalledWith("observations", expect.any(HTMLButtonElement));
   fireEvent.click(screen.getByRole("button", { name: "更多會議選項" }));
   fireEvent.click(screen.getByRole("menuitem", { name: "裝置狀態" }));
-  expect(props.onOpenPanel).toHaveBeenLastCalledWith("devices");
+  expect(props.onOpenPanel).toHaveBeenLastCalledWith("devices", expect.any(HTMLButtonElement));
   fireEvent.click(screen.getByRole("button", { name: "更多會議選項" }));
   fireEvent.click(screen.getByRole("menuitem", { name: "會議資訊" }));
-  expect(props.onOpenPanel).toHaveBeenLastCalledWith("transcript");
+  expect(props.onOpenPanel).toHaveBeenLastCalledWith("transcript", expect.any(HTMLButtonElement));
 });
 
 test("keeps microphone and camera state controlled by its owner", () => {
@@ -75,4 +76,10 @@ test("reflects only the owner-selected information tab as pressed", () => {
 
   expect(screen.getByRole("button", { name: "開啟逐字稿" })).toHaveAttribute("aria-pressed", "false");
   expect(screen.getByRole("button", { name: "開啟壓力事件" })).toHaveAttribute("aria-pressed", "true");
+});
+
+test("uses a box-sized fixed 56px control group that cannot wrap", () => {
+  const styles = readFileSync("src/styles.css", "utf8");
+
+  expect(styles).toMatch(/\.meeting-control-bar\s*\{[^}]*box-sizing:\s*border-box;[^}]*flex-wrap:\s*nowrap;[^}]*height:\s*56px;/s);
 });

@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useId, useRef, useState } from "react";
+import { Fragment, type Ref, useEffect, useId, useRef, useState } from "react";
 import { Icon, type IconName } from "./Icons";
 import { IconButton } from "./IconButton";
 
@@ -16,9 +16,10 @@ type ActionMenuProps = {
   label: string;
   icon?: IconName;
   tone?: "default" | "inverse" | "danger";
+  triggerRef?: Ref<HTMLButtonElement>;
 };
 
-export function ActionMenu({ items, label, icon = "more", tone }: ActionMenuProps) {
+export function ActionMenu({ items, label, icon = "more", tone, triggerRef: externalTriggerRef }: ActionMenuProps) {
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -77,6 +78,11 @@ export function ActionMenu({ items, label, icon = "more", tone }: ActionMenuProp
     item.onSelect();
     close();
   };
+  const setTriggerRef = (element: HTMLButtonElement | null) => {
+    triggerRef.current = element;
+    if (typeof externalTriggerRef === "function") externalTriggerRef(element);
+    else if (externalTriggerRef) externalTriggerRef.current = element;
+  };
 
   return (
     <div className="action-menu" ref={containerRef}>
@@ -86,7 +92,7 @@ export function ActionMenu({ items, label, icon = "more", tone }: ActionMenuProp
         icon={icon}
         label={label}
         onClick={() => (open ? close(false) : openMenu())}
-        ref={triggerRef}
+        ref={setTriggerRef}
         tone={tone}
       />
       {open ? (
@@ -96,6 +102,7 @@ export function ActionMenu({ items, label, icon = "more", tone }: ActionMenuProp
           onKeyDown={(event) => {
             if (event.key === "Escape") {
               event.preventDefault();
+              event.stopPropagation();
               close();
             } else if (event.key === "ArrowDown") {
               event.preventDefault();

@@ -157,6 +157,28 @@ test("opens the responsive drawer from the fixed control bar and restores focus 
   expect(opener).toHaveFocus();
 });
 
+test("returns focus to the actual more-menu opener after it routes information into the transcript tab", () => {
+  render(<MeetingRoom meeting={scheduledMeeting(10)} scenario={defaultScenario} responder={simulatedResponder} />);
+
+  const more = screen.getByRole("button", { name: "更多會議選項" });
+  fireEvent.click(more);
+  fireEvent.click(screen.getByRole("menuitem", { name: "會議資訊" }));
+  fireEvent.click(screen.getByRole("button", { name: "關閉資訊面板" }));
+  expect(more).toHaveFocus();
+});
+
+test("lets Escape dismiss the more menu without also dismissing its open drawer", () => {
+  render(<MeetingRoom meeting={scheduledMeeting(10)} scenario={defaultScenario} responder={simulatedResponder} />);
+
+  fireEvent.click(screen.getByRole("button", { name: "開啟逐字稿" }));
+  const more = screen.getByRole("button", { name: "更多會議選項" });
+  fireEvent.click(more);
+  fireEvent.keyDown(screen.getByRole("menuitem", { name: "語音與逐字稿" }), { key: "Escape" });
+  expect(screen.queryByRole("menu")).toBeNull();
+  expect(screen.getByRole("complementary", { name: "會議資訊" })).toBeVisible();
+  expect(more).toHaveFocus();
+});
+
 test("places voice controls inside the transcript content and keeps one microphone button in the fixed bar", () => {
   const idleVoice = injectedVoice();
   idleVoice.status = "idle";

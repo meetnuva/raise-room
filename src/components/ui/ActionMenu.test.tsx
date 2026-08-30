@@ -79,3 +79,13 @@ test("closes on Escape and outside clicks, then returns focus to its trigger", (
   expect(screen.queryByRole("menu")).toBeNull();
   expect(trigger).toHaveFocus();
 });
+
+test("stops Escape after dismissing the menu so an enclosing drawer remains open", () => {
+  const onContainerKeyDown = vi.fn();
+  render(<div onKeyDown={onContainerKeyDown}><ActionMenu label="更多選項" items={[]} /></div>);
+  fireEvent.click(screen.getByRole("button", { name: "更多選項" }));
+
+  fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" });
+  expect(screen.queryByRole("menu")).toBeNull();
+  expect(onContainerKeyDown).not.toHaveBeenCalled();
+});

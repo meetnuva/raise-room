@@ -1829,6 +1829,14 @@ button {
   border-radius: .75rem;
   background: #202124;
   color: #f8f9fa;
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity var(--motion-dialog), transform var(--motion-dialog);
+}
+
+.meeting-side-panel[data-motion="entering"] {
+  opacity: 0;
+  transform: translateX(16px);
 }
 
 .meeting-side-panel [role="tablist"] {
@@ -1876,10 +1884,11 @@ button {
 }
 
 .meeting-control-bar {
+  box-sizing: border-box;
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
-  min-height: 56px;
+  height: 56px;
   gap: 8px;
   padding: 4px;
   border-radius: 28px;
@@ -1941,6 +1950,12 @@ button {
 
 .meeting-panel-scrim {
   display: none;
+  opacity: 1;
+  transition: opacity var(--motion-dialog);
+}
+
+.meeting-panel-scrim[data-motion="entering"] {
+  opacity: 0;
 }
 
 @media (max-width: 1023px) {
@@ -1968,7 +1983,7 @@ button {
     max-height: none;
     border-radius: .75rem;
     box-shadow: 0 8px 24px rgb(0 0 0 / 32%);
-    transition: opacity 180ms cubic-bezier(.2, 0, 0, 1), transform 180ms cubic-bezier(.2, 0, 0, 1);
+    transition: opacity var(--motion-dialog), transform var(--motion-dialog);
   }
 }
 
