@@ -7,6 +7,13 @@ body:
     attributes:
       value: 請勿貼出 Key、token、私人逐字稿、音訊、影像或未遮蔽設定截圖。
   - type: textarea
+    id: problem
+    attributes:
+      label: 問題描述
+      description: 請用一句到數句話說明實際遇到的問題與影響。
+    validations:
+      required: true
+  - type: textarea
     id: reproduction
     attributes:
       label: 重現步驟
@@ -35,3 +42,8 @@ body:
         - 已設定 Perxona 動態主管
     validations:
       required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs 或 console output（選填）
+      description: 貼出前請直接遮蔽 Key、token、私人逐字稿、個人資料與任何設定值。

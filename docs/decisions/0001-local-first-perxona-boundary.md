@@ -9,7 +9,7 @@ Raise Room 處理私人薪資練習內容，且可選用 Perxona Presenter 與�
 
 ## Decision
 
-情境、逐字稿、語音與視覺觀察預設留在 browser 本機。browser 只可使用受網域限制的 Publishable Key；Secret Key 僅存在 loopback Node server，並由同源 API 呼叫 Perxona Chatbot。
+情境與逐字稿預設留在 browser 本機；只有動態主管已設定且實際使用時，loopback Node server 才會把它們送往 Perxona Chatbot。音訊、影格與 landmarks 永不送往該服務。browser 只可使用受網域限制的 Publishable Key；Secret Key 僅存在 loopback Node server，並由同源 API 呼叫 Perxona Chatbot。
 
 ## Alternatives
 

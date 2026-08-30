@@ -50,7 +50,7 @@ npm run start
 
 可自行選擇繁中、English 或日本語，並按下「載入本機語音模型」。首次 opt-in 會從 Hugging Face Hub 下載 `onnx-community/whisper-tiny`；模型大小依量化檔而異、可能需要一段時間，完成後由瀏覽器快取供後續使用。音訊不會上傳，WebGPU 優先、沒有時使用較慢的 WASM fallback。
 
-每段錄音最多分析最後 30 秒；按下停止後會立即關閉麥克風 tracks，再在瀏覽器內轉錄。報告只讀取逐字稿中的可觀察語音 metadata；字元／分鐘不可跨語言比較。動態主管已透過 server-only Secret Key 邊界呼叫專用 Perxona Chatbot；未設定或暫時失敗時，會明確標示為本機腳本 fallback。
+每段錄音最多分析最後 30 秒；按下停止後會立即關閉麥克風 tracks，再在瀏覽器內轉錄。報告只讀取逐字稿中的可觀察語音 metadata；字元／分鐘不可跨語言比較。設定完成時，程式可透過 server-only Secret Key 邊界呼叫專用 Perxona Chatbot；真實 Key／Chatbot E2E 尚未驗證。未設定或暫時失敗時，會明確標示為本機腳本 fallback。
 
 ## Phase 4：可選本機視覺觀察
 
