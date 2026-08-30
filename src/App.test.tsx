@@ -1,62 +1,142 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, expect, vi } from "vitest";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { App } from "./App";
 
-test("renders Raise Room's local-first setup entry point", () => {
-  render(<App />);
-  expect(screen.getByRole("heading", { name: "Raise Room" })).toBeVisible();
-  expect(screen.getByText("你的練習資料預設只留在這台裝置。")).toBeVisible();
-  expect(screen.getByText("視覺教練功能尚未啟用")).toBeVisible();
-  fireEvent.click(screen.getByRole("button", { name: "語音設定" }));
-  expect(screen.getByRole("heading", { name: "語音模型與麥克風測試" })).toBeVisible();
-  fireEvent.click(screen.getByRole("button", { name: "返回情境設定" }));
-  expect(screen.getByRole("heading", { name: "設定這場薪資檢討" })).toBeVisible();
-});
+const appMocks = vi.hoisted(() => ({ practiceSession: vi.fn() }));
 
-test("preserves the scenario through the report retry flow and can return to setup", async () => {
-  render(<App />);
+vi.mock("./components/PracticeSession", () => ({
+  PracticeSession: ({ children }: { children: (runtime: { media: object; voice: object }) => React.ReactNode }) => {
+    appMocks.practiceSession();
+    return <>{children({ media: {}, voice: {} })}</>;
+  },
+}));
+vi.mock("./components/MeetingRoom", () => ({
+  MeetingRoom: ({ onFinish }: { onFinish: (transcript: []) => void }) => (
+    <section aria-labelledby="meeting-room-title">
+      <h2 id="meeting-room-title" tabIndex={-1}>薪資檢討 Raise Room</h2>
+      <button type="button" onClick={() => onFinish([])}>結束並看報告</button>
+    </section>
+  ),
+}));
 
-  fireEvent.click(screen.getByRole("button", { name: "進入會議大廳" }));
-  fireEvent.change(screen.getByLabelText("開發用文字輸入"), {
-    target: { value: "我期待調整 5%。" },
-  });
-  fireEvent.click(screen.getByRole("button", { name: "送出" }));
-  await screen.findByText("請以具體成果說明這次薪資調整請求。");
-  fireEvent.click(screen.getByRole("button", { name: "結束並看報告" }));
+function openSettings() {
+  fireEvent.click(screen.getByRole("button", { name: "設定" }));
+  return screen.getByRole("dialog");
+}
 
-  expect(screen.getByRole("heading", { name: "會後教練報告" })).toBeVisible();
-  fireEvent.click(screen.getByRole("button", { name: "再練一次" }));
-  expect(screen.getByRole("heading", { name: "薪資檢討 Raise Room" })).toBeVisible();
-  expect(screen.getByText("nuva · 18 個月年資")).toBeVisible();
+function enterLobby() {
+  fireEvent.click(screen.getByRole("button", { name: "提早進入準備室" }));
+}
 
-  fireEvent.click(screen.getByRole("button", { name: "結束並看報告" }));
-  fireEvent.click(screen.getByRole("button", { name: "重新設定情境" }));
-  expect(screen.getByRole("heading", { name: "設定這場薪資檢討" })).toBeVisible();
-});
+function joinMeeting() {
+  fireEvent.click(screen.getByRole("button", { name: "立即進入會議室" }));
+}
 
-test("applies meeting-mode to the application shell during a meeting", () => {
-  render(<App />);
-
-  fireEvent.click(screen.getByRole("button", { name: "進入會議大廳" }));
-
-  expect(document.querySelector("main")).toHaveClass("meeting-mode");
+beforeEach(() => {
+  window.localStorage.clear();
+  vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+  appMocks.practiceSession.mockClear();
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
 });
 
-beforeEach(() => {
-  vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+test("creates the strict next meeting from the document-load clock", () => {
+  render(<App now={() => new Date(2026, 7, 30, 17, 5)} />);
+  expect(screen.getByRole("heading", { name: "Raise Room" })).toBeVisible();
+  expect(screen.getByText("18:00–18:20")).toBeVisible();
+  expect(screen.queryByRole("heading", { name: "設定這場薪資檢討" })).toBeNull();
 });
 
-test("resets to the manager stage and focuses its heading when entering a meeting", () => {
-  const scrollTo = vi.mocked(window.scrollTo);
-  render(<App />);
+test("saves five minutes without moving the start hour", () => {
+  render(<App now={() => new Date(2026, 7, 30, 17, 5)} />);
+  openSettings();
+  fireEvent.click(screen.getByRole("tab", { name: "會議" }));
+  fireEvent.click(screen.getByRole("radio", { name: "5 分鐘" }));
+  fireEvent.click(screen.getByRole("button", { name: "儲存" }));
+  expect(screen.getByText("18:00–18:05")).toBeVisible();
+});
 
-  fireEvent.click(screen.getByRole("button", { name: "進入會議大廳" }));
+test("navigates home to lobby to meeting, retries through lobby, and resets home", () => {
+  render(<App now={() => new Date(2026, 7, 30, 17, 5)} />);
+  enterLobby();
+  expect(screen.getByRole("heading", { name: "確認你的裝置" })).toBeVisible();
+  joinMeeting();
+  expect(screen.getByRole("heading", { name: "薪資檢討 Raise Room" })).toHaveFocus();
+  fireEvent.click(screen.getByRole("button", { name: "結束並看報告" }));
+  expect(screen.getByRole("heading", { name: "會後教練報告" })).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "再練一次" }));
+  expect(screen.getByRole("heading", { name: "確認你的裝置" })).toBeVisible();
+  joinMeeting();
+  fireEvent.click(screen.getByRole("button", { name: "結束並看報告" }));
+  fireEvent.click(screen.getByRole("button", { name: "重新設定情境" }));
+  expect(screen.getByRole("heading", { name: "Raise Room" })).toBeVisible();
+});
 
-  const heading = screen.getByRole("heading", { name: "薪資檢討 Raise Room" });
-  expect(scrollTo).toHaveBeenCalledWith({ top: 0, left: 0, behavior: "auto" });
-  expect(heading).toHaveFocus();
+test("keeps settings edits local on cancel and returns focus to settings", () => {
+  window.localStorage.setItem("raise-room-meeting-settings-v1", JSON.stringify({ durationMinutes: 20, managerPresentation: "male" }));
+  render(<App now={() => new Date(2026, 7, 30, 17, 5)} />);
+  openSettings();
+  fireEvent.click(screen.getByRole("tab", { name: "會議" }));
+  fireEvent.click(screen.getByRole("radio", { name: "5 分鐘" }));
+  fireEvent.click(screen.getByRole("button", { name: "取消" }));
+  expect(window.localStorage.getItem("raise-room-meeting-settings-v1")).toBe(JSON.stringify({ durationMinutes: 20, managerPresentation: "male" }));
+  expect(screen.getByRole("button", { name: "設定" })).toHaveFocus();
+  expect(screen.getByText("18:00–18:20")).toBeVisible();
+});
+
+test("reads persisted boundaries once and starts no practice resource on the home page", () => {
+  const getItem = vi.spyOn(Storage.prototype, "getItem");
+  const { rerender } = render(<App now={() => new Date(2026, 7, 30, 17, 5)} />);
+  rerender(<App now={() => new Date(2026, 7, 30, 17, 6)} />);
+  expect(getItem.mock.calls.map(([key]) => key)).toEqual([
+    "raise-room-scenario-draft",
+    "raise-room-meeting-settings-v1",
+    "raise-room-voice-settings-v1",
+  ]);
+  expect(appMocks.practiceSession).not.toHaveBeenCalled();
+});
+
+test("saves exactly scenario, practice, and voice boundaries", () => {
+  render(<App now={() => new Date(2026, 7, 30, 17, 5)} />);
+  openSettings();
+  fireEvent.click(screen.getByRole("tab", { name: "會議" }));
+  fireEvent.click(screen.getByRole("radio", { name: "5 分鐘" }));
+  fireEvent.click(screen.getByRole("button", { name: "儲存" }));
+  expect(window.localStorage.getItem("raise-room-scenario-draft")).not.toBeNull();
+  expect(window.localStorage.getItem("raise-room-meeting-settings-v1")).toBe(JSON.stringify({ durationMinutes: 5, managerPresentation: "male" }));
+  expect(window.localStorage.getItem("raise-room-voice-settings-v1")).not.toBeNull();
+});
+
+test("clear confirmation removes only practice storage and returns home defaults", () => {
+  window.localStorage.setItem("raise-room-scenario-draft", "scenario");
+  window.localStorage.setItem("raise-room-meeting-settings-v1", "practice");
+  window.localStorage.setItem("raise-room-voice-settings-v1", "voice");
+  window.localStorage.setItem("credentials", "keep");
+  render(<App now={() => new Date(2026, 7, 30, 17, 5)} />);
+  openSettings();
+  fireEvent.click(screen.getByRole("tab", { name: "隱私" }));
+  fireEvent.click(screen.getByRole("button", { name: "清除本機設定與草稿" }));
+  fireEvent.click(screen.getByRole("button", { name: "確認清除" }));
+  expect(window.localStorage.getItem("raise-room-scenario-draft")).toBeNull();
+  expect(window.localStorage.getItem("raise-room-meeting-settings-v1")).toBeNull();
+  expect(window.localStorage.getItem("raise-room-voice-settings-v1")).toBeNull();
+  expect(window.localStorage.getItem("credentials")).toBe("keep");
+  expect(screen.getByText("18:00–18:20")).toBeVisible();
+});
+
+test("auto-rolls an expired schedule only while home is active", () => {
+  vi.useFakeTimers();
+  let current = new Date(2026, 7, 30, 17, 5);
+  render(<App now={() => current} />);
+  current = new Date(2026, 7, 30, 18, 20);
+  act(() => vi.advanceTimersByTime(60_000));
+  expect(screen.getByText("19:00–19:20")).toBeVisible();
+  enterLobby();
+  current = new Date(2026, 7, 30, 19, 20);
+  act(() => vi.advanceTimersByTime(60_000));
+  expect(screen.getByRole("heading", { name: "確認你的裝置" })).toBeVisible();
+  expect(screen.queryByText("20:00–20:20")).toBeNull();
 });
