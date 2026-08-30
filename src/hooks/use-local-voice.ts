@@ -5,6 +5,8 @@ import {
   type LocalAsrClient,
   type VoiceLanguage,
 } from "../lib/local-asr";
+import { defaultAsrModelPresetId, type AsrModelPresetId } from "../domain/asr-models";
+import { toTaiwanTraditional } from "../lib/traditional-chinese";
 
 export type VoiceStatus =
   | "idle"
@@ -18,12 +20,15 @@ export type VoiceStatus =
   | "error";
 
 export interface VoiceTranscriptResult {
+  rawText: string;
   text: string;
   durationSeconds: number;
   language: VoiceLanguage;
+  modelPreset: AsrModelPresetId;
 }
 
 type LocalVoiceInput = {
+  modelPreset?: AsrModelPresetId;
   asrClient?: LocalAsrClient;
   asrClientFactory?: () => LocalAsrClient;
   mediaDevices?: Pick<MediaDevices, "getUserMedia">;
@@ -37,6 +42,7 @@ function defaultNow() {
 }
 
 export function useLocalVoice(input?: LocalVoiceInput) {
+  const modelPreset = input?.modelPreset ?? defaultAsrModelPresetId;
   const clientRef = useRef<LocalAsrClient | null>(input?.asrClient ?? null);
   const injectedClient = useRef(Boolean(input?.asrClient));
   const clientFactory = useRef(input?.asrClientFactory ?? createLocalAsrClient);
@@ -55,6 +61,8 @@ export function useLocalVoice(input?: LocalVoiceInput) {
   const [partialText, setPartialText] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [language, setLanguage] = useState<VoiceLanguage>("zh");
+  const [device, setDevice] = useState<"webgpu" | "wasm" | null>(null);
+  const activePreset = useRef(modelPreset);
 
   const stopTracks = useCallback(() => {
     stream.current?.getTracks().forEach((track) => track.stop());
@@ -99,6 +107,7 @@ export function useLocalVoice(input?: LocalVoiceInput) {
         setStatus("ready");
         setProgress(null);
         setErrorMessage(null);
+        setDevice(event.device);
       }
 
       if (event.type === "partial") {
@@ -123,6 +132,23 @@ export function useLocalVoice(input?: LocalVoiceInput) {
     };
   }, [client, release]);
 
+  useEffect(() => {
+    if (activePreset.current === modelPreset) return;
+
+    if (recorder.current?.state === "recording") recorder.current.stop();
+    release();
+    if (!injectedClient.current && clientRef.current) {
+      clientRef.current.destroy();
+      clientRef.current = null;
+    }
+    activePreset.current = modelPreset;
+    setStatus("idle");
+    setProgress(null);
+    setPartialText("");
+    setErrorMessage(null);
+    setDevice(null);
+  }, [modelPreset, release]);
+
   const loadModel = useCallback(() => {
     const asr = client();
     if (!asr) {
@@ -134,8 +160,8 @@ export function useLocalVoice(input?: LocalVoiceInput) {
     setStatus("loading-model");
     setProgress(null);
     setErrorMessage(null);
-    asr.load();
-  }, [client]);
+    asr.load(modelPreset);
+  }, [client, modelPreset]);
 
   const startRecording = useCallback(async () => {
     if (status !== "ready") return;
@@ -206,7 +232,8 @@ export function useLocalVoice(input?: LocalVoiceInput) {
       const decoded = await audioContext.decodeAudioData(await blob.arrayBuffer());
       const channel = decoded.getChannelData(0);
       const samples = channel.slice(Math.max(0, channel.length - (16000 * 30)));
-      const text = (await client()?.transcribe(samples, language) ?? "").trim();
+      const rawText = (await client()?.transcribe(samples, language, modelPreset) ?? "").trim();
+      const text = language === "zh" ? toTaiwanTraditional(rawText).trim() : rawText;
 
       release();
 
@@ -216,18 +243,18 @@ export function useLocalVoice(input?: LocalVoiceInput) {
       }
 
       if (mounted.current) setStatus("ready");
-      return { text, durationSeconds, language };
-    } catch {
+      return { rawText, text, durationSeconds, language, modelPreset };
+    } catch (error) {
       release();
 
       if (mounted.current) {
         setStatus("error");
-        setErrorMessage("本機轉錄失敗，請再試一次。");
+        setErrorMessage(error instanceof Error ? error.message : "本機轉錄失敗，請再試一次。");
       }
 
       return null;
     }
-  }, [client, input?.audioContextFactory, input?.now, language, release, status, stopTracks]);
+  }, [client, input?.audioContextFactory, input?.now, language, modelPreset, release, status, stopTracks]);
 
   const cancel = useCallback(() => {
     if (recorder.current?.state === "recording") {
@@ -242,6 +269,22 @@ export function useLocalVoice(input?: LocalVoiceInput) {
     }
   }, [release]);
 
+  const releaseModel = useCallback(() => {
+    if (recorder.current?.state === "recording") recorder.current.stop();
+    release();
+    if (!injectedClient.current && clientRef.current) {
+      clientRef.current.destroy();
+      clientRef.current = null;
+    }
+    if (mounted.current) {
+      setStatus("idle");
+      setProgress(null);
+      setPartialText("");
+      setErrorMessage(null);
+      setDevice(null);
+    }
+  }, [release]);
+
   return {
     status,
     progress,
@@ -253,5 +296,7 @@ export function useLocalVoice(input?: LocalVoiceInput) {
     startRecording,
     stopAndTranscribe,
     cancel,
+    device,
+    releaseModel,
   };
 }

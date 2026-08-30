@@ -1,8 +1,11 @@
+import type { AsrModelPresetId } from "../domain/asr-models";
+
 export type VoiceLanguage = "zh" | "en" | "ja";
 
 export type AsrWorkerRequest =
-  | { type: "load" }
-  | { type: "transcribe"; requestId: string; audio: Float32Array; language: VoiceLanguage };
+  | { type: "load"; preset: AsrModelPresetId }
+  | { type: "transcribe"; requestId: string; preset: AsrModelPresetId; audio: Float32Array; language: VoiceLanguage }
+  | { type: "close" };
 
 export type AsrWorkerEvent =
   | { type: "loading"; progress: number | null; message: string }
@@ -21,8 +24,8 @@ export interface WorkerPort {
 
 export interface LocalAsrClient {
   subscribe(listener: (event: AsrWorkerEvent) => void): () => void;
-  load(): void;
-  transcribe(audio: Float32Array, language: VoiceLanguage): Promise<string>;
+  load(preset: AsrModelPresetId): void;
+  transcribe(audio: Float32Array, language: VoiceLanguage, preset: AsrModelPresetId): Promise<string>;
   destroy(): void;
 }
 
@@ -126,17 +129,17 @@ export function createLocalAsrClient(
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
-    load() {
-      if (!destroyed) worker.postMessage({ type: "load" });
+    load(preset) {
+      if (!destroyed) worker.postMessage({ type: "load", preset });
     },
-    transcribe(audio, language) {
+    transcribe(audio, language, preset) {
       if (destroyed) return Promise.reject(new Error("語音轉錄已關閉。"));
 
       const requestId = `asr-${Date.now()}-${serial++}`;
       return new Promise((resolve, reject) => {
         pending.set(requestId, { resolve, reject });
         worker.postMessage(
-          { type: "transcribe", requestId, audio, language },
+          { type: "transcribe", requestId, preset, audio, language },
           [audio.buffer],
         );
       });
@@ -149,6 +152,7 @@ export function createLocalAsrClient(
       pending.clear();
       listeners.clear();
       worker.removeEventListener("message", onMessage);
+      worker.postMessage({ type: "close" });
       worker.terminate();
     },
   };

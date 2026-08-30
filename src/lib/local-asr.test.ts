@@ -22,14 +22,16 @@ test("normalizes official download percentages before validating worker events",
   expect(normalizeAsrProgress("50")).toBeNull();
 });
 
-test("correlates requests, transfers audio, errors and destroys pending work", async () => {
+test("correlates preset requests, transfers audio, closes and destroys pending work", async () => {
   const worker = fakeWorker(); const client = createLocalAsrClient(() => worker);
-  client.load(); expect(worker.postMessage).toHaveBeenCalledWith({ type: "load" });
-  const promise = client.transcribe(new Float32Array([0]), "zh");
+  client.load("balanced"); expect(worker.postMessage).toHaveBeenCalledWith({ type: "load", preset: "balanced" });
+  const promise = client.transcribe(new Float32Array([0]), "zh", "balanced");
   const call = vi.mocked(worker.postMessage).mock.calls[1];
-  expect(call[0]).toMatchObject({ type: "transcribe", language: "zh" }); expect(call[1]).toHaveLength(1);
+  expect(call[0]).toMatchObject({ type: "transcribe", language: "zh", preset: "balanced" }); expect(call[1]).toHaveLength(1);
   worker.emit({ type: "complete", requestId: (call[0] as { requestId: string }).requestId, text: "完成" });
   await expect(promise).resolves.toBe("完成");
-  const pending = client.transcribe(new Float32Array([1]), "en"); client.destroy();
-  await expect(pending).rejects.toThrow("已關閉"); expect(worker.terminate).toHaveBeenCalledOnce();
+  const pending = client.transcribe(new Float32Array([1]), "en", "fast"); client.destroy();
+  await expect(pending).rejects.toThrow("已關閉");
+  expect(worker.postMessage).toHaveBeenLastCalledWith({ type: "close" });
+  expect(worker.terminate).toHaveBeenCalledOnce();
 });

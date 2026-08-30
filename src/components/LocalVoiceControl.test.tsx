@@ -3,7 +3,7 @@ import { expect, test, vi } from "vitest";
 import { LocalVoiceControl } from "./LocalVoiceControl";
 import type { VoiceTranscriptResult } from "../hooks/use-local-voice";
 
-const voice = (status: "idle" | "ready" | "recording" = "idle") => ({ status, progress: null, partialText: "", errorMessage: null, language: "zh" as const, setLanguage: vi.fn(), loadModel: vi.fn(), startRecording: vi.fn(), stopAndTranscribe: vi.fn(), cancel: vi.fn() });
+const voice = (status: "idle" | "ready" | "recording" = "idle") => ({ status, progress: null, partialText: "", errorMessage: null, language: "zh" as const, setLanguage: vi.fn(), loadModel: vi.fn(), startRecording: vi.fn(), stopAndTranscribe: vi.fn(), cancel: vi.fn(), device: null, releaseModel: vi.fn() });
 
 test("requires an explicit model opt-in and exposes language choice", () => {
   const injected = voice(); render(<LocalVoiceControl voice={injected} onTranscript={vi.fn<(result: VoiceTranscriptResult) => void>()} />);

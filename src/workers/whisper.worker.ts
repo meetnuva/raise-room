@@ -5,14 +5,16 @@ import {
   TextStreamer,
   WhisperForConditionalGeneration,
 } from "@huggingface/transformers";
+import { isAsrModelPresetId, type AsrModelPresetId } from "../domain/asr-models";
+import { getAsrRuntimeConfig } from "../lib/asr-runtime-config";
 import { normalizeAsrProgress, type AsrWorkerRequest, type VoiceLanguage } from "../lib/local-asr";
 
-const modelId = "onnx-community/whisper-tiny";
 const maxSamples = 16000 * 30;
 let processing = false;
 
 type Runtime = Awaited<ReturnType<typeof loadRuntime>>;
 let runtime: Runtime | null = null;
+let activePreset: AsrModelPresetId | null = null;
 
 function send(message: unknown) {
   self.postMessage(message);
@@ -34,39 +36,43 @@ function loading(progress: unknown) {
   });
 }
 
-async function loadRuntime() {
-  const progress_callback = loading;
-
-  try {
-    const [tokenizer, processor, model] = await Promise.all([
-      AutoTokenizer.from_pretrained(modelId, { progress_callback }),
-      AutoProcessor.from_pretrained(modelId, { progress_callback }),
-      WhisperForConditionalGeneration.from_pretrained(modelId, {
-        device: "webgpu",
-        dtype: { encoder_model: "fp32", decoder_model_merged: "q4" },
-        progress_callback,
-      }),
-    ]);
-
-    return { tokenizer, processor, model, device: "webgpu" as const };
-  } catch {
-    const [tokenizer, processor, model] = await Promise.all([
-      AutoTokenizer.from_pretrained(modelId, { progress_callback }),
-      AutoProcessor.from_pretrained(modelId, { progress_callback }),
-      WhisperForConditionalGeneration.from_pretrained(modelId, { dtype: "q8", progress_callback }),
-    ]);
-
-    return { tokenizer, processor, model, device: "wasm" as const };
-  }
+function hasWebGpu() {
+  return typeof navigator !== "undefined" && "gpu" in navigator;
 }
 
-async function load() {
+async function loadRuntime(preset: AsrModelPresetId) {
+  const progress_callback = loading;
+  const config = getAsrRuntimeConfig(preset, hasWebGpu());
+  if (!config.ok) throw new Error(config.message);
+  const [tokenizer, processor, model] = await Promise.all([
+    AutoTokenizer.from_pretrained(config.modelId, { progress_callback }),
+    AutoProcessor.from_pretrained(config.modelId, { progress_callback }),
+    WhisperForConditionalGeneration.from_pretrained(config.modelId, {
+      device: config.device,
+      dtype: config.dtype,
+      progress_callback,
+    }),
+  ]);
+
+  return { tokenizer, processor, model, device: config.device };
+}
+
+async function closeRuntime() {
+  const model = runtime?.model as { dispose?: () => void | Promise<void> } | undefined;
+  await model?.dispose?.();
+  runtime = null;
+  activePreset = null;
+}
+
+async function load(preset: AsrModelPresetId) {
   try {
-    runtime ??= await loadRuntime();
+    if (activePreset !== preset) await closeRuntime();
+    runtime ??= await loadRuntime(preset);
+    activePreset = preset;
     await runtime.model.generate({ input_features: full([1, 80, 3000], 0), max_new_tokens: 1 });
     send({ type: "ready", device: runtime.device });
-  } catch {
-    send({ type: "error", message: "無法載入本機語音模型。" });
+  } catch (error) {
+    send({ type: "error", message: error instanceof Error ? error.message : "無法載入本機語音模型。" });
   }
 }
 
@@ -84,7 +90,11 @@ async function transcribe(request: Extract<AsrWorkerRequest, { type: "transcribe
   send({ type: "transcribing", requestId: request.requestId });
 
   try {
-    runtime ??= await loadRuntime();
+    if (!isAsrModelPresetId(request.preset)) throw new Error("不支援的語音模型設定。");
+    if (activePreset !== request.preset || !runtime) {
+      await load(request.preset);
+      if (!runtime || activePreset !== request.preset) throw new Error("無法載入本機語音模型。");
+    }
     const audio = request.audio.slice(Math.max(0, request.audio.length - maxSamples));
     let partial = "";
     const streamer = new TextStreamer(runtime.tokenizer, {
@@ -114,6 +124,7 @@ async function transcribe(request: Extract<AsrWorkerRequest, { type: "transcribe
 
 self.addEventListener("message", (event: MessageEvent<AsrWorkerRequest>) => {
   if (!event.data || typeof event.data !== "object") return;
-  if (event.data.type === "load") void load();
+  if (event.data.type === "load" && isAsrModelPresetId(event.data.preset)) void load(event.data.preset);
   if (event.data.type === "transcribe") void transcribe(event.data);
+  if (event.data.type === "close") void closeRuntime();
 });
