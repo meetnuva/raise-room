@@ -64,7 +64,7 @@ export function HomeChrome({ onOpenSettings }: { onOpenSettings(target?: HomeSet
         <section aria-label="本機使用者" className="meet-home-popover" role="dialog">
           <h2>本機使用者</h2>
           <p>資料只存在這台裝置</p>
-          <button type="button" onClick={() => onOpenSettings("privacy")}>隱私設定</button>
+          <button type="button" onClick={() => { setOpenPopover(null); onOpenSettings("privacy"); }}>隱私設定</button>
         </section>
       ) : null}
     </div>

@@ -1,4 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { vi } from "vitest";
 import { HomeChrome } from "./HomeChrome";
 
@@ -36,4 +38,22 @@ test("opens help, about, and local privacy content while routing every settings 
   expect(screen.getByText("資料只存在這台裝置")).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "隱私設定" }));
   expect(onOpenSettings).toHaveBeenLastCalledWith("privacy");
+});
+
+test("closes the local user popover before opening privacy settings", () => {
+  const onOpenSettings = vi.fn();
+  render(<HomeChrome onOpenSettings={onOpenSettings} />);
+
+  fireEvent.click(screen.getByRole("button", { name: "本機使用者" }));
+  fireEvent.click(screen.getByRole("button", { name: "隱私設定" }));
+
+  expect(screen.queryByRole("dialog", { name: "本機使用者" })).toBeNull();
+  expect(onOpenSettings).toHaveBeenCalledWith("privacy");
+});
+
+test("uses the shared focus token for home controls", () => {
+  const styles = readFileSync(resolve(process.cwd(), "src/styles.css"), "utf8");
+
+  expect(styles).toMatch(/\.meet-home button:focus-visible\s*\{\s*outline: 3px solid var\(--focus-light\);/);
+  expect(styles).not.toMatch(/\.meet-home button:focus-visible\s*\{[^}]*#7dd3fc/);
 });

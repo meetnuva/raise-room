@@ -1296,7 +1296,7 @@ button {
 }
 
 .meet-home button:focus-visible {
-  outline: 3px solid #7dd3fc;
+  outline: 3px solid var(--focus-light);
   outline-offset: 2px;
 }
 
