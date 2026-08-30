@@ -41,7 +41,7 @@ npm run start
 
 首頁、設定、會前準備室與正式談判已使用同一組本地 SVG icons、tooltip、menu、dialog、drawer 與可見狀態；所有這些 UI state 都只保留在 React memory。設定採原生 dialog 與七個可存取 tabs；談判控制列固定為麥克風、鏡頭、逐字稿、壓力事件、更多、離開，次要工具才開啟側欄。CSS 對桌面、平板與手機分別定義 drawer 與控制列規則，並支援 reduced motion。
 
-2026-08-30 的最新自動化閘門已通過：59 個 test files／320 tests、TypeScript、Vite production build、release-files 與已審閱依賴稽核；fresh 靜態掃描確認 34 個 CSS custom-property 定義、19 種 `var()` 引用類型、共 79 次 `var()` 使用，且 0 個未知 token。這不能取代實機驗收：五個指定 viewport（375×812、768×1024、1280×800、1440×900、1920×1080）、Google Meet 唯讀對照、完整每個控制的 Chrome readback，以及不中斷 20 分鐘實作，仍由 root acceptance 負責且尚未在本次文件中宣告完成。
+2026-08-31 的最新自動化閘門已通過：59 個 test files／326 tests、TypeScript、Vite production build、release-files 與已審閱依賴稽核；fresh 靜態掃描確認 28 個 CSS custom-property 定義、19 種 `var()` 引用類型、共 81 次 `var()` 使用，且 0 個未知 token。這不能取代實機驗收：五個指定 viewport（375×812、768×1024、1280×800、1440×900、1920×1080）、Google Meet 唯讀對照、完整每個控制的 Chrome readback，以及不中斷 20 分鐘實作，仍由 root acceptance 負責且尚未在本次文件中宣告完成。
 
 ## 排程與會前準備
 
