@@ -38,4 +38,13 @@ App
 - browser 只會以同源 API 取得動態主管狀態或回覆。未設定完整 server 環境時，UI 顯示本機腳本 fallback。
 - Optional Presenter 只在完整 Publishable Key 與 target 已設定、且使用者明確啟動時載入。Secret Key 不會進入 browser。
 
+## Meet 式互動層與響應式界線
+
+- `HomeChrome`、`ActionMenu`、`Tooltip` 與 `IconButton` 只持有暫時的 UI state；每個選單項目都路由到真實設定、說明、隱私或會議資訊內容。不可用的 action 會以 disabled 與原因揭露，而不是顯示假控制。
+- `PracticeSettingsDialog` 使用原生 `<dialog>`、可存取 roving tabs、Escape 與 focus return；Save／Cancel 仍由既有 allowlisted settings owner 處理。CSS 在桌面保留 208px tab rail，在較窄畫面改為可水平捲動的 tabs，並保留固定 footer。
+- `MeetingRoom` 的核心六控制固定在 56px 底部列；逐字稿、事件、語音、視覺、裝置與會議資訊都由 `MeetingSidePanel` 呈現。桌面以 360px side panel 推縮舞台，768–1023px 以 320px overlay，手機以 scrim 與 `min(calc(100vw - 24px), 360px)` overlay；這些 UI layers 不寫入逐字稿、報告或外部服務。
+- CSS root 定義產品使用的 surface、text、focus、danger、control、scrim 與 motion token，且 reduced-motion media query 會保留最終狀態並將動畫／transition 降至近乎瞬時。
+
+自動化驗證可檢查此互動契約與 CSS 靜態條件，但不取代實機 viewport、focus、z-index 或 20 分鐘 media／ASR acceptance；後者必須由瀏覽器 readback 另行完成。
+
 詳見 [資料與隱私邊界](privacy-boundary.md)、[Perxona 整合邊界](perxona-integration.md) 與 [架構決策](decisions)。
