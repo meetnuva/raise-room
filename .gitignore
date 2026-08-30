@@ -3,5 +3,6 @@ dist/
 .DS_Store
 *.local
 *.tsbuildinfo
+.superpowers/
 vite.config.js
 vite.config.d.ts
