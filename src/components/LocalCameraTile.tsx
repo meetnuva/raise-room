@@ -6,6 +6,7 @@ type LocalCameraTileProps = {
   camera?: Camera;
   detail?: string;
   showControl?: boolean;
+  showStatus?: boolean;
   onVideoElement?: (element: HTMLVideoElement | null) => void;
   previewStream?: MediaStream | null;
   overlay?: ReactNode;
@@ -18,6 +19,7 @@ function LocalCameraTileView({
   camera,
   detail,
   showControl = true,
+  showStatus = true,
   onVideoElement,
   previewStream,
   overlay,
@@ -73,8 +75,8 @@ function LocalCameraTileView({
       ) : (
         <>
           <div className="camera-placeholder" aria-hidden="true">你</div>
-          <p>{message}</p>
-          {camera.errorMessage && <p role="status">⚠ {camera.errorMessage}</p>}
+          {showStatus && <p>{message}</p>}
+          {showStatus && camera.errorMessage && <p role="status">⚠ {camera.errorMessage}</p>}
           {showControl && (
             <button type="button" onClick={() => void camera.start()} disabled={camera.status === "requesting"}>
               {camera.status === "requesting" ? "正在請求鏡頭權限" : "開啟我的鏡頭"}

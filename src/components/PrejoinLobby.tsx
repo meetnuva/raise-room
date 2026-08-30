@@ -134,6 +134,7 @@ export function PrejoinLobby({
           <LocalCameraTile
             previewStream={media.stream}
             showControl={false}
+            showStatus={false}
             overlay={
               <div className="prejoin-preview-controls" aria-label="預覽裝置控制">
                 <IconButton
@@ -179,6 +180,9 @@ export function PrejoinLobby({
           <p className="prejoin-time">{formatPracticeTimeRange(meeting, "zh-TW")}</p>
           <p>你將與 {scenario.manager.name} 進行 {meeting.durationMinutes} 分鐘的調薪談判練習。</p>
           <p>主管會在談判開始後加入</p>
+          <button type="button" className="prejoin-join" onClick={onJoin}>立即進入會議室</button>
+          <p className="early-entry-note">可以提早開始談判</p>
+          {hasUnfinishedReadiness && <p className="prejoin-readiness-note">你仍可進入，未完成項目可在會議中開啟</p>}
           <ul className="prejoin-readiness" aria-label="準備狀態">
             {readiness.map((item) => (
               <li aria-label={`${item.label} ${readinessLabel(item.state)}`} key={item.id}>
@@ -191,9 +195,6 @@ export function PrejoinLobby({
               </li>
             ))}
           </ul>
-          <button type="button" className="prejoin-join" onClick={onJoin}>立即進入會議室</button>
-          <p className="early-entry-note">可以提早開始談判</p>
-          {hasUnfinishedReadiness && <p className="prejoin-readiness-note">你仍可進入，未完成項目可在會議中開啟</p>}
           <button type="button" className="prejoin-cancel" onClick={onCancel}>取消</button>
         </aside>
       </div>

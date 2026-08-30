@@ -117,6 +117,25 @@ test("waits for explicit permission, has no mount side effects, and always permi
   expect(onJoin).toHaveBeenCalledOnce();
 });
 
+test("places early entry controls before the readiness list", () => {
+  renderLobby();
+
+  const join = screen.getByRole("button", { name: "立即進入會議室" });
+  const earlyEntry = screen.getByText("可以提早開始談判");
+  const readiness = screen.getByRole("list", { name: "準備狀態" });
+
+  expect(join.compareDocumentPosition(readiness) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+  expect(earlyEntry.compareDocumentPosition(readiness) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+});
+
+test("keeps redundant preview camera status out of the overlay control area", () => {
+  renderLobby();
+
+  expect(screen.queryByText("鏡頭尚未開啟")).toBeNull();
+  expect(screen.getByRole("listitem", { name: /鏡頭.*需要處理/ })).toBeVisible();
+  expect(screen.getByRole("button", { name: "開啟鏡頭" })).toBeVisible();
+});
+
 test("shows denied fallback and delegates the round microphone and camera controls", () => {
   const denied = fakeMedia({ status: "denied", errorMessage: "你尚未允許相機與麥克風權限。" });
   renderLobby({ media: denied });
