@@ -73,7 +73,10 @@ export function MeetingRoom({
   });
 
   const submitUserMessage = async (text: string, delivery: TurnDelivery) => {
-    if (!text.trim() || sending) return;
+    if (!text.trim() || sending) {
+      return;
+    }
+
     const userTurn = appendUserTurn(meetingRef.current, text.trim(), delivery);
     meetingRef.current = userTurn;
     setMeeting(userTurn);
@@ -95,8 +98,11 @@ export function MeetingRoom({
   };
 
   const sendFallbackMessage = async () => {
-    const text = draft.trim(); if (!text) return;
-    setDraft(""); await submitUserMessage(text, { source: "text" });
+    const text = draft.trim();
+    if (!text) return;
+
+    setDraft("");
+    await submitUserMessage(text, { source: "text" });
   };
 
   return (
@@ -106,7 +112,10 @@ export function MeetingRoom({
           <p className="eyebrow">本機模擬會議</p>
           <h2 id="meeting-room-title" tabIndex={-1}>薪資檢討 Raise Room</h2>
         </div>
-        <p className="meeting-countdown" aria-label={`剩餘時間 ${formatCountdown(meeting.elapsedSeconds, durationSeconds)}`}>
+        <p
+          className="meeting-countdown"
+          aria-label={`剩餘時間 ${formatCountdown(meeting.elapsedSeconds, durationSeconds)}`}
+        >
           剩餘 {formatCountdown(meeting.elapsedSeconds, durationSeconds)}
         </p>
       </header>
@@ -146,17 +155,35 @@ export function MeetingRoom({
 
       <div className="meeting-controls" aria-label="會議控制">
         <LocalVoiceControl
-          onTranscript={(result) => void submitUserMessage(result.text, { source: "voice", durationSeconds: result.durationSeconds })}
+          onTranscript={(result) => {
+            void submitUserMessage(result.text, {
+              source: "voice",
+              durationSeconds: result.durationSeconds,
+            });
+          }}
           disabled={sending}
         />
         <button
           type="button"
-          onClick={() => camera.status === "active" ? camera.stop() : void camera.start()}
+          onClick={() => {
+            if (camera.status === "active") {
+              camera.stop();
+            } else {
+              void camera.start();
+            }
+          }}
           disabled={camera.status === "requesting"}
         >
           {camera.status === "active" ? "關閉我的鏡頭" : "開啟我的鏡頭"}
         </button>
-        <button className="development-only" data-development-only="true" type="button" onClick={() => advanceTo(180)}>跳到第 3 分鐘</button>
+        <button
+          className="development-only"
+          data-development-only="true"
+          type="button"
+          onClick={() => advanceTo(180)}
+        >
+          跳到第 3 分鐘
+        </button>
         <button
           className="finish-meeting"
           type="button"
@@ -203,7 +230,9 @@ export function MeetingRoom({
                 placeholder="暫代語音輸入，僅供開發測試"
                 disabled={sending}
               />
-              <button disabled={sending} type="submit">送出</button>
+              <button disabled={sending} type="submit">
+                送出
+              </button>
             </div>
           </form>
         </section>
