@@ -1,19 +1,21 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import { useEffect } from "react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { App } from "./App";
 
-const appMocks = vi.hoisted(() => ({ practiceSession: vi.fn(), runtime: { media: { runtime: "shared-media" }, voice: { runtime: "shared-voice" } }, lobbyProps: null as { media: object; voice: object } | null, meetingProps: null as { camera?: object; voice?: object; meeting: { title: string }; onFinish: (transcript: []) => void } | null }));
+const appMocks = vi.hoisted(() => ({ practiceSession: vi.fn(), practiceSessionUnmount: vi.fn(), runtime: { media: { runtime: "shared-media" }, voice: { runtime: "shared-voice" } }, lobbyProps: null as { media: object; voice: object } | null, meetingProps: null as { camera?: object; voice?: object; meeting: { title: string }; onFinish: (transcript: []) => void } | null }));
 
 vi.mock("./components/PracticeSession", () => ({
   PracticeSession: ({ children }: { children: (runtime: { media: object; voice: object }) => React.ReactNode }) => {
     appMocks.practiceSession();
+    useEffect(() => () => appMocks.practiceSessionUnmount(), []);
     return <>{children(appMocks.runtime)}</>;
   },
 }));
 vi.mock("./components/PrejoinLobby", () => ({
-  PrejoinLobby: (props: { media: object; voice: object; onJoin: () => void }) => {
+  PrejoinLobby: (props: { media: object; voice: object; onJoin: () => void; onOpenSettings?: (target: "audio" | "video" | "voice") => void }) => {
     appMocks.lobbyProps = props;
-    return <section><h2>確認你的裝置</h2><button type="button" onClick={props.onJoin}>立即進入會議室</button></section>;
+    return <section><h2>確認你的裝置</h2><button type="button" onClick={props.onJoin}>立即進入會議室</button><button type="button" onClick={() => props.onOpenSettings?.("audio")}>麥克風設定</button></section>;
   },
 }));
 vi.mock("./components/MeetingRoom", () => ({
@@ -45,6 +47,7 @@ beforeEach(() => {
   window.localStorage.clear();
   vi.spyOn(window, "scrollTo").mockImplementation(() => {});
   appMocks.practiceSession.mockClear();
+  appMocks.practiceSessionUnmount.mockClear();
   appMocks.lobbyProps = null;
   appMocks.meetingProps = null;
 });
@@ -106,6 +109,18 @@ test("passes the same practice media and voice runtime from lobby into the meeti
   expect(appMocks.practiceSession).toHaveBeenCalledTimes(2);
   expect(appMocks.meetingProps?.camera).toBe(lobbyRuntime?.media);
   expect(appMocks.meetingProps?.voice).toBe(lobbyRuntime?.voice);
+});
+
+test("opens lobby settings by unmounting the practice session instead of retaining its media runtime", () => {
+  render(<App now={() => new Date(2026, 7, 30, 17, 5)} />);
+  enterLobby();
+
+  fireEvent.click(screen.getByRole("button", { name: "麥克風設定" }));
+
+  expect(screen.getByRole("dialog", { name: "練習設定" })).toBeVisible();
+  expect(screen.getByRole("tab", { name: "音訊" })).toHaveAttribute("aria-selected", "true");
+  expect(screen.queryByRole("heading", { name: "確認你的裝置" })).toBeNull();
+  expect(appMocks.practiceSessionUnmount).toHaveBeenCalledOnce();
 });
 
 test("keeps settings edits local on cancel and returns focus to settings", () => {

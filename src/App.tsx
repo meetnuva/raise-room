@@ -181,6 +181,7 @@ export function App({ now = () => new Date() }: { now?: () => Date } = {}) {
               presenterConfig={presenterConfig}
               onJoin={() => setAppState({ view: "practice", phase: "meeting" })}
               onCancel={() => setAppState({ view: "home" })}
+              onOpenSettings={(target) => setAppState({ view: "settings", target })}
             />
           ) : (
             <MeetingRoom

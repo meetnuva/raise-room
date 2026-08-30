@@ -1,6 +1,11 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import type { ComponentProps, ComponentType } from "react";
 import { expect, test, vi } from "vitest";
 import { LocalCameraTile } from "./LocalCameraTile";
+
+const LocalCameraTileWithOverlay = LocalCameraTile as unknown as ComponentType<ComponentProps<typeof LocalCameraTile> & {
+  overlay?: React.ReactNode;
+}>;
 
 test("only starts the local camera after an explicit click", () => {
   const start = vi.fn();
@@ -37,6 +42,22 @@ test("renders an injected preview stream without requesting or owning it", () =>
   const video = screen.getByLabelText("本機鏡頭預覽") as HTMLVideoElement;
   expect(video.srcObject).toBe(stream);
   expect(screen.queryByRole("button", { name: "開啟我的鏡頭" })).toBeNull();
+  unmount();
+  expect(stop).not.toHaveBeenCalled();
+});
+
+test("renders an injected preview overlay without taking ownership of its stream", () => {
+  const stop = vi.fn();
+  const stream = { getTracks: () => [{ stop }] } as unknown as MediaStream;
+  const { unmount } = render(
+    <LocalCameraTileWithOverlay
+      previewStream={stream}
+      showControl={false}
+      overlay={<button type="button">預覽控制</button>}
+    />,
+  );
+
+  expect(screen.getByRole("button", { name: "預覽控制" })).toBeVisible();
   unmount();
   expect(stop).not.toHaveBeenCalled();
 });

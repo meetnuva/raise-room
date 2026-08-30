@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, type ReactNode } from "react";
 import { useLocalCamera } from "../hooks/use-local-camera";
 type Camera = ReturnType<typeof useLocalCamera>;
 export function LocalCameraTile({
@@ -7,12 +7,14 @@ export function LocalCameraTile({
   showControl = true,
   onVideoElement,
   previewStream,
+  overlay,
 }: {
   camera?: Camera;
   detail?: string;
   showControl?: boolean;
   onVideoElement?: (element: HTMLVideoElement | null) => void;
   previewStream?: MediaStream | null;
+  overlay?: ReactNode;
 }) {
   const owned = useLocalCamera();
   const camera = injected ?? owned;
@@ -65,6 +67,7 @@ export function LocalCameraTile({
           )}
         </>
       )}
+      {overlay}
     </section>
   );
 }

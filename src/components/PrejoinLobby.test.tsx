@@ -1,5 +1,6 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { readFileSync } from "node:fs";
+import type { ComponentProps, ComponentType } from "react";
 import { beforeEach, expect, test, vi } from "vitest";
 import type { ScheduledPracticeMeeting } from "../domain/practice-schedule";
 import { defaultScenario } from "../domain/scenario";
@@ -7,6 +8,10 @@ import type { PresenterRuntimeConfig } from "../lib/perxona-config";
 import type { PracticeMediaController } from "../runtime/use-practice-media";
 import type { VoiceStatus } from "../hooks/use-local-voice";
 import { PrejoinLobby } from "./PrejoinLobby";
+
+const PrejoinLobbyWithSettings = PrejoinLobby as unknown as ComponentType<ComponentProps<typeof PrejoinLobby> & {
+  onOpenSettings?: (target: "audio" | "video" | "voice") => void;
+}>;
 
 const meeting: ScheduledPracticeMeeting = {
   id: "practice-2026-08-30T10:00:00.000Z-20",
@@ -64,11 +69,12 @@ function renderLobby(input: {
   voice?: ReturnType<typeof fakeVoice>;
   presenterConfig?: PresenterRuntimeConfig;
   presenterPreloader?: (url: string) => Promise<void>;
+  onOpenSettings?: (target: "audio" | "video" | "voice") => void;
 } = {}) {
   const onJoin = vi.fn();
   const onCancel = vi.fn();
   render(
-    <PrejoinLobby
+    <PrejoinLobbyWithSettings
       meeting={meeting}
       scenario={defaultScenario}
       media={input.media ?? fakeMedia()}
@@ -77,6 +83,7 @@ function renderLobby(input: {
       presenterPreloader={input.presenterPreloader}
       onJoin={onJoin}
       onCancel={onCancel}
+      onOpenSettings={input.onOpenSettings ?? vi.fn()}
     />,
   );
   return { onJoin, onCancel };
@@ -114,31 +121,31 @@ test("shows denied fallback and delegates the round microphone and camera contro
   const denied = fakeMedia({ status: "denied", errorMessage: "你尚未允許相機與麥克風權限。" });
   renderLobby({ media: denied });
 
-  expect(screen.getByText("你尚未允許相機與麥克風權限。")).toBeVisible();
+  expect(screen.getAllByText("你尚未允許相機與麥克風權限。")[0]).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "允許鏡頭與麥克風" }));
   expect(denied.request).toHaveBeenCalledOnce();
 
   const active = fakeMedia({ status: "active", stream: {} as MediaStream, cameraEnabled: true, microphoneEnabled: true });
   const { rerender } = render(
-    <PrejoinLobby meeting={meeting} scenario={defaultScenario} media={active} voice={fakeVoice()} presenterConfig={{ enabled: false, reason: "missing-target" }} onJoin={vi.fn()} onCancel={vi.fn()} />,
+    <PrejoinLobbyWithSettings meeting={meeting} scenario={defaultScenario} media={active} voice={fakeVoice()} presenterConfig={{ enabled: false, reason: "missing-target" }} onJoin={vi.fn()} onCancel={vi.fn()} onOpenSettings={vi.fn()} />,
   );
   fireEvent.click(screen.getByRole("button", { name: "關閉麥克風" }));
   fireEvent.click(screen.getByRole("button", { name: "關閉鏡頭" }));
   expect(active.toggleMicrophone).toHaveBeenCalledOnce();
   expect(active.toggleCamera).toHaveBeenCalledOnce();
-  rerender(<PrejoinLobby meeting={meeting} scenario={defaultScenario} media={active} voice={fakeVoice()} presenterConfig={{ enabled: false, reason: "missing-target" }} onJoin={vi.fn()} onCancel={vi.fn()} />);
+  rerender(<PrejoinLobbyWithSettings meeting={meeting} scenario={defaultScenario} media={active} voice={fakeVoice()} presenterConfig={{ enabled: false, reason: "missing-target" }} onJoin={vi.fn()} onCancel={vi.fn()} onOpenSettings={vi.fn()} />);
 });
 
 test("delegates ASR model load and cancellation without constructing a new controller", () => {
   const idle = fakeVoice("idle");
   const { rerender } = render(
-    <PrejoinLobby meeting={meeting} scenario={defaultScenario} media={fakeMedia()} voice={idle} presenterConfig={{ enabled: false, reason: "missing-target" }} onJoin={vi.fn()} onCancel={vi.fn()} />,
+    <PrejoinLobbyWithSettings meeting={meeting} scenario={defaultScenario} media={fakeMedia()} voice={idle} presenterConfig={{ enabled: false, reason: "missing-target" }} onJoin={vi.fn()} onCancel={vi.fn()} onOpenSettings={vi.fn()} />,
   );
   fireEvent.click(screen.getByRole("button", { name: "載入本機語音模型" }));
   expect(idle.loadModel).toHaveBeenCalledOnce();
 
   const loading = fakeVoice("loading-model");
-  rerender(<PrejoinLobby meeting={meeting} scenario={defaultScenario} media={fakeMedia()} voice={loading} presenterConfig={{ enabled: false, reason: "missing-target" }} onJoin={vi.fn()} onCancel={vi.fn()} />);
+  rerender(<PrejoinLobbyWithSettings meeting={meeting} scenario={defaultScenario} media={fakeMedia()} voice={loading} presenterConfig={{ enabled: false, reason: "missing-target" }} onJoin={vi.fn()} onCancel={vi.fn()} onOpenSettings={vi.fn()} />);
   fireEvent.click(screen.getByRole("button", { name: "取消載入" }));
   expect(loading.releaseModel).toHaveBeenCalledOnce();
 });
@@ -146,7 +153,7 @@ test("delegates ASR model load and cancellation without constructing a new contr
 test("preloads only after explicit presenter check and reports success, failure, and disabled state", async () => {
   const preloader = vi.fn().mockResolvedValue(undefined);
   const { rerender } = render(
-    <PrejoinLobby meeting={meeting} scenario={defaultScenario} media={fakeMedia()} voice={fakeVoice()} presenterConfig={enabledPresenter} presenterPreloader={preloader} onJoin={vi.fn()} onCancel={vi.fn()} />,
+    <PrejoinLobbyWithSettings meeting={meeting} scenario={defaultScenario} media={fakeMedia()} voice={fakeVoice()} presenterConfig={enabledPresenter} presenterPreloader={preloader} onJoin={vi.fn()} onCancel={vi.fn()} onOpenSettings={vi.fn()} />,
   );
   fireEvent.click(screen.getByRole("button", { name: "檢查 3D 主管" }));
   await screen.findByText("連線已驗證");
@@ -154,11 +161,58 @@ test("preloads only after explicit presenter check and reports success, failure,
   expect(preloader).toHaveBeenLastCalledWith(enabledPresenter.presenterUrl);
 
   const rejected = vi.fn().mockRejectedValue(new Error("載入失敗"));
-  rerender(<PrejoinLobby meeting={meeting} scenario={defaultScenario} media={fakeMedia()} voice={fakeVoice()} presenterConfig={enabledPresenter} presenterPreloader={rejected} onJoin={vi.fn()} onCancel={vi.fn()} />);
+  rerender(<PrejoinLobbyWithSettings meeting={meeting} scenario={defaultScenario} media={fakeMedia()} voice={fakeVoice()} presenterConfig={enabledPresenter} presenterPreloader={rejected} onJoin={vi.fn()} onCancel={vi.fn()} onOpenSettings={vi.fn()} />);
   fireEvent.click(screen.getByRole("button", { name: "檢查 3D 主管" }));
   expect(await screen.findByText("3D 主管連線暫時無法驗證")).toBeVisible();
 
-  rerender(<PrejoinLobby meeting={meeting} scenario={defaultScenario} media={fakeMedia()} voice={fakeVoice()} presenterConfig={{ enabled: false, reason: "missing-key" }} onJoin={vi.fn()} onCancel={vi.fn()} />);
-  expect(screen.getByRole("button", { name: "檢查 3D 主管" })).toBeDisabled();
-  expect(screen.getByText("尚未設定 3D 主管")).toBeVisible();
+  rerender(<PrejoinLobbyWithSettings meeting={meeting} scenario={defaultScenario} media={fakeMedia()} voice={fakeVoice()} presenterConfig={{ enabled: false, reason: "missing-key" }} onJoin={vi.fn()} onCancel={vi.fn()} onOpenSettings={vi.fn()} />);
+  expect(screen.queryByRole("button", { name: "檢查 3D 主管" })).toBeNull();
+  expect(screen.getByRole("listitem", { name: "3D 主管 選用" })).toBeVisible();
+});
+
+test("uses Meet-style preview overlay controls and sends the more menu to real settings", () => {
+  const media = fakeMedia({
+    status: "active",
+    stream: {} as MediaStream,
+    cameraEnabled: false,
+    microphoneEnabled: false,
+  });
+  const onOpenSettings = vi.fn();
+  renderLobby({ media, onOpenSettings });
+
+  const microphone = screen.getByRole("button", { name: "開啟麥克風" });
+  const camera = screen.getByRole("button", { name: "開啟鏡頭" });
+  expect(microphone).toHaveAttribute("aria-pressed", "false");
+  expect(camera).toHaveAttribute("aria-pressed", "false");
+  expect(microphone).toHaveClass("icon-button--danger");
+  expect(camera).toHaveClass("icon-button--danger");
+
+  fireEvent.click(screen.getByRole("button", { name: "更多裝置選項" }));
+  expect(media.request).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("menuitem", { name: "麥克風設定" }));
+  expect(onOpenSettings).toHaveBeenCalledWith("audio");
+  expect(media.request).not.toHaveBeenCalled();
+});
+
+test("shows four readiness rows and keeps every preparation action explicit", async () => {
+  const media = fakeMedia();
+  const voice = fakeVoice();
+  const preloader = vi.fn().mockResolvedValue(undefined);
+  renderLobby({ media, voice, presenterConfig: enabledPresenter, presenterPreloader: preloader });
+
+  expect(screen.getByRole("listitem", { name: /鏡頭.*需要處理/ })).toBeVisible();
+  expect(screen.getByRole("listitem", { name: /麥克風.*需要處理/ })).toBeVisible();
+  expect(screen.getByRole("listitem", { name: /語音模型.*需要處理/ })).toBeVisible();
+  expect(screen.getByRole("listitem", { name: /3D 主管.*需要處理/ })).toBeVisible();
+  expect(screen.getByText("你仍可進入，未完成項目可在會議中開啟")).toBeVisible();
+  expect(media.request).not.toHaveBeenCalled();
+  expect(voice.loadModel).not.toHaveBeenCalled();
+  expect(preloader).not.toHaveBeenCalled();
+
+  fireEvent.click(screen.getByRole("button", { name: "啟用鏡頭" }));
+  fireEvent.click(screen.getByRole("button", { name: "載入本機語音模型" }));
+  fireEvent.click(screen.getByRole("button", { name: "檢查 3D 主管" }));
+  expect(media.request).toHaveBeenCalledOnce();
+  expect(voice.loadModel).toHaveBeenCalledOnce();
+  await waitFor(() => expect(preloader).toHaveBeenCalledOnce());
 });
