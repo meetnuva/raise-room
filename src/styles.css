@@ -2121,10 +2121,11 @@ button {
 .manager-stage > button.manager-stage-action {
   position: absolute;
   z-index: 5;
-  right: .75rem;
+  left: 50%;
   bottom: .75rem;
   width: auto;
   align-self: auto;
+  transform: translateX(-50%);
 }
 
 .participant-tile-hit-target:focus-visible {

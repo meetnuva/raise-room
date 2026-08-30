@@ -47,3 +47,12 @@ test("uses compact stage overlays for presenter actions and status without block
   expect(styles).toMatch(/\.manager-stage\s*>\s*button\.manager-stage-action\s*\{[^}]*position:\s*absolute;[^}]*z-index:\s*5;[^}]*width:\s*auto;[^}]*align-self:\s*auto;/s);
   expect(styles).toMatch(/\.manager-stage \.presenter-canvas\s*\{[^}]*pointer-events:\s*auto;/s);
 });
+
+test("anchors Presenter actions away from the bottom-right self tile", () => {
+  const styles = readFileSync("src/styles.css", "utf8");
+  const actionRule = styles.match(/\.manager-stage\s*>\s*button\.manager-stage-action\s*\{([^}]*)\}/s)?.[1];
+
+  expect(actionRule).toMatch(/left:\s*50%;/);
+  expect(actionRule).toMatch(/transform:\s*translateX\(-50%\);/);
+  expect(actionRule).not.toMatch(/right:/);
+});

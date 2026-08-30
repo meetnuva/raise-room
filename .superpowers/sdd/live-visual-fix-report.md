@@ -36,3 +36,9 @@ In the meeting, the post-fix launch action computed to `position: absolute`, `z-
 ## Review notes
 
 Self-review found no correctness, architecture, security, performance, or scope issue. The browser emitted an existing `react-i18next` initialization warning but no errors; this visual-only change does not touch that dependency/runtime path. The Vite build retained its pre-existing large-chunk warning.
+
+## Follow-up: self-tile overlap
+
+The post-fix screenshot `06-raise-room-meeting-after.png` showed the compact launch action still overlapped the bottom-right self tile. A dedicated source regression test was RED against the old `right: .75rem` rule, then GREEN after anchoring the action at the manager stage horizontal center with `left: 50%` and `translateX(-50%)`. This keeps its absolute `z-index: 5` overlay behavior without changing the self-tile layout.
+
+Fresh Chrome geometry verification measured the action at x `650.168..777.832`, the self tile at x `1144..1400`, and no rectangle intersection. The action remained `absolute`, `z-index: 5`.
