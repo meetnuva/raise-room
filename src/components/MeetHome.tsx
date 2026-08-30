@@ -47,7 +47,7 @@ export function MeetHome({
 }: {
   meeting: ScheduledPracticeMeeting;
   now: Date;
-  onOpenSettings(target?: HomeSettingsTarget): void;
+  onOpenSettings(target?: HomeSettingsTarget, opener?: HTMLElement | null): void;
   onEnterLobby: () => void;
 }) {
   const today = startOfLocalDay(now);
@@ -135,14 +135,14 @@ export function MeetHome({
                     type="button"
                     onClick={onEnterLobby}
                   >
-                    <div className="meet-home-schedule-time">
+                    <span className="meet-home-schedule-time">
                       <time>{formatPracticeTimeRange(meeting, "zh-TW")}</time>
                       <span>{scheduleStatusLabel(meeting, now)}</span>
-                    </div>
-                    <div>
-                      <h3 id="scheduled-meeting-title">{meeting.title}</h3>
-                      <p>{meeting.company} · {meeting.role}</p>
-                    </div>
+                    </span>
+                    <span className="meet-home-schedule-details">
+                      <span className="meet-home-schedule-title" id="scheduled-meeting-title">{meeting.title}</span>
+                      <span className="meet-home-schedule-meta">{meeting.company} · {meeting.role}</span>
+                    </span>
                     <span className="meet-home-enter">提早進入準備室</span>
                   </button>
                 ) : (

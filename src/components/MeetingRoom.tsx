@@ -129,6 +129,9 @@ function MeetingRoomView({
   const panelOpener = useRef<HTMLButtonElement | null>(null);
   const panelCloseTimer = useRef<number | null>(null);
   const vision = useLocalVision({ videoElement: cameraVideoElement });
+  useEffect(() => () => {
+    if (panelCloseTimer.current !== null) window.clearTimeout(panelCloseTimer.current);
+  }, []);
   const latestTurn = meeting.transcript[meeting.transcript.length - 1];
   const managerEngineStatus =
     latestTurn?.speaker === "manager"
@@ -232,6 +235,10 @@ function MeetingRoomView({
   }, [panelMotion, panelOpen]);
 
   const openPanel = (tab: MeetingPanelTab, opener: HTMLButtonElement | null) => {
+    if (panelCloseTimer.current !== null) {
+      window.clearTimeout(panelCloseTimer.current);
+      panelCloseTimer.current = null;
+    }
     if (opener) panelOpener.current = opener;
     setActivePanelTab(tab);
     setPanelMotion("entering");
@@ -272,7 +279,7 @@ function MeetingRoomView({
       <p>鏡頭：{camera.cameraActive ? "已開啟" : "未開啟"}</p>
       <p>語音：{voice.status === "ready" || voice.status === "recording" ? "本機模型已就緒" : "尚未就緒"}</p>
       <p>麥克風與鏡頭選擇會套用到下一次明確請求裝置權限。</p>
-      <DeviceSettingsPanel kinds={["audioinput", "videoinput"]} selectedDeviceIds={selectedDeviceIds} onSelectDevice={onSelectDevice ?? (() => {})} />
+      <DeviceSettingsPanel allowMediaTest={false} kinds={["audioinput", "videoinput"]} selectedDeviceIds={selectedDeviceIds} onSelectDevice={onSelectDevice ?? (() => {})} />
     </div>
   );
 

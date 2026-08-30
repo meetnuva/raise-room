@@ -176,6 +176,17 @@ test("keeps the drawer mounted for its 180ms reverse exit before returning focus
   expect(opener).toHaveFocus();
 });
 
+test("cancels a pending drawer exit when a panel is reopened", () => {
+  vi.useFakeTimers();
+  render(<MeetingRoom meeting={scheduledMeeting(10)} scenario={defaultScenario} responder={simulatedResponder} />);
+  fireEvent.click(screen.getByRole("button", { name: "開啟逐字稿" }));
+  fireEvent.click(screen.getByRole("button", { name: "關閉資訊面板" }));
+  fireEvent.click(screen.getByRole("button", { name: "開啟壓力事件" }));
+  act(() => vi.advanceTimersByTime(180));
+  expect(screen.getByRole("complementary", { name: "會議資訊" })).toBeVisible();
+  expect(screen.getByRole("tab", { name: "壓力事件" })).toHaveAttribute("aria-selected", "true");
+});
+
 test("returns focus to the actual more-menu opener after it routes information into the transcript tab", () => {
   render(<MeetingRoom meeting={scheduledMeeting(10)} scenario={defaultScenario} responder={simulatedResponder} />);
 
@@ -383,6 +394,13 @@ test("returns focus to the self tile menu trigger after its device action closes
   fireEvent.click(screen.getByRole("button", { name: "關閉資訊面板" }));
 
   expect(opener).toHaveFocus();
+});
+
+test("does not offer a second raw media request from the meeting device drawer", () => {
+  render(<MeetingRoom meeting={scheduledMeeting(10)} scenario={defaultScenario} responder={simulatedResponder} />);
+  fireEvent.click(screen.getByRole("button", { name: "更多會議選項" }));
+  fireEvent.click(screen.getByRole("menuitem", { name: "裝置狀態" }));
+  expect(screen.queryByRole("button", { name: /測試麥克風|預覽攝影機/ })).toBeNull();
 });
 
 test("keeps a timed event after the development fallback receives a reply", async () => {

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { vi } from "vitest";
 import { DeviceSettingsPanel } from "./DeviceSettingsPanel";
 
@@ -22,4 +22,19 @@ test("enumerates only after explicit request, filters kinds, and selects a real 
   expect(screen.queryByRole("button", { name: /預覽/ })).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "使用 喇叭" }));
   expect(onSelectDevice).toHaveBeenCalledWith(expect.objectContaining({ deviceId: "speaker-id", kind: "audiooutput" }));
+});
+
+test("stops a late camera preview after unmount and never exposes media tests when disabled", async () => {
+  let resolveStream: (stream: MediaStream) => void = () => {};
+  const getUserMedia = vi.fn(() => new Promise<MediaStream>((resolve) => { resolveStream = resolve; }));
+  const stop = vi.fn();
+  const { unmount } = render(<DeviceSettingsPanel kinds={["videoinput"]} mediaDevices={{ enumerateDevices: vi.fn(), getUserMedia }} onSelectDevice={vi.fn()} />);
+  fireEvent.click(screen.getByRole("button", { name: "預覽攝影機" }));
+  unmount();
+  await act(async () => resolveStream({ getTracks: () => [{ stop }] } as unknown as MediaStream));
+  expect(stop).toHaveBeenCalledOnce();
+
+  render(<DeviceSettingsPanel allowMediaTest={false} kinds={["audioinput", "videoinput"]} mediaDevices={{ enumerateDevices: vi.fn(), getUserMedia }} onSelectDevice={vi.fn()} />);
+  expect(screen.queryByRole("button", { name: /測試麥克風|預覽攝影機/ })).toBeNull();
+  expect(getUserMedia).toHaveBeenCalledOnce();
 });

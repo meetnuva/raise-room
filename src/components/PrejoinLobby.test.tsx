@@ -190,7 +190,7 @@ test("uses Meet-style preview overlay controls and sends the more menu to real s
   fireEvent.click(screen.getByRole("button", { name: "更多裝置選項" }));
   expect(media.request).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("menuitem", { name: "麥克風設定" }));
-  expect(onOpenSettings).toHaveBeenCalledWith("audio");
+  expect(onOpenSettings).toHaveBeenCalledWith("audio", screen.getByRole("button", { name: "更多裝置選項" }));
   expect(media.request).not.toHaveBeenCalled();
 });
 

@@ -66,14 +66,15 @@ test("renders self tile actions and its visible pin state without owning an inje
   const stream = {} as MediaStream;
   render(<LocalCameraTile previewStream={stream} showControl={false} pinned tileActions={<button type="button">開啟裝置設定</button>} />);
 
-  expect(screen.getByText("你 · 本機預覽 · 已釘選")).toBeVisible();
+  expect(screen.getByText("已釘選")).toBeVisible();
+  expect(screen.getByTestId("ui-icon")).toBeVisible();
   expect(screen.getByRole("button", { name: "開啟裝置設定" })).toBeVisible();
 });
 
 test("makes an injected self tile keyboard-operable without creating an owned controller", () => {
   const onTileActivate = vi.fn();
   render(<LocalCameraTile previewStream={{} as MediaStream} showControl={false} onTileActivate={onTileActivate} />);
-  fireEvent.keyDown(screen.getByLabelText("你的本機鏡頭"), { key: "Enter" });
-  fireEvent.keyDown(screen.getByLabelText("你的本機鏡頭"), { key: " " });
-  expect(onTileActivate).toHaveBeenCalledTimes(2);
+  const trigger = screen.getByRole("button", { name: "開啟你的參與者選單" });
+  fireEvent.click(trigger);
+  expect(onTileActivate).toHaveBeenCalledOnce();
 });

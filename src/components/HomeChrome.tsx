@@ -6,10 +6,11 @@ export type HomeSettingsTarget = "audio" | "video" | "voice" | "manager" | "pers
 
 type HomePopover = "about" | "help" | "user" | null;
 
-export function HomeChrome({ onOpenSettings }: { onOpenSettings(target?: HomeSettingsTarget): void }) {
+export function HomeChrome({ onOpenSettings }: { onOpenSettings(target?: HomeSettingsTarget, opener?: HTMLElement | null): void }) {
   const [openPopover, setOpenPopover] = useState<HomePopover>(null);
   const controlsRef = useRef<HTMLDivElement>(null);
   const popoverOpener = useRef<HTMLElement | null>(null);
+  const moreTrigger = useRef<HTMLButtonElement>(null);
 
   const closePopover = () => {
     setOpenPopover(null);
@@ -25,7 +26,7 @@ export function HomeChrome({ onOpenSettings }: { onOpenSettings(target?: HomeSet
     return () => document.removeEventListener("mousedown", dismiss);
   }, [openPopover]);
 
-  const openAbout = () => setOpenPopover("about");
+  const openAbout = () => { popoverOpener.current = moreTrigger.current; setOpenPopover("about"); };
   const openUser = (opener: HTMLButtonElement) => { popoverOpener.current = opener; setOpenPopover("user"); };
 
   return (
@@ -37,14 +38,15 @@ export function HomeChrome({ onOpenSettings }: { onOpenSettings(target?: HomeSet
       }}
     >
       <IconButton aria-expanded={openPopover === "help"} icon="help" label="說明" onClick={(event) => { popoverOpener.current = event.currentTarget; setOpenPopover("help"); }} />
-      <IconButton icon="settings" label="設定" title="設定" onClick={() => onOpenSettings()} />
+      <IconButton icon="settings" label="設定" title="設定" onClick={(event) => onOpenSettings(undefined, event.currentTarget)} />
       <ActionMenu
         items={[
-          { id: "devices", label: "檢查裝置", icon: "devices", onSelect: () => onOpenSettings("audio") },
-          { id: "privacy", label: "查看本機資料與隱私", icon: "info", onSelect: () => onOpenSettings("privacy") },
+          { id: "devices", label: "檢查裝置", icon: "devices", onSelect: () => onOpenSettings("audio", moreTrigger.current) },
+          { id: "privacy", label: "查看本機資料與隱私", icon: "info", onSelect: () => onOpenSettings("privacy", moreTrigger.current) },
           { id: "about", label: "關於 Raise Room", icon: "help", onSelect: openAbout },
         ]}
         label="更多選項"
+        triggerRef={moreTrigger}
       />
       <button
         aria-expanded={openPopover === "user"}
@@ -70,7 +72,7 @@ export function HomeChrome({ onOpenSettings }: { onOpenSettings(target?: HomeSet
         <section aria-label="本機使用者" className="meet-home-popover" role="dialog">
           <h2>本機使用者</h2>
           <p>資料只存在這台裝置</p>
-          <button type="button" onClick={() => { setOpenPopover(null); onOpenSettings("privacy"); }}>隱私設定</button>
+          <button type="button" onClick={() => { setOpenPopover(null); onOpenSettings("privacy", popoverOpener.current); }}>隱私設定</button>
         </section>
       ) : null}
     </div>

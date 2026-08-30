@@ -22,7 +22,8 @@ function voiceControl(status: VoiceStatus) {
   }
 
   if (status === "requesting-microphone" || status === "transcribing" || status === "loading-model" || status === "denied" || status === "unsupported" || status === "error") {
-    return { icon: "microphoneOff" as const, label: "開始說話", selected: false, disabled: true };
+    const reason = status === "denied" ? "麥克風權限已拒絕，請改用文字輸入。" : status === "unsupported" ? "此瀏覽器不支援本機語音，請改用文字輸入。" : "語音目前無法使用，請改用文字輸入。";
+    return { icon: "microphoneOff" as const, label: "開始說話", selected: false, disabled: true, reason };
   }
 
   return { icon: "microphone" as const, label: "開始說話", selected: false, disabled: false };
@@ -52,6 +53,7 @@ export function MeetingControlBar({
     <div className="meeting-control-bar" role="toolbar" aria-label="會議控制">
       <IconButton
         disabled={voice.disabled}
+        aria-describedby={voice.reason ? "meeting-voice-unavailable-reason" : undefined}
         icon={voice.icon}
         label={voice.label}
         onClick={(event) => onVoiceAction(event.currentTarget)}
@@ -59,6 +61,7 @@ export function MeetingControlBar({
         tone="inverse"
         tooltipDelayMs={500}
       />
+      {voice.reason && <span className="visually-hidden" id="meeting-voice-unavailable-reason">{voice.reason}</span>}
       <IconButton
         disabled={cameraRequesting}
         icon={cameraActive ? "camera" : "cameraOff"}

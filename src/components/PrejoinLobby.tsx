@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { ScheduledPracticeMeeting } from "../domain/practice-schedule";
 import { formatPracticeTimeRange } from "../domain/practice-schedule";
 import type { Scenario } from "../domain/scenario";
@@ -58,10 +58,11 @@ export function PrejoinLobby({
   presenterConfig: PresenterRuntimeConfig;
   onJoin: () => void;
   onCancel: () => void;
-  onOpenSettings: (target: SettingsTarget) => void;
+  onOpenSettings: (target: SettingsTarget, opener?: HTMLElement | null) => void;
   presenterPreloader?: (url: string) => Promise<void>;
 }) {
   const [presenterCheck, setPresenterCheck] = useState<PresenterCheckState>("idle");
+  const deviceSettingsTrigger = useRef<HTMLButtonElement>(null);
   const presenterAvailable = presenterConfig.enabled;
   const canRequestMedia = media.status !== "requesting" && media.status !== "active";
   const toggleOrRequestMedia = (target: "camera" | "microphone") => {
@@ -155,11 +156,12 @@ export function PrejoinLobby({
                 />
                 <ActionMenu
                   items={[
-                    { id: "audio", label: "麥克風設定", icon: "microphone", onSelect: () => onOpenSettings("audio") },
-                    { id: "video", label: "鏡頭設定", icon: "camera", onSelect: () => onOpenSettings("video") },
+                    { id: "audio", label: "麥克風設定", icon: "microphone", onSelect: () => onOpenSettings("audio", deviceSettingsTrigger.current) },
+                    { id: "video", label: "鏡頭設定", icon: "camera", onSelect: () => onOpenSettings("video", deviceSettingsTrigger.current) },
                   ]}
                   label="更多裝置選項"
                   tone="inverse"
+                  triggerRef={deviceSettingsTrigger}
                 />
               </div>
             }

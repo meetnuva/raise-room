@@ -75,7 +75,7 @@ export function App({ now = () => new Date() }: { now?: () => Date } = {}) {
   const [presenterCatalog] = useState(() => readPresenterCatalog(import.meta.env));
   const [selectedDeviceIds, setSelectedDeviceIds] = useState<Partial<Record<MediaDeviceKind, string>>>({});
   const [managerResponder] = useState(() => createHybridManagerResponder());
-  const restoreSettingsFocus = useRef(false);
+  const settingsOpener = useRef<HTMLElement | null>(null);
   const nowRef = useRef(now);
   nowRef.current = now;
 
@@ -86,9 +86,10 @@ export function App({ now = () => new Date() }: { now?: () => Date } = {}) {
       document.getElementById("meeting-room-title")?.focus();
     }
 
-    if (appState.view === "home" && restoreSettingsFocus.current && settingsTarget === null) {
-      restoreSettingsFocus.current = false;
-      document.querySelector<HTMLButtonElement>("button[aria-label='設定']")?.focus();
+    if (settingsTarget === null && settingsOpener.current) {
+      const opener = settingsOpener.current;
+      settingsOpener.current = null;
+      if (document.contains(opener)) opener.focus();
     }
   }, [appState, settingsTarget]);
 
@@ -113,10 +114,11 @@ export function App({ now = () => new Date() }: { now?: () => Date } = {}) {
 
   const settingsValue: PracticeSettingsDraft = { scenario, practice, modelPreset: voicePreset };
   const presenterConfig = selectPresenterConfig(presenterCatalog, practice.managerPresentation);
-  const closeSettings = () => {
-    restoreSettingsFocus.current = true;
-    setSettingsTarget(null);
+  const openSettings = (target: SettingsTarget = "audio", opener?: HTMLElement | null) => {
+    settingsOpener.current = opener ?? document.activeElement as HTMLElement | null;
+    setSettingsTarget(target);
   };
+  const closeSettings = () => setSettingsTarget(null);
   const saveSettings = (next: PracticeSettingsDraft) => {
     if (typeof window !== "undefined") {
       writeScenarioDraft(window.localStorage, next.scenario);
@@ -127,7 +129,6 @@ export function App({ now = () => new Date() }: { now?: () => Date } = {}) {
     setPractice(next.practice);
     setVoicePreset(next.modelPreset);
     setMeeting((current) => reviseMeeting(current, next.scenario, next.practice));
-    restoreSettingsFocus.current = true;
     setSettingsTarget(null);
   };
   const clearSettings = () => {
@@ -140,7 +141,6 @@ export function App({ now = () => new Date() }: { now?: () => Date } = {}) {
     setPractice(defaultPracticeSettings);
     setVoicePreset(defaultAsrModelPresetId);
     setMeeting(createMeeting(documentNow, defaultScenario, defaultPracticeSettings));
-    restoreSettingsFocus.current = true;
     setSettingsTarget(null);
   };
   const selectDevice = (device: DeviceSettingsDevice) => {
@@ -153,7 +153,7 @@ export function App({ now = () => new Date() }: { now?: () => Date } = {}) {
         <MeetHome
           meeting={meeting}
           now={homeNow}
-          onOpenSettings={(target) => setSettingsTarget(target ?? "audio")}
+          onOpenSettings={openSettings}
           onEnterLobby={() => setAppState({ view: "practice", phase: "lobby" })}
         />
       )}
@@ -168,7 +168,7 @@ export function App({ now = () => new Date() }: { now?: () => Date } = {}) {
               presenterConfig={presenterConfig}
               onJoin={() => setAppState({ view: "practice", phase: "meeting" })}
               onCancel={() => setAppState({ view: "home" })}
-              onOpenSettings={setSettingsTarget}
+              onOpenSettings={openSettings}
             />
           ) : (
             <MeetingRoom

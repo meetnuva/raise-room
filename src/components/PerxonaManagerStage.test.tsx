@@ -9,7 +9,8 @@ test("shows the pinned state and exposes real manager tile actions", () => {
   const onOpenInfo = vi.fn();
   render(<PerxonaManagerStage managerName="王主管" config={{ enabled: false, reason: "missing-key" }} latestManagerText={null} pinned onTogglePin={onTogglePin} onViewRole={onViewRole} onOpenInfo={onOpenInfo} />);
 
-  expect(screen.getByText("主管畫面 · 已釘選")).toBeVisible();
+  expect(screen.getByText("已釘選")).toBeVisible();
+  expect(screen.getAllByTestId("ui-icon")[0]).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "主管更多操作" }));
   fireEvent.click(screen.getByRole("menuitem", { name: "取消釘選主管" }));
   expect(onTogglePin).toHaveBeenCalledOnce();
@@ -32,8 +33,8 @@ test("only speaks each ready manager reply once with an injected client", async 
   await waitFor(() => expect(speak).toHaveBeenCalledWith("請說明具體成果。"));
   expect(speak).toHaveBeenCalledOnce();
 });
-test("opens the manager participant menu from the tile keyboard surface", () => {
+test("opens the manager participant menu from the tile surface", async () => {
   render(<PerxonaManagerStage managerName="王主管" config={{ enabled: false, reason: "missing-key" }} latestManagerText={null} />);
-  fireEvent.keyDown(screen.getByLabelText("王主管"), { key: "Enter" });
-  expect(screen.getByRole("menu")).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "開啟主管參與者選單" }));
+  expect(await screen.findByRole("menu")).toBeVisible();
 });

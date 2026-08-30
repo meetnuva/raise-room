@@ -15,7 +15,7 @@ test("opens help, about, and local privacy content while routing every settings 
   expect(screen.queryByRole("dialog", { name: "Raise Room 使用說明" })).toBeNull();
 
   fireEvent.click(screen.getByRole("button", { name: "設定" }));
-  expect(onOpenSettings).toHaveBeenLastCalledWith();
+  expect(onOpenSettings).toHaveBeenLastCalledWith(undefined, screen.getByRole("button", { name: "設定" }));
 
   fireEvent.click(screen.getByRole("button", { name: "更多選項" }));
   expect(screen.getAllByRole("menuitem").map((item) => item.textContent)).toEqual([
@@ -24,11 +24,11 @@ test("opens help, about, and local privacy content while routing every settings 
     "關於 Raise Room",
   ]);
   fireEvent.click(screen.getByRole("menuitem", { name: "檢查裝置" }));
-  expect(onOpenSettings).toHaveBeenLastCalledWith("audio");
+  expect(onOpenSettings).toHaveBeenLastCalledWith("audio", screen.getByRole("button", { name: "更多選項" }));
 
   fireEvent.click(screen.getByRole("button", { name: "更多選項" }));
   fireEvent.click(screen.getByRole("menuitem", { name: "查看本機資料與隱私" }));
-  expect(onOpenSettings).toHaveBeenLastCalledWith("privacy");
+  expect(onOpenSettings).toHaveBeenLastCalledWith("privacy", screen.getByRole("button", { name: "更多選項" }));
 
   fireEvent.click(screen.getByRole("button", { name: "更多選項" }));
   fireEvent.click(screen.getByRole("menuitem", { name: "關於 Raise Room" }));
@@ -37,7 +37,7 @@ test("opens help, about, and local privacy content while routing every settings 
   fireEvent.click(screen.getByRole("button", { name: "本機使用者" }));
   expect(screen.getByText("資料只存在這台裝置")).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "隱私設定" }));
-  expect(onOpenSettings).toHaveBeenLastCalledWith("privacy");
+  expect(onOpenSettings).toHaveBeenLastCalledWith("privacy", screen.getByRole("button", { name: "本機使用者" }));
 });
 
 test("closes the local user popover before opening privacy settings", () => {
@@ -48,7 +48,7 @@ test("closes the local user popover before opening privacy settings", () => {
   fireEvent.click(screen.getByRole("button", { name: "隱私設定" }));
 
   expect(screen.queryByRole("dialog", { name: "本機使用者" })).toBeNull();
-  expect(onOpenSettings).toHaveBeenCalledWith("privacy");
+  expect(onOpenSettings).toHaveBeenCalledWith("privacy", screen.getByRole("button", { name: "本機使用者" }));
 });
 
 test("returns Escape focus to the actual popover opener", () => {
@@ -58,6 +58,15 @@ test("returns Escape focus to the actual popover opener", () => {
   fireEvent.keyDown(opener, { key: "Escape" });
   expect(screen.queryByRole("dialog", { name: "Raise Room 使用說明" })).toBeNull();
   expect(opener).toHaveFocus();
+});
+
+test("returns About Escape focus to the more-menu trigger", () => {
+  render(<HomeChrome onOpenSettings={vi.fn()} />);
+  const more = screen.getByRole("button", { name: "更多選項" });
+  fireEvent.click(more);
+  fireEvent.click(screen.getByRole("menuitem", { name: "關於 Raise Room" }));
+  fireEvent.keyDown(screen.getByRole("dialog", { name: "關於 Raise Room" }), { key: "Escape" });
+  expect(more).toHaveFocus();
 });
 
 test("uses the shared focus token for home controls", () => {
