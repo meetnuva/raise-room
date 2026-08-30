@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { StrictMode } from "react";
+import { readFileSync } from "node:fs";
 import { vi } from "vitest";
 import { DeviceSettingsPanel } from "./DeviceSettingsPanel";
 
@@ -55,4 +56,12 @@ test("keeps explicit media requests live after StrictMode replay and stops the r
   expect(await screen.findByLabelText("攝影機預覽")).toBeVisible();
   unmount();
   expect(cameraTrack.stop).toHaveBeenCalledOnce();
+});
+
+test("styles explicit device read and test actions as compact controls with hover and focus feedback", () => {
+  const styles = readFileSync("src/styles.css", "utf8");
+
+  expect(styles).toMatch(/\.device-settings-panel\s*>\s*button\s*\{[^}]*justify-self:\s*start;[^}]*min-width:\s*10rem;/s);
+  expect(styles).toMatch(/\.device-settings-panel\s*>\s*button:hover\s*\{[^}]*background:/);
+  expect(styles).toMatch(/\.device-settings-panel\s*>\s*button:focus-visible\s*\{[^}]*outline:/);
 });

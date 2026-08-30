@@ -446,7 +446,7 @@ button:focus-visible {
   display: grid;
   grid-template-columns: 208px minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr) auto;
-  width: min(960px, calc(100vw - 32px));
+  width: min(54rem, calc(100vw - 32px));
   max-height: min(720px, calc(100dvh - 32px));
   padding: 0;
   border: 1px solid #cbd5e1;
@@ -572,6 +572,20 @@ button:focus-visible {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
+}
+
+.device-settings-panel > button {
+  justify-self: start;
+  min-width: 10rem;
+}
+
+.device-settings-panel > button:hover {
+  background: var(--surface-subtle);
+}
+
+.device-settings-panel > button:focus-visible {
+  outline: 2px solid var(--focus-light);
+  outline-offset: 2px;
 }
 
 button {
@@ -1343,11 +1357,29 @@ button {
   font-weight: 800;
 }
 
+.meet-home-schedule-details {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: .25rem;
+  min-width: 0;
+  text-align: left;
+}
+
+.meet-home-schedule-title,
+.meet-home-schedule-meta {
+  overflow-wrap: anywhere;
+}
+
 .meet-home-enter {
   align-self: center;
+  display: inline-flex;
+  padding: .5rem .75rem;
   border-color: #075985;
+  border-radius: 999px;
   background: #075985;
   color: #ffffff;
+  white-space: nowrap;
 }
 
 .meet-home-schedule-card:hover .meet-home-enter {
@@ -1689,7 +1721,7 @@ button {
   position: absolute;
   right: 1rem;
   bottom: 1rem;
-  z-index: 1;
+  z-index: 3;
   width: clamp(10rem, 22%, 16rem);
   min-width: 0;
 }
@@ -1714,7 +1746,7 @@ button {
 }
 
 .meeting-controls {
-  z-index: 2;
+  z-index: 5;
   gap: 0.5rem;
   border-radius: 0.5rem;
 }
@@ -2032,7 +2064,7 @@ button {
 
 .participant-tile-overlay {
   position: relative;
-  z-index: 3;
+  z-index: 4;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2061,10 +2093,38 @@ button {
   z-index: 2;
 }
 
+.manager-stage .presenter-canvas {
+  pointer-events: auto;
+}
+
+.manager-stage-status {
+  position: absolute;
+  z-index: 5;
+  left: .75rem;
+  bottom: .75rem;
+  max-width: min(50%, 20rem);
+  margin: 0;
+  padding: .375rem .5rem;
+  border-radius: .375rem;
+  background: rgb(15 23 42 / 82%);
+  color: #e2e8f0;
+  font-size: .8125rem;
+  pointer-events: none;
+}
+
 .manager-stage > button:not(.participant-tile-hit-target),
 .local-camera-tile > button:not(.participant-tile-hit-target) {
   position: relative;
   z-index: 4;
+}
+
+.manager-stage > button.manager-stage-action {
+  position: absolute;
+  z-index: 5;
+  right: .75rem;
+  bottom: .75rem;
+  width: auto;
+  align-self: auto;
 }
 
 .participant-tile-hit-target:focus-visible {

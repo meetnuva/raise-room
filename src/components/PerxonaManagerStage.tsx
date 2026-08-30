@@ -75,14 +75,14 @@ export function PerxonaManagerStage({
         <ParticipantMenu kind="manager" pinned={pinned} expanded={false} onTogglePin={onTogglePin ?? (() => {})} onViewRole={onViewRole} onOpenInfo={onOpenInfo} openRequest={menuRequest} />
       </div>
       <div ref={containerRef} className="presenter-canvas" aria-label="Perxona 3D 主管舞台" />
-      <p role="status">● {state}</p>
+      <p className="manager-stage-status" role="status">● {state}</p>
       {errorMessage && !onPresenterError && <p role="alert">⚠ {errorMessage}</p>}
       {status === "mounted" && (
-        <button type="button" onClick={() => void launch()}>
+        <button className="manager-stage-action" type="button" onClick={() => void launch()}>
           啟動 3D 主管
         </button>
       )}
-      {status === "ready" && <button type="button" onClick={interrupt}>停止發話</button>}
+      {status === "ready" && <button className="manager-stage-action" type="button" onClick={interrupt}>停止發話</button>}
     </section>
   );
 }

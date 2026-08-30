@@ -96,6 +96,15 @@ test("styles the manager as a 16:9 main stage with a smaller camera overlay", ()
   expect(styles).toContain("transition: opacity var(--motion-standard)");
 });
 
+test("layers the self tile above the presenter canvas while controls and participant overlays remain higher", () => {
+  const styles = readFileSync("src/styles.css", "utf8");
+
+  expect(styles).toMatch(/\.manager-stage \.presenter-canvas,[\s\S]*?\{[^}]*z-index:\s*2;/);
+  expect(styles).toMatch(/\.meeting-sidebar\s*\{[^}]*z-index:\s*3;/s);
+  expect(styles).toMatch(/\.participant-tile-overlay\s*\{[^}]*z-index:\s*4;/s);
+  expect(styles).toMatch(/\.meeting-controls\s*\{[^}]*z-index:\s*5;/s);
+});
+
 test("bounds the 16:9 manager stage for short desktop viewports without a mobile height override", () => {
   const styles = readFileSync("src/styles.css", "utf8");
 

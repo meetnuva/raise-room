@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { readFileSync } from "node:fs";
 import { expect, test, vi } from "vitest";
 import type { PresenterClient } from "../lib/perxona-presenter";
 import { PerxonaManagerStage } from "./PerxonaManagerStage";
@@ -37,4 +38,12 @@ test("opens the manager participant menu from the tile surface", async () => {
   render(<PerxonaManagerStage managerName="王主管" config={{ enabled: false, reason: "missing-key" }} latestManagerText={null} />);
   fireEvent.click(screen.getByLabelText("Perxona 3D 主管舞台"));
   expect(await screen.findByRole("menu")).toBeVisible();
+});
+
+test("uses compact stage overlays for presenter actions and status without blocking the canvas", () => {
+  const styles = readFileSync("src/styles.css", "utf8");
+
+  expect(styles).toMatch(/\.manager-stage-status\s*\{[^}]*position:\s*absolute;[^}]*z-index:\s*5;[^}]*pointer-events:\s*none;/s);
+  expect(styles).toMatch(/\.manager-stage\s*>\s*button\.manager-stage-action\s*\{[^}]*position:\s*absolute;[^}]*z-index:\s*5;[^}]*width:\s*auto;[^}]*align-self:\s*auto;/s);
+  expect(styles).toMatch(/\.manager-stage \.presenter-canvas\s*\{[^}]*pointer-events:\s*auto;/s);
 });

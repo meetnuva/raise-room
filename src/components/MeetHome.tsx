@@ -115,14 +115,16 @@ export function MeetHome({
                     return (
                       <button
                         aria-current={isToday ? "date" : undefined}
+                        aria-label={dateLabel(date)}
                         aria-pressed={isSelected}
                         className={isSelected ? "selected" : undefined}
                         key={date.toISOString()}
+                        title={dateLabel(date)}
                         type="button"
                         onClick={() => setSelectedDate(date)}
                       >
                         <span>{weekdayLabel(date)}</span>
-                        <strong>{dateLabel(date)}</strong>
+                        <strong>{date.getDate()}</strong>
                       </button>
                     );
                   })}

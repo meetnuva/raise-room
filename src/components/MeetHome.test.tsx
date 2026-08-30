@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { readFileSync } from "node:fs";
 import { vi } from "vitest";
 import type { ScheduledPracticeMeeting } from "../domain/practice-schedule";
 import { MeetHome } from "./MeetHome";
@@ -75,6 +76,22 @@ test("shows the schedule and permits early entry", () => {
   expect(screen.getByText("與王主管的年度調薪 1:1")).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: /進入.*準備室/ }));
   expect(onEnterLobby).toHaveBeenCalledOnce();
+});
+
+test("renders a compact numeric day while retaining the full date as its accessible name", () => {
+  render(<MeetHome meeting={meeting20} now={now} onOpenSettings={vi.fn()} onEnterLobby={vi.fn()} />);
+
+  const today = screen.getByRole("button", { name: "8月30日" });
+  expect(today).toHaveAttribute("title", "8月30日");
+  expect(today.querySelector("strong")).toHaveTextContent("30");
+  expect(today.querySelector("strong")).not.toHaveTextContent("8月30日");
+});
+
+test("defines a wrapping details column and a compact visual CTA without adding another button", () => {
+  const styles = readFileSync("src/styles.css", "utf8");
+
+  expect(styles).toMatch(/\.meet-home-schedule-details\s*\{[^}]*display:\s*flex;[^}]*flex:\s*1\s+1\s+auto;[^}]*flex-direction:\s*column;[^}]*min-width:\s*0;[^}]*text-align:\s*left;/s);
+  expect(styles).toMatch(/\.meet-home-enter\s*\{[^}]*display:\s*inline-flex;[^}]*padding:\s*\.5rem\s+\.75rem;[^}]*border-radius:\s*999px;[^}]*white-space:\s*nowrap;/s);
 });
 
 test("shows an empty state for a future date and restores today schedule", () => {

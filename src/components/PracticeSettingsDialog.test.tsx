@@ -114,7 +114,7 @@ test("uses roving tabs with linked panels and keyboard navigation", () => {
 test("defines a desktop vertical-tab dialog and a mobile horizontal fallback", () => {
   const styles = readFileSync("src/styles.css", "utf8");
 
-  expect(styles).toMatch(/\.practice-settings-dialog\s*\{[^}]*grid-template-columns:\s*208px\s+minmax\(0,\s*1fr\);[^}]*width:\s*min\(960px,\s*calc\(100vw\s*-\s*32px\)\);[^}]*max-height:\s*min\(720px,\s*calc\(100dvh\s*-\s*32px\)\);/s);
+  expect(styles).toMatch(/\.practice-settings-dialog\s*\{[^}]*grid-template-columns:\s*208px\s+minmax\(0,\s*1fr\);[^}]*width:\s*min\(54rem,\s*calc\(100vw\s*-\s*32px\)\);[^}]*max-height:\s*min\(720px,\s*calc\(100dvh\s*-\s*32px\)\);/s);
   expect(styles).toMatch(/\.practice-settings-header,[\s\S]*?\.practice-settings-actions\s*\{[^}]*min-height:\s*64px;/);
   expect(styles).toMatch(/\.practice-settings-tabs\s*\{[^}]*flex-direction:\s*column;/s);
   expect(styles).toMatch(/\.practice-settings-tabs \[role="tab"\]\s*\{[^}]*min-height:\s*44px;/);
