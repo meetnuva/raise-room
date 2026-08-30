@@ -61,6 +61,15 @@ test("creates the strict next meeting from the document-load clock", () => {
   expect(screen.queryByRole("heading", { name: "設定這場薪資檢討" })).toBeNull();
 });
 
+test("opens settings from the functional home more menu", () => {
+  render(<App now={() => new Date(2026, 7, 30, 17, 5)} />);
+
+  fireEvent.click(screen.getByRole("button", { name: "更多選項" }));
+  fireEvent.click(screen.getByRole("menuitem", { name: "查看本機資料與隱私" }));
+
+  expect(screen.getByRole("dialog", { name: "練習設定" })).toBeVisible();
+});
+
 test("saves five minutes without moving the start hour", () => {
   render(<App now={() => new Date(2026, 7, 30, 17, 5)} />);
   openSettings();

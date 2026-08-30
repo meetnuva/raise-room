@@ -38,6 +38,31 @@ test("uses the blue nuva brand and opens settings", () => {
   expect(onOpenSettings).toHaveBeenCalledOnce();
 });
 
+test("uses icon navigation and enters the lobby once from either schedule card action", () => {
+  const onEnterLobby = vi.fn();
+  render(
+    <MeetHome
+      meeting={meeting20}
+      now={now}
+      onOpenSettings={vi.fn()}
+      onEnterLobby={onEnterLobby}
+    />,
+  );
+
+  for (const button of [screen.getByRole("button", { name: "會議" }), screen.getByRole("button", { name: "練習紀錄" })]) {
+    expect(button.querySelector("svg")).not.toBeNull();
+  }
+
+  const card = screen.getByRole("article", { name: "進入與王主管的年度調薪 1:1準備室" });
+  fireEvent.keyDown(card, { key: "Enter" });
+  fireEvent.keyDown(card, { key: " " });
+  const enter = screen.getByRole("button", { name: "提早進入準備室" });
+  fireEvent.keyDown(enter, { key: " " });
+  expect(onEnterLobby).toHaveBeenCalledTimes(2);
+  fireEvent.click(enter);
+  expect(onEnterLobby).toHaveBeenCalledTimes(3);
+});
+
 test("shows the schedule and permits early entry", () => {
   const onEnterLobby = vi.fn();
   render(

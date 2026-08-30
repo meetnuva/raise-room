@@ -1,0 +1,39 @@
+import { fireEvent, render, screen } from "@testing-library/react";
+import { vi } from "vitest";
+import { HomeChrome } from "./HomeChrome";
+
+test("opens help, about, and local privacy content while routing every settings action", () => {
+  const onOpenSettings = vi.fn();
+  render(<HomeChrome onOpenSettings={onOpenSettings} />);
+
+  const help = screen.getByRole("button", { name: "說明" });
+  fireEvent.click(help);
+  expect(screen.getByRole("heading", { name: "Raise Room 使用說明" })).toBeVisible();
+  fireEvent.keyDown(help, { key: "Escape" });
+  expect(screen.queryByRole("dialog", { name: "Raise Room 使用說明" })).toBeNull();
+
+  fireEvent.click(screen.getByRole("button", { name: "設定" }));
+  expect(onOpenSettings).toHaveBeenLastCalledWith();
+
+  fireEvent.click(screen.getByRole("button", { name: "更多選項" }));
+  expect(screen.getAllByRole("menuitem").map((item) => item.textContent)).toEqual([
+    "檢查裝置",
+    "查看本機資料與隱私",
+    "關於 Raise Room",
+  ]);
+  fireEvent.click(screen.getByRole("menuitem", { name: "檢查裝置" }));
+  expect(onOpenSettings).toHaveBeenLastCalledWith("audio");
+
+  fireEvent.click(screen.getByRole("button", { name: "更多選項" }));
+  fireEvent.click(screen.getByRole("menuitem", { name: "查看本機資料與隱私" }));
+  expect(onOpenSettings).toHaveBeenLastCalledWith("privacy");
+
+  fireEvent.click(screen.getByRole("button", { name: "更多選項" }));
+  fireEvent.click(screen.getByRole("menuitem", { name: "關於 Raise Room" }));
+  expect(screen.getByRole("heading", { name: "關於 Raise Room" })).toBeVisible();
+
+  fireEvent.click(screen.getByRole("button", { name: "本機使用者" }));
+  expect(screen.getByText("資料只存在這台裝置")).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "隱私設定" }));
+  expect(onOpenSettings).toHaveBeenLastCalledWith("privacy");
+});

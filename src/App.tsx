@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { CoachingReport } from "./components/CoachingReport";
 import { MeetingRoom } from "./components/MeetingRoom";
 import { MeetHome } from "./components/MeetHome";
+import type { HomeSettingsTarget } from "./components/HomeChrome";
 import { PracticeSession } from "./components/PracticeSession";
 import { PracticeSettingsDialog, type PracticeSettingsDraft } from "./components/PracticeSettingsDialog";
 import { PrejoinLobby } from "./components/PrejoinLobby";
@@ -20,7 +21,7 @@ import type { DeviceSettingsDevice } from "./components/DeviceSettingsPanel";
 
 type AppState =
   | { view: "home" }
-  | { view: "settings" }
+  | { view: "settings"; target?: HomeSettingsTarget }
   | { view: "practice"; phase: "lobby" | "meeting" }
   | { view: "report"; scenario: Scenario; transcript: TranscriptTurn[]; visualSignals?: VisualSignals };
 
@@ -153,7 +154,7 @@ export function App({ now = () => new Date() }: { now?: () => Date } = {}) {
         <MeetHome
           meeting={meeting}
           now={homeNow}
-          onOpenSettings={() => setAppState({ view: "settings" })}
+          onOpenSettings={(target) => setAppState({ view: "settings", target })}
           onEnterLobby={() => setAppState({ view: "practice", phase: "lobby" })}
         />
       )}

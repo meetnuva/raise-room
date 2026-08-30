@@ -4,7 +4,10 @@ import {
   getPracticeScheduleStatus,
   type ScheduledPracticeMeeting,
 } from "../domain/practice-schedule";
+import { HomeChrome } from "./HomeChrome";
+import type { HomeSettingsTarget } from "./HomeChrome";
 import { NuvaBrand } from "./NuvaBrand";
+import { Icon } from "./ui/Icons";
 
 type HomeTab = "meetings" | "history";
 
@@ -44,7 +47,7 @@ export function MeetHome({
 }: {
   meeting: ScheduledPracticeMeeting;
   now: Date;
-  onOpenSettings: () => void;
+  onOpenSettings(target?: HomeSettingsTarget): void;
   onEnterLobby: () => void;
 }) {
   const today = startOfLocalDay(now);
@@ -61,14 +64,7 @@ export function MeetHome({
     <div className="meet-home">
       <header className="meet-home-header">
         <NuvaBrand />
-        <div className="meet-home-header-actions">
-          <button aria-label="設定" className="meet-home-settings" title="設定" type="button" onClick={onOpenSettings}>
-            <svg aria-hidden="true" viewBox="0 0 24 24">
-              <path d="M19.14 12.94a7.43 7.43 0 0 0 .05-.94 7.43 7.43 0 0 0-.05-.94l2.03-1.58-1.92-3.32-2.39.96a7.18 7.18 0 0 0-1.62-.94L14.88 3h-3.84l-.36 3.18a7.18 7.18 0 0 0-1.62.94l-2.39-.96-1.92 3.32 2.03 1.58a7.43 7.43 0 0 0-.05.94c0 .32.02.63.05.94l-2.03 1.58 1.92 3.32 2.39-.96c.5.39 1.04.71 1.62.94l.36 3.18h3.84l.36-3.18c.58-.23 1.12-.55 1.62-.94l2.39.96 1.92-3.32-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5Z" />
-            </svg>
-          </button>
-          <span aria-label="本機使用者" className="meet-home-avatar">你</span>
-        </div>
+        <HomeChrome onOpenSettings={onOpenSettings} />
       </header>
 
       <div className="meet-home-layout">
@@ -79,7 +75,8 @@ export function MeetHome({
             type="button"
             onClick={() => setActiveTab("meetings")}
           >
-            會議
+            <Icon name="meeting" size={20} />
+            <span>會議</span>
           </button>
           <button
             aria-current={activeTab === "history" ? "page" : undefined}
@@ -87,7 +84,8 @@ export function MeetHome({
             type="button"
             onClick={() => setActiveTab("history")}
           >
-            練習紀錄
+            <Icon name="history" size={20} />
+            <span>練習紀錄</span>
           </button>
         </nav>
 
@@ -131,7 +129,18 @@ export function MeetHome({
                 </div>
 
                 {selectedDateHasMeeting ? (
-                  <article aria-labelledby="scheduled-meeting-title" className="meet-home-schedule-card">
+                  <article
+                    aria-label={`進入${meeting.title}準備室`}
+                    className="meet-home-schedule-card"
+                    tabIndex={0}
+                    onClick={onEnterLobby}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        onEnterLobby();
+                      }
+                    }}
+                  >
                     <div className="meet-home-schedule-time">
                       <time>{formatPracticeTimeRange(meeting, "zh-TW")}</time>
                       <span>{scheduleStatusLabel(meeting, now)}</span>
@@ -140,7 +149,12 @@ export function MeetHome({
                       <h3 id="scheduled-meeting-title">{meeting.title}</h3>
                       <p>{meeting.company} · {meeting.role}</p>
                     </div>
-                    <button className="meet-home-enter" type="button" onClick={onEnterLobby}>
+                    <button
+                      className="meet-home-enter"
+                      type="button"
+                      onClick={(event) => { event.stopPropagation(); onEnterLobby(); }}
+                      onKeyDown={(event) => event.stopPropagation()}
+                    >
                       提早進入準備室
                     </button>
                   </article>
