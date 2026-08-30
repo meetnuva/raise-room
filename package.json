@@ -10,7 +10,8 @@
     "dev": "node --env-file-if-exists=.env.local server/dev.mjs",
     "start": "node --env-file-if-exists=.env.local server/start.mjs",
     "test": "vitest run",
-    "build": "tsc -b && vite build"
+    "build": "tsc -b && vite build",
+    "audit:known": "node scripts/check-audit.mjs"
   },
   "dependencies": {
     "@huggingface/transformers": "4.2.0",
