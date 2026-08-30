@@ -57,6 +57,7 @@ test("saves five minutes without moving the start hour", () => {
   fireEvent.click(screen.getByRole("radio", { name: "5 分鐘" }));
   fireEvent.click(screen.getByRole("button", { name: "儲存" }));
   expect(screen.getByText("18:00–18:05")).toBeVisible();
+  expect(screen.getByRole("button", { name: "設定" })).toHaveFocus();
 });
 
 test("navigates home to lobby to meeting, retries through lobby, and resets home", () => {
@@ -125,6 +126,7 @@ test("clear confirmation removes only practice storage and returns home defaults
   expect(window.localStorage.getItem("raise-room-voice-settings-v1")).toBeNull();
   expect(window.localStorage.getItem("credentials")).toBe("keep");
   expect(screen.getByText("18:00–18:20")).toBeVisible();
+  expect(screen.getByRole("button", { name: "設定" })).toHaveFocus();
 });
 
 test("auto-rolls an expired schedule only while home is active", () => {
@@ -139,4 +141,21 @@ test("auto-rolls an expired schedule only while home is active", () => {
   act(() => vi.advanceTimersByTime(60_000));
   expect(screen.getByRole("heading", { name: "確認你的裝置" })).toBeVisible();
   expect(screen.queryByText("20:00–20:20")).toBeNull();
+});
+
+test("updates the home schedule status before rolling an expired meeting", () => {
+  vi.useFakeTimers();
+  let current = new Date(2026, 7, 30, 17, 5);
+  render(<App now={() => current} />);
+
+  expect(screen.getByText("即將開始")).toBeVisible();
+  current = new Date(2026, 7, 30, 18, 0);
+  act(() => vi.advanceTimersByTime(60_000));
+  expect(screen.getByText("進行中")).toBeVisible();
+  expect(screen.getByText("18:00–18:20")).toBeVisible();
+
+  current = new Date(2026, 7, 30, 18, 20);
+  act(() => vi.advanceTimersByTime(60_000));
+  expect(screen.getByText("19:00–19:20")).toBeVisible();
+  expect(screen.getByText("即將開始")).toBeVisible();
 });

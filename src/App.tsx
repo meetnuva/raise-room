@@ -71,6 +71,7 @@ export function App({ now = () => new Date() }: { now?: () => Date } = {}) {
   const [practice, setPractice] = useState<PracticeSettings>(readInitialPractice);
   const [voicePreset, setVoicePreset] = useState<AsrModelPresetId>(readInitialVoicePreset);
   const [meeting, setMeeting] = useState(() => createMeeting(documentNow, scenario, practice));
+  const [homeNow, setHomeNow] = useState(documentNow);
   const [presenterCatalog] = useState(() => readPresenterCatalog(import.meta.env));
   const [selectedDeviceIds, setSelectedDeviceIds] = useState<Partial<Record<MediaDeviceKind, string>>>({});
   const [managerResponder] = useState(() => createHybridManagerResponder());
@@ -94,6 +95,7 @@ export function App({ now = () => new Date() }: { now?: () => Date } = {}) {
 
     const interval = window.setInterval(() => {
       const currentNow = now();
+      setHomeNow(currentNow);
       if (currentNow.getTime() >= new Date(meeting.endsAt).getTime()) {
         setMeeting(createMeeting(currentNow, scenario, practice));
       }
@@ -118,6 +120,7 @@ export function App({ now = () => new Date() }: { now?: () => Date } = {}) {
     setPractice(next.practice);
     setVoicePreset(next.modelPreset);
     setMeeting((current) => reviseMeeting(current, next.scenario, next.practice));
+    restoreSettingsFocus.current = true;
     setAppState({ view: "home" });
   };
   const clearSettings = () => {
@@ -130,6 +133,7 @@ export function App({ now = () => new Date() }: { now?: () => Date } = {}) {
     setPractice(defaultPracticeSettings);
     setVoicePreset(defaultAsrModelPresetId);
     setMeeting(createMeeting(documentNow, defaultScenario, defaultPracticeSettings));
+    restoreSettingsFocus.current = true;
     setAppState({ view: "home" });
   };
   const selectDevice = (device: DeviceSettingsDevice) => {
@@ -141,7 +145,7 @@ export function App({ now = () => new Date() }: { now?: () => Date } = {}) {
       {(appState.view === "home" || appState.view === "settings") && (
         <MeetHome
           meeting={meeting}
-          now={documentNow}
+          now={homeNow}
           onOpenSettings={() => setAppState({ view: "settings" })}
           onEnterLobby={() => setAppState({ view: "practice", phase: "lobby" })}
         />
