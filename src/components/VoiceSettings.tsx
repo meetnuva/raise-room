@@ -33,7 +33,7 @@ function VoiceSettingsView({ onSave, onBack, hasWebGpu, voice, selectedPreset, s
     const startedAt = performance.now();
     setRemainingSeconds(20);
     const interval = window.setInterval(() => {
-      const remaining = Math.max(0, 20 - Math.ceil((performance.now() - startedAt) / 1000));
+      const remaining = Math.max(0, Math.ceil(20 - (performance.now() - startedAt) / 1000));
       setRemainingSeconds(remaining);
       if (remaining === 0) { window.clearInterval(interval); void stopTest(); }
     }, 250);
@@ -49,6 +49,7 @@ function VoiceSettingsView({ onSave, onBack, hasWebGpu, voice, selectedPreset, s
   const model = asrModelPresets[selectedPreset];
   const result = resultsByPreset[selectedPreset];
   const unavailable = !isPresetAvailable(selectedPreset, hasWebGpu);
+  const testInProgress = voice.status === "recording" || voice.status === "transcribing";
   return <section className="voice-settings" aria-labelledby="voice-settings-title">
     <div className="section-heading"><p className="eyebrow">全程本機</p><h2 id="voice-settings-title">語音模型與麥克風測試</h2><p>測試音訊與文字不會送給 Perxona，也不會加入會議逐字稿。</p></div>
     <fieldset className="asr-model-cards"><legend>選擇本機語音模型</legend>{(Object.keys(asrModelPresets) as AsrModelPresetId[]).map((id) => {
@@ -57,8 +58,8 @@ function VoiceSettingsView({ onSave, onBack, hasWebGpu, voice, selectedPreset, s
     })}</fieldset>
     {!hasWebGpu && <p role="status">此裝置不支援 WebGPU，高品質模型無法使用。</p>}
     <section className="microphone-test" aria-labelledby="microphone-test-title"><h3 id="microphone-test-title">麥克風精準度測試</h3>
-      <label>語音語言<select aria-label="測試語音語言" value={language} onChange={(event) => selectLanguage(event.target.value as VoiceLanguage)}><option value="zh">繁中</option><option value="en">English</option><option value="ja">日本語</option></select></label>
-      <label>參考句<textarea maxLength={500} value={referenceText} onChange={(event) => { setReferenceEdited(true); setReferenceText(event.target.value); }} /></label>
+      <label>語音語言<select aria-label="測試語音語言" disabled={testInProgress} value={language} onChange={(event) => selectLanguage(event.target.value as VoiceLanguage)}><option value="zh">繁中</option><option value="en">English</option><option value="ja">日本語</option></select></label>
+      <label>參考句<textarea disabled={testInProgress} maxLength={500} value={referenceText} onChange={(event) => { setReferenceEdited(true); setReferenceText(event.target.value); }} /></label>
       <div aria-live="polite">{voice.status === "idle" && <button disabled={unavailable} type="button" onClick={voice.loadModel}>載入並測試</button>}{voice.status === "loading-model" && <p>正在載入 {model.label} 模型</p>}{voice.status === "ready" && <button type="button" onClick={() => { setRemainingSeconds(20); void voice.startRecording(); }}>開始測試</button>}{voice.status === "recording" && <><p>測試剩餘 {remainingSeconds} 秒</p><button type="button" onClick={() => void stopTest()}>停止測試</button></>}{voice.status === "transcribing" && <p>正在本機轉錄</p>}{voice.errorMessage && <p role="alert">{voice.errorMessage}</p>}</div>
       {result && <>{result.rawText !== result.text && <details><summary>查看原始辨識結果</summary><p>{result.rawText}</p></details>}<TranscriptComparison reference={result.reference} actual={result.text} language={result.language} /></>}
     </section>

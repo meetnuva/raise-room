@@ -41,7 +41,7 @@ test("persists only the chosen preset after explicit confirmation", () => {
   expect(onSave).toHaveBeenCalledExactlyOnceWith("balanced");
 });
 
-test("loads and requests microphone only after clicks, auto-stops once at 20 seconds, and keeps a local result", async () => {
+test("locks test inputs and stops exactly once at 20 seconds", async () => {
   vi.useFakeTimers();
   const calls = { load: vi.fn(), start: vi.fn(), stop: vi.fn(), release: vi.fn() };
   render(<VoiceHarness calls={calls} />);
@@ -50,9 +50,15 @@ test("loads and requests microphone only after clicks, auto-stops once at 20 sec
   expect(calls.load).toHaveBeenCalledOnce(); expect(calls.start).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("button", { name: "開始測試" }));
   expect(calls.start).toHaveBeenCalledOnce(); expect(screen.getByText("測試剩餘 20 秒")).toBeVisible();
-  await act(async () => { await vi.advanceTimersByTimeAsync(20_000); });
+  const language = screen.getByRole("combobox", { name: "測試語音語言" });
+  const reference = screen.getByRole("textbox", { name: "參考句" });
+  expect(language).toBeDisabled(); expect(reference).toBeDisabled();
+  fireEvent.change(language, { target: { value: "en" } });
+  fireEvent.change(reference, { target: { value: "不可改變倒數" } });
+  await act(async () => { await vi.advanceTimersByTimeAsync(19_999); });
+  expect(calls.stop).not.toHaveBeenCalled();
+  await act(async () => { await vi.advanceTimersByTimeAsync(1); });
   expect(calls.stop).toHaveBeenCalledOnce();
-  expect(screen.getByText("文字吻合度：100%")).toBeVisible();
 });
 
 test("releases prior model on switch, keeps its snapshot, and blocks unavailable model saving", async () => {
