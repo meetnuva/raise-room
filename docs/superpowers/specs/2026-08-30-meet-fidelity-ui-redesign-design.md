@@ -272,4 +272,4 @@ CSS root 必須定義並由本次觸及的 UI 使用：
 - Header help/settings/more/user、三個 more menu action、About/user popover、Escape focus return、participant canvas/self-tile click、pin、self expand/restore、drawer 與六鍵控制均有真實 DOM readback。Console 無 app error；只有既有 Perxona Presenter `react-i18next` warning。
 - 真實 combined media 成功，video `1280×720`、`readyState=4`；高品質 WebGPU ASR Ready 並產生可編輯 preview；Perxona Presenter iframe mount 且狀態 Ready；本機視覺觀察開始並持續累積 aggregate。
 - 一局不中斷 20 分鐘完成：壓力事件在 `2:00`、`6:00`、`10:00`、`14:00`、`18:00` 全部轉為已發生，`20:00` 自動 handoff 至報告；報告顯示 1,213 個本機視覺 aggregate 樣本。
-- 尚未執行的外送關卡：從完整 UI 按「送給主管」會將公司、職位、薪資情境與測試文字傳給 Perxona，必須取得使用者 action-time 明確確認。Chrome permission deny 與系統 reduced-motion 偏好本次未改動使用者瀏覽器／系統設定，保留自動化驗證證據。
+- 使用者 action-time 明確確認後，完整 UI 已將公司／職位／薪資情境與編輯後測試文字傳給 Perxona，逐字稿取得動態主管回覆，Presenter 保持 Ready；離開後報告保留 1 個 6.16 秒語音回合與逐字稿證據。Chrome permission deny 與系統 reduced-motion 偏好本次未改動使用者瀏覽器／系統設定，保留自動化驗證證據。
