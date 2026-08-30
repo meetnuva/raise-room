@@ -29,6 +29,12 @@ export interface LocalAsrClient {
 const object = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null;
 const string = (value: unknown): value is string => typeof value === "string";
 
+export function normalizeAsrProgress(value: unknown): number | null {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) return null;
+  const normalized = value <= 1 ? value : value <= 100 ? value / 100 : null;
+  return normalized === null ? null : Math.min(1, Math.max(0, normalized));
+}
+
 export function parseAsrWorkerEvent(value: unknown): AsrWorkerEvent | null {
   if (!object(value) || !string(value.type)) return null;
   if (value.type === "loading" && string(value.message) && (value.progress === null || (typeof value.progress === "number" && Number.isFinite(value.progress) && value.progress >= 0 && value.progress <= 1))) return { type: "loading", progress: value.progress, message: value.message };

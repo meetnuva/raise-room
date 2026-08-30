@@ -5,7 +5,7 @@ import {
   TextStreamer,
   WhisperForConditionalGeneration,
 } from "@huggingface/transformers";
-import type { AsrWorkerRequest, VoiceLanguage } from "../lib/local-asr";
+import { normalizeAsrProgress, type AsrWorkerRequest, type VoiceLanguage } from "../lib/local-asr";
 
 const modelId = "onnx-community/whisper-tiny";
 const maxSamples = 16000 * 30;
@@ -18,7 +18,7 @@ function send(message: unknown) { self.postMessage(message); }
 
 function loading(progress: unknown) {
   const value = progress as { progress?: unknown; status?: unknown; file?: unknown };
-  send({ type: "loading", progress: typeof value.progress === "number" && Number.isFinite(value.progress) ? Math.min(1, Math.max(0, value.progress)) : null, message: typeof value.file === "string" ? value.file : typeof value.status === "string" ? value.status : "正在載入本機模型" });
+  send({ type: "loading", progress: normalizeAsrProgress(value.progress), message: typeof value.file === "string" ? value.file : typeof value.status === "string" ? value.status : "正在載入本機模型" });
 }
 
 async function loadRuntime() {

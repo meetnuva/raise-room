@@ -71,3 +71,19 @@ test("marks text fallback turns and disables a second submission while replying"
   expect(screen.getByRole("button", { name: "送出" })).toBeDisabled(); await act(async () => resolveReply("收到"));
   fireEvent.click(screen.getByRole("button", { name: "結束並看報告" }));
 });
+
+test("auto-completion hands the latest append-only transcript to onFinish exactly once", async () => {
+  vi.useFakeTimers(); let now = 0; let resolveReply = (_text: string) => {}; const onFinish = vi.fn();
+  render(<MeetingRoom scenario={defaultScenario} responder={{ reply: () => new Promise<string>((resolve) => { resolveReply = resolve; }) }} onFinish={onFinish} clock={{ durationSeconds: 2, now: () => now, intervalMs: 250 }} />);
+  fireEvent.change(screen.getByLabelText("開發用文字輸入"), { target: { value: "最新回合" } }); fireEvent.click(screen.getByRole("button", { name: "送出" })); await act(async () => resolveReply("主管回覆"));
+  now = 2_000; act(() => vi.advanceTimersByTime(250));
+  expect(onFinish).toHaveBeenCalledTimes(1); expect(onFinish).toHaveBeenCalledWith([
+    { speaker: "user", text: "最新回合", elapsedSeconds: 0, delivery: { source: "text" } }, { speaker: "manager", text: "主管回覆", elapsedSeconds: 0 },
+  ]); vi.useRealTimers();
+});
+
+test("unlocks text input and shows a visible error when the manager responder rejects", async () => {
+  render(<MeetingRoom scenario={defaultScenario} responder={{ reply: () => Promise.reject(new Error("offline")) }} />);
+  fireEvent.change(screen.getByLabelText("開發用文字輸入"), { target: { value: "重試" } }); fireEvent.click(screen.getByRole("button", { name: "送出" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("主管回覆暫時無法取得，請重新送出。"); expect(screen.getByRole("button", { name: "送出" })).not.toBeDisabled();
+});

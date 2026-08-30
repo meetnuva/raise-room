@@ -18,8 +18,8 @@ import { useMeetingClock } from "../hooks/use-meeting-clock";
 
 const meetingLengthSeconds = 10 * 60;
 
-function formatCountdown(elapsedSeconds: number) {
-  const remainingSeconds = Math.max(0, meetingLengthSeconds - elapsedSeconds);
+function formatCountdown(elapsedSeconds: number, durationSeconds: number) {
+  const remainingSeconds = Math.max(0, durationSeconds - elapsedSeconds);
   const minutes = Math.floor(remainingSeconds / 60);
   const seconds = remainingSeconds % 60;
 
@@ -39,18 +39,22 @@ export function MeetingRoom({
   responder,
   onFinish,
   presenterConfig = { enabled: false, reason: "missing-key" },
+  clock,
 }: {
   scenario: Scenario;
   responder: ManagerResponder;
   onFinish?: (transcript: TranscriptTurn[]) => void;
   presenterConfig?: PresenterRuntimeConfig;
+  clock?: { durationSeconds?: number; now?: () => number; intervalMs?: number };
 }) {
   const [meeting, setMeeting] = useState(() => createMeeting(scenario));
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const meetingRef = useRef(meeting);
   const latestTurn = meeting.transcript[meeting.transcript.length - 1];
   const camera = useLocalCamera();
+  const durationSeconds = clock?.durationSeconds ?? meetingLengthSeconds;
 
   const advanceTo = (elapsedSeconds: number) => {
     setMeeting((current) => {
@@ -61,9 +65,11 @@ export function MeetingRoom({
   };
 
   useMeetingClock({
-    durationSeconds: meetingLengthSeconds,
+    durationSeconds,
     onTick: advanceTo,
     onComplete: () => onFinish?.(meetingRef.current.transcript),
+    now: clock?.now,
+    intervalMs: clock?.intervalMs,
   });
 
   const submitUserMessage = async (text: string, delivery: TurnDelivery) => {
@@ -72,14 +78,20 @@ export function MeetingRoom({
     meetingRef.current = userTurn;
     setMeeting(userTurn);
     setSending(true);
-    const repliedMeeting = await respondToUser(userTurn, scenario, responder);
-    const managerTurn = repliedMeeting.transcript[repliedMeeting.transcript.length - 1];
-    setMeeting((current) => {
-      const next = { ...current, transcript: [...current.transcript, managerTurn] };
-      meetingRef.current = next;
-      return next;
-    });
-    setSending(false);
+    setSendError(null);
+    try {
+      const repliedMeeting = await respondToUser(userTurn, scenario, responder);
+      const managerTurn = repliedMeeting.transcript[repliedMeeting.transcript.length - 1];
+      setMeeting((current) => {
+        const next = { ...current, transcript: [...current.transcript, managerTurn] };
+        meetingRef.current = next;
+        return next;
+      });
+    } catch {
+      setSendError("主管回覆暫時無法取得，請重新送出。 ");
+    } finally {
+      setSending(false);
+    }
   };
 
   const sendFallbackMessage = async () => {
@@ -94,10 +106,11 @@ export function MeetingRoom({
           <p className="eyebrow">本機模擬會議</p>
           <h2 id="meeting-room-title" tabIndex={-1}>薪資檢討 Raise Room</h2>
         </div>
-        <p className="meeting-countdown" aria-label={`剩餘時間 ${formatCountdown(meeting.elapsedSeconds)}`}>
-          剩餘 {formatCountdown(meeting.elapsedSeconds)}
+        <p className="meeting-countdown" aria-label={`剩餘時間 ${formatCountdown(meeting.elapsedSeconds, durationSeconds)}`}>
+          剩餘 {formatCountdown(meeting.elapsedSeconds, durationSeconds)}
         </p>
       </header>
+      {sendError && <p role="alert">{sendError}</p>}
 
       <div className="meeting-stages" aria-label="會議雙人畫面">
         <PerxonaManagerStage

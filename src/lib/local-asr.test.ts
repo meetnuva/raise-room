@@ -1,5 +1,5 @@
 import { expect, test, vi } from "vitest";
-import { createLocalAsrClient, parseAsrWorkerEvent, type WorkerPort } from "./local-asr";
+import { createLocalAsrClient, normalizeAsrProgress, parseAsrWorkerEvent, type WorkerPort } from "./local-asr";
 
 function fakeWorker(): WorkerPort & { emit(value: unknown): void } {
   let listener: ((event: MessageEvent<unknown>) => void) | undefined;
@@ -13,6 +13,13 @@ test("rejects malformed worker data at the boundary", () => {
   expect(parseAsrWorkerEvent({ type: "ready", device: "gpu" })).toBeNull();
   expect(parseAsrWorkerEvent({ type: "loading", progress: 2, message: "x" })).toBeNull();
   expect(parseAsrWorkerEvent({ type: "complete", requestId: "a", text: "好" })).toEqual({ type: "complete", requestId: "a", text: "好" });
+});
+
+test("normalizes official download percentages before validating worker events", () => {
+  expect(normalizeAsrProgress(0.5)).toBe(0.5);
+  expect(normalizeAsrProgress(50)).toBe(0.5);
+  expect(normalizeAsrProgress(101)).toBeNull();
+  expect(normalizeAsrProgress("50")).toBeNull();
 });
 
 test("correlates requests, transfers audio, errors and destroys pending work", async () => {

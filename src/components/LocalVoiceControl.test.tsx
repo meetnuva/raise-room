@@ -16,3 +16,9 @@ test("marks active microphone clearly", () => {
   render(<LocalVoiceControl voice={voice("recording")} onTranscript={vi.fn()} />);
   expect(screen.getByText("麥克風使用中")).toBeVisible(); expect(screen.getByRole("button", { name: "停止並轉成文字" })).toBeVisible();
 });
+
+test("does not create the owned voice hook when an injected voice is supplied", () => {
+  const WorkerSpy = vi.fn(); vi.stubGlobal("Worker", WorkerSpy);
+  render(<LocalVoiceControl voice={voice()} onTranscript={vi.fn()} />);
+  expect(WorkerSpy).not.toHaveBeenCalled(); vi.unstubAllGlobals();
+});

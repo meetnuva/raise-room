@@ -4,12 +4,12 @@ import { createLocalAsrClient, type AsrWorkerEvent, type LocalAsrClient, type Vo
 export type VoiceStatus = "idle" | "loading-model" | "ready" | "requesting-microphone" | "recording" | "transcribing" | "unsupported" | "denied" | "error";
 export interface VoiceTranscriptResult { text: string; durationSeconds: number; language: VoiceLanguage; }
 
-export function useLocalVoice(input?: { asrClient?: LocalAsrClient; mediaDevices?: Pick<MediaDevices, "getUserMedia">; mediaRecorderFactory?: (stream: MediaStream) => MediaRecorder; audioContextFactory?: () => AudioContext; now?: () => number; }) {
-  const clientRef = useRef<LocalAsrClient | null>(input?.asrClient ?? null); const mounted = useRef(true); const stream = useRef<MediaStream | null>(null); const recorder = useRef<MediaRecorder | null>(null); const context = useRef<AudioContext | null>(null); const startedAt = useRef<number | null>(null); const chunks = useRef<Blob[]>([]);
+export function useLocalVoice(input?: { asrClient?: LocalAsrClient; asrClientFactory?: () => LocalAsrClient; mediaDevices?: Pick<MediaDevices, "getUserMedia">; mediaRecorderFactory?: (stream: MediaStream) => MediaRecorder; audioContextFactory?: () => AudioContext; now?: () => number; }) {
+  const clientRef = useRef<LocalAsrClient | null>(input?.asrClient ?? null); const injectedClient = useRef(Boolean(input?.asrClient)); const clientFactory = useRef(input?.asrClientFactory ?? createLocalAsrClient); const mounted = useRef(true); const stream = useRef<MediaStream | null>(null); const recorder = useRef<MediaRecorder | null>(null); const context = useRef<AudioContext | null>(null); const startedAt = useRef<number | null>(null); const chunks = useRef<Blob[]>([]);
   const [status, setStatus] = useState<VoiceStatus>(() => input?.asrClient ? "idle" : typeof Worker === "undefined" ? "unsupported" : "idle"); const [progress, setProgress] = useState<number | null>(null); const [partialText, setPartialText] = useState(""); const [errorMessage, setErrorMessage] = useState<string | null>(null); const [language, setLanguage] = useState<VoiceLanguage>("zh");
   const stopTracks = useCallback(() => { stream.current?.getTracks().forEach((track) => track.stop()); stream.current = null; }, []);
   const release = useCallback(() => { stopTracks(); recorder.current = null; chunks.current = []; context.current?.close().catch(() => undefined); context.current = null; startedAt.current = null; }, [stopTracks]);
-  const client = useCallback(() => { if (!clientRef.current && typeof Worker !== "undefined") clientRef.current = createLocalAsrClient(); return clientRef.current; }, []);
+  const client = useCallback(() => { if (!clientRef.current && (!injectedClient.current && (input?.asrClientFactory || typeof Worker !== "undefined"))) clientRef.current = clientFactory.current(); return clientRef.current; }, [input?.asrClientFactory]);
   useEffect(() => {
     mounted.current = true;
     const asr = client(); if (!asr) return; const unsubscribe = asr.subscribe((event: AsrWorkerEvent) => {
@@ -17,7 +17,7 @@ export function useLocalVoice(input?: { asrClient?: LocalAsrClient; mediaDevices
       if (event.type === "ready") { setStatus("ready"); setProgress(null); setErrorMessage(null); }
       if (event.type === "partial") setPartialText(event.text); if (event.type === "error") { setStatus("error"); setErrorMessage(event.message); }
     });
-    return () => { mounted.current = false; unsubscribe(); release(); asr.destroy(); };
+    return () => { mounted.current = false; unsubscribe(); release(); if (!injectedClient.current && clientRef.current === asr) { asr.destroy(); clientRef.current = null; } };
   }, [client, release]);
   const loadModel = useCallback(() => { const asr = client(); if (!asr) { setStatus("unsupported"); setErrorMessage("此瀏覽器不支援本機語音轉錄。"); return; } setStatus("loading-model"); setProgress(null); setErrorMessage(null); asr.load(); }, [client]);
   const startRecording = useCallback(async () => {
