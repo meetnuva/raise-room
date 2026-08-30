@@ -9,8 +9,10 @@ Raise Room 是私人練習工具，不是雇主評分、招募篩選、謊言偵
 - 視覺模型檔首次從 Google MediaPipe 固定網址下載，WASM loader 與 binary 由 pinned `@mediapipe/tasks-vision@1.0.1` 的 Vite build assets 提供；因此不能宣稱完全離線。Face Landmarker 固定關閉 blendshapes 與 transformation matrices，不做臉部辨識、年齡、性別、情緒、誠實、自信或能力推論。
 - 視覺報告只顯示本局 aggregate counts／ratios：臉部可見率以所有樣本為分母；置中與距離穩定也以所有樣本為分母；鏡頭方向近似只以 iris 點完整的樣本為分母。iris 幾何近似不等於眼神接觸，所有數值不可作 HR、雇主或招募用途。
 - 關閉鏡頭與元件卸載都會停止所有 MediaStream tracks，釋放裝置。
-- 本機語音只有在使用者明確按下載入模型、開始說話後才會啟用。音訊不會上傳或保存；每段停止時立即關閉麥克風 tracks，僅在 browser memory 內解碼並轉錄最後 30 秒。
-- `onnx-community/whisper-tiny` 模型檔首次由 Hugging Face Hub 下載，大小依套件與量化檔而異，之後由瀏覽器快取重用；這不是「零網路」宣告。WebGPU 優先，沒有 WebGPU 時可使用較慢的 WASM fallback。
+- 本機語音只有在使用者明確按下載入模型、開始說話或設定頁開始測試後才會啟用。音訊不會上傳或保存；設定測試最多 20 秒、會議最多取最後 30 秒。兩者停止時都會先關閉麥克風 tracks，僅在 browser memory 內解碼。
+- 設定頁的音訊、參考句、raw／正體化辨識結果、文字吻合度與差異只存在 React memory：不送到 Perxona、Node server、逐字稿或 localStorage。localStorage 只保存 allowlisted model preset ID。
+- 高品質 `onnx-community/whisper-large-v3-turbo`（約 1.5 GB）必須使用 WebGPU，沒有可用 WebGPU 時不提供 fallback。平衡／快速模型才可在 WebGPU 實際初始化失敗時改用 q8 WASM。模型檔首次由 Hugging Face Hub 下載並由 browser cache 重用；這不是「零網路」宣告。
+- 正式會議只會把使用者確認後的 edited transcript 送至動態主管；raw ASR text 和音訊不會離開裝置。delivery metadata 僅含來源、錄音秒數、語言與 preset ID，不含音訊。
 - 報告只由逐字稿 delivery metadata 推導語音秒數、字元／分鐘與固定填充詞計數；字元／分鐘不可跨繁中、英文、日文比較，且不產生自信、誠實、情緒或任何心理／人格分數。
 - 本局逐字稿只存在 React memory，關閉或重新整理頁面後就會消失。
 - 情境設定的本機草稿只保存在目前瀏覽器，方便再次開啟設定頁時使用。

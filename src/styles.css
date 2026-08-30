@@ -126,6 +126,77 @@ button:focus-visible {
   gap: 0.75rem;
 }
 
+.voice-settings {
+  display: grid;
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.asr-model-cards {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.asr-model-card {
+  align-content: start;
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid #94a3b8;
+  border-radius: 0.5rem;
+  background: #f8fafc;
+}
+
+.asr-model-card.selected {
+  border-width: 2px;
+  border-color: #0369a1;
+}
+
+.asr-model-card input {
+  width: auto;
+}
+
+.asr-model-card input:disabled + strong {
+  color: #64748b;
+}
+
+.microphone-test,
+.transcript-comparison,
+.voice-transcript-preview {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 1.25rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  background: #ffffff;
+}
+
+.microphone-test h3,
+.voice-transcript-preview h3 {
+  margin: 0;
+}
+
+.transcript-comparison p,
+.voice-transcript-preview p {
+  overflow-wrap: anywhere;
+}
+
+.transcript-diff {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.125rem;
+}
+
+.diff-insert { color: #166534; text-decoration: underline; }
+.diff-delete { color: #b91c1c; text-decoration: line-through; }
+.diff-replace { color: #92400e; text-decoration: underline; }
+
+.voice-settings-actions,
+.voice-preview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
 button {
   padding: 0.625rem 1rem;
   border: 1px solid #0369a1;
@@ -341,6 +412,11 @@ button {
   color: #fca5a5;
 }
 
+.meeting-controls .voice-transcript-preview {
+  flex: 1 1 22rem;
+  color: #1f2937;
+}
+
 .delivery-filler-words {
   display: flex;
   flex-wrap: wrap;
@@ -524,6 +600,10 @@ button {
 }
 
 @media (max-width: 42rem) {
+  .asr-model-cards {
+    grid-template-columns: 1fr;
+  }
+
   .meeting-stages,
   .meeting-details,
   .report-columns {

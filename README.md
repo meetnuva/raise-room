@@ -46,11 +46,13 @@ npm run start
 
 會議逐字稿只保留在目前的 React memory；關閉或重新整理頁面後不會保留。情境草稿只存在此瀏覽器的本機草稿。Perxona 動態主管啟用時，browser 只會同源呼叫本機 server；Secret Key 只在 Node process environment。詳見 [資料與隱私邊界](docs/privacy-boundary.md)、[Perxona 整合邊界](docs/perxona-integration.md) 與 [Chatbot setup contract](docs/perxona-chatbot-setup.md)。
 
-## Phase 3：可選本機語音
+## Phase 3：可設定的本機語音
 
-可自行選擇繁中、English 或日本語，並按下「載入本機語音模型」。首次 opt-in 會從 Hugging Face Hub 下載 `onnx-community/whisper-tiny`；模型大小依量化檔而異、可能需要一段時間，完成後由瀏覽器快取供後續使用。音訊不會上傳，WebGPU 優先、沒有時使用較慢的 WASM fallback。
+設定頁預設選取「高品質」`onnx-community/whisper-large-v3-turbo`，但不會自動下載；必須按「載入並測試」或會議中的「載入本機語音模型」。高品質首次約 1.5 GB，且必須使用 WebGPU；裝置不支援時會明確 disabled，絕不暗中切換。平衡 `whisper-small`（約 390 MB）與快速 `whisper-tiny`（約 114 MB）優先使用 WebGPU，實際初始化失敗才可改用較慢的 q8 WASM。
 
-每段錄音最多分析最後 30 秒；按下停止後會立即關閉麥克風 tracks，再在瀏覽器內轉錄。報告只讀取逐字稿中的可觀察語音 metadata；字元／分鐘不可跨語言比較。已以一個真實文字回合驗收 server-only Secret Key 邊界的專用 Perxona Chatbot，回覆來源為 `perxona`；未設定或暫時失敗時，會明確標示為本機腳本 fallback。麥克風 permission E2E 與音訊品質仍未驗收。
+設定頁可用繁中、English 或日本語的參考句做最長 20 秒麥克風測試，顯示正體化文字、差異與「文字吻合度」。這是兩段文字的比對，不是口音、能力或信心評分。模型選擇只保存 preset ID；測試音訊、參考句、結果和分數都只存在當前 memory，絕不送給 Perxona。
+
+會議錄音最多分析最後 30 秒；按下停止後會先關閉麥克風 tracks，再在 browser memory 轉錄。辨識結果會先進入可編輯預覽，只有確認「送給主管」後，修改過的文字才會加入逐字稿並傳給動態主管。報告只讀取已確認逐字稿的可觀察 metadata；字元／分鐘不可跨語言比較。麥克風 permission、同句 A/B 與長時間品質驗收仍待實際 Chrome acceptance。
 
 ## Phase 4：可選本機視覺觀察
 
