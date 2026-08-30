@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { afterEach, expect, test, vi, type Mock } from "vitest";
-import { VoiceSettings } from "./VoiceSettings";
+import { VoiceSettings, VoiceSettingsPanel } from "./VoiceSettings";
 import type { VoiceStatus } from "../hooks/use-local-voice";
 
 function VoiceHarness({ calls }: { calls: { load: Mock<() => void>; start: Mock<() => void>; stop: Mock<() => void>; release: Mock<() => void> } }) {
@@ -45,6 +45,14 @@ test("persists only the chosen preset after explicit confirmation", () => {
   fireEvent.click(screen.getByRole("radio", { name: /平衡/ }));
   fireEvent.click(screen.getByRole("button", { name: "使用這個模型" }));
   expect(onSave).toHaveBeenCalledExactlyOnceWith("balanced");
+});
+
+test("exposes a controlled voice panel without persisting the selected preset", () => {
+  const onSelectedPresetChange = vi.fn();
+  const voice = { status: "idle", progress: null, partialText: "", errorMessage: null, language: "zh", setLanguage: vi.fn(), device: null, loadModel: vi.fn(), startRecording: vi.fn(), stopAndTranscribe: vi.fn(), cancel: vi.fn(), releaseModel: vi.fn() } as unknown as Parameters<typeof VoiceSettings>[0]["voice"];
+  render(<VoiceSettingsPanel selectedPreset="quality" onSelectedPresetChange={onSelectedPresetChange} hasWebGpu voice={voice} />);
+  fireEvent.click(screen.getByRole("radio", { name: /平衡/ }));
+  expect(onSelectedPresetChange).toHaveBeenCalledExactlyOnceWith("balanced");
 });
 
 test("locks test inputs and stops exactly once at 20 seconds", async () => {

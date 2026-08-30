@@ -23,7 +23,9 @@ type VoiceSettingsProps = {
   voice?: VoiceController;
 };
 
-type ViewProps = Omit<VoiceSettingsProps, "savedPreset" | "voice" | "hasWebGpu"> & {
+type ViewProps = {
+  onSave?: (preset: AsrModelPresetId) => void;
+  onBack?: () => void;
   hasWebGpu: boolean;
   voice: VoiceController;
   selectedPreset: AsrModelPresetId;
@@ -156,13 +158,34 @@ function VoiceSettingsView({
       </section>
       <p>文字吻合度只比較兩段文字，不代表說話能力或口音好壞。</p>
       <p>高品質模型第一次需下載約 1.5 GB。</p>
-      <div className="voice-settings-actions">
+      {onSave && onBack && <div className="voice-settings-actions">
         <button type="button" onClick={voice.releaseModel}>釋放語音模型</button>
         <button type="button" disabled={unavailable} onClick={() => onSave(selectedPreset)}>使用這個模型</button>
         <button type="button" onClick={onBack}>返回情境設定</button>
-      </div>
+      </div>}
     </section>
   );
+}
+
+function OwnedVoiceSettingsPanel({
+  selectedPreset,
+  onSelectedPresetChange,
+  hasWebGpu,
+}: Omit<VoiceSettingsPanelProps, "voice">) {
+  const voice = useLocalVoice({ modelPreset: selectedPreset });
+  return <VoiceSettingsView hasWebGpu={hasWebGpu} voice={voice} selectedPreset={selectedPreset} setSelectedPreset={onSelectedPresetChange} />;
+}
+
+export type VoiceSettingsPanelProps = {
+  selectedPreset: AsrModelPresetId;
+  onSelectedPresetChange(id: AsrModelPresetId): void;
+  hasWebGpu: boolean;
+  voice?: VoiceController;
+};
+
+export function VoiceSettingsPanel({ voice, ...props }: VoiceSettingsPanelProps) {
+  if (!voice) return <OwnedVoiceSettingsPanel {...props} />;
+  return <VoiceSettingsView {...props} voice={voice} setSelectedPreset={props.onSelectedPresetChange} />;
 }
 
 function OwnedVoiceSettings(props: Omit<VoiceSettingsProps, "voice" | "hasWebGpu"> & { hasWebGpu: boolean }) {
@@ -170,10 +193,11 @@ function OwnedVoiceSettings(props: Omit<VoiceSettingsProps, "voice" | "hasWebGpu
   const voice = useLocalVoice({ modelPreset: selectedPreset });
   return (
     <VoiceSettingsView
-      {...props}
-      hasWebGpu={props.hasWebGpu}
+      onSave={props.onSave}
+      onBack={props.onBack}
       selectedPreset={selectedPreset}
       setSelectedPreset={setSelectedPreset}
+      hasWebGpu={props.hasWebGpu}
       voice={voice}
     />
   );
@@ -183,9 +207,9 @@ function InjectedVoiceSettings(props: VoiceSettingsProps & { voice: VoiceControl
   const [selectedPreset, setSelectedPreset] = useState(props.savedPreset);
   return (
     <VoiceSettingsView
-      hasWebGpu={props.hasWebGpu}
       onBack={props.onBack}
       onSave={props.onSave}
+      hasWebGpu={props.hasWebGpu}
       selectedPreset={selectedPreset}
       setSelectedPreset={setSelectedPreset}
       voice={props.voice}
