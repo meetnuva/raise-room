@@ -70,6 +70,6 @@ iris 幾何近似不等於眼神接觸；所有數值都不能作 HR、雇主或
 
 會議中的「開啟我的鏡頭」只會在你直接點擊後請求權限，影像只在本機 `<video>` 預覽。`getUserMedia` 必須在安全內容（HTTPS 或 localhost）中使用；`http://lvh.me` 不足以同時驗證鏡頭權限。
 
-若要使用 3D 主管，請由 `.env.example` 複製設定，填入 Publishable Key、Avatar、Scene、Voice ID。沒有完整 Presenter 設定時，3D 舞台不會啟動；會議主管仍會使用已設定的 Perxona 動態主管，或在未設定／暫時失敗時顯示本機腳本 fallback。不可把 Secret Key 放入前端。
+若要使用 3D 主管，請由 `.env.example` 複製設定，填入 Publishable Key、共用 Scene，以及男／女主管各自的 Avatar、Voice ID。男主管的新變數未填時才會使用舊的 Avatar／Voice 變數；女主管不會使用男主管或舊變數。角色設定不完整時會被停用，不會改用另一個角色。會議主管仍會使用已設定的 Perxona 動態主管，或在未設定／暫時失敗時顯示本機腳本 fallback。Secret Key 不可放入任何 `VITE_` 前端變數。
 
 已用暫時的 built-in male-finance avatar、office/training scene 與可用中文的 confident male voice 驗收 Presenter `Ready`：頁面只顯示一個 avatar，真實 Chatbot 回合會同時寫入逐字稿並交給 Presenter；React StrictMode 下也只保留一個 `sv-presenter`。這不代表 custom VRoid、對嘴、表情、獨立動作、聲學音訊品質、鏡頭／麥克風／視覺 permission E2E 或完整 device-enabled 十分鐘 session 已驗收；以上仍是後續關卡。
