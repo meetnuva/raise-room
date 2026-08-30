@@ -907,6 +907,149 @@ button {
   outline-offset: 2px;
 }
 
+.prejoin-lobby {
+  min-height: 100vh;
+  background: #f8fafc;
+  color: #1f2937;
+}
+
+.prejoin-header {
+  box-sizing: border-box;
+  min-height: 4rem;
+  padding: 0 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+.prejoin-header .nuva-brand {
+  height: 4rem;
+}
+
+.prejoin-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(18rem, 0.85fr);
+  gap: 2rem;
+  width: min(100% - 3rem, 70rem);
+  margin: 0 auto;
+  padding: clamp(2rem, 6vw, 5rem) 0;
+}
+
+.prejoin-preview,
+.prejoin-join-panel {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+}
+
+.prejoin-preview-heading p,
+.prejoin-kicker,
+.prejoin-time,
+.early-entry-note,
+.prejoin-status-list dt {
+  margin: 0;
+  color: #4b5563;
+}
+
+.prejoin-preview-heading h2,
+.prejoin-join-panel h1 {
+  margin: 0.25rem 0 0;
+  color: #111827;
+}
+
+.prejoin-preview .local-camera-tile {
+  display: grid;
+  gap: 0.75rem;
+  min-height: 19rem;
+  padding: 1.25rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.75rem;
+  background: #172033;
+  color: #f8fafc;
+}
+
+.prejoin-preview .local-camera-tile video {
+  min-height: 15rem;
+  border-radius: 0.5rem;
+}
+
+.prejoin-permission,
+.prejoin-join {
+  border-color: #075985;
+  background: #075985;
+  color: #ffffff;
+}
+
+.prejoin-device-controls {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.prejoin-round-control {
+  display: grid;
+  width: 4.75rem;
+  height: 4.75rem;
+  place-items: center;
+  padding: 0.5rem;
+  border-radius: 50%;
+  color: #075985;
+  text-align: center;
+}
+
+.prejoin-status-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.prejoin-status-list > div {
+  display: grid;
+  grid-template-columns: 5rem minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.prejoin-status-list dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.prejoin-join-panel {
+  padding: clamp(1.5rem, 4vw, 3rem);
+  border: 1px solid #dbeafe;
+  border-radius: 0.75rem;
+  background: #ffffff;
+  box-shadow: 0 1rem 3rem rgb(15 23 42 / 8%);
+}
+
+.prejoin-join-panel > p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.prejoin-time {
+  font-size: 1.25rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+.early-entry-note {
+  font-size: 0.875rem;
+}
+
+.prejoin-cancel {
+  justify-self: start;
+  border-color: transparent;
+}
+
+@media (max-width: 48rem) {
+  .prejoin-grid {
+    grid-template-columns: 1fr;
+    width: min(100% - 2rem, 42rem);
+    padding: 2rem 0;
+  }
+}
+
 @media (max-width: 48rem) {
   .meet-home-layout {
     grid-template-columns: 1fr;

@@ -28,3 +28,15 @@ test("hands an active video element to its local consumer and clears it on unmou
   unmount();
   expect(onVideoElement).toHaveBeenLastCalledWith(null);
 });
+
+test("renders an injected preview stream without requesting or owning it", () => {
+  const stop = vi.fn();
+  const stream = { getTracks: () => [{ stop }] } as unknown as MediaStream;
+  const { unmount } = render(<LocalCameraTile previewStream={stream} showControl={false} />);
+
+  const video = screen.getByLabelText("本機鏡頭預覽") as HTMLVideoElement;
+  expect(video.srcObject).toBe(stream);
+  expect(screen.queryByRole("button", { name: "開啟我的鏡頭" })).toBeNull();
+  unmount();
+  expect(stop).not.toHaveBeenCalled();
+});

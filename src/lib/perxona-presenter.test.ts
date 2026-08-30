@@ -45,3 +45,9 @@ test("mounts one presenter and tears down its event listeners", async () => {
   client.destroy();
   expect(container.querySelector("sv-presenter")).toBeNull();
 });
+
+test("preloading the engine does not mount or initialize a presenter", async () => {
+  await loadPresenterEngine(url);
+
+  expect(document.querySelector("sv-presenter")).toBeNull();
+});

@@ -6,11 +6,13 @@ export function LocalCameraTile({
   detail,
   showControl = true,
   onVideoElement,
+  previewStream,
 }: {
   camera?: Camera;
   detail?: string;
   showControl?: boolean;
   onVideoElement?: (element: HTMLVideoElement | null) => void;
+  previewStream?: MediaStream | null;
 }) {
   const owned = useLocalCamera();
   const camera = injected ?? owned;
@@ -20,15 +22,18 @@ export function LocalCameraTile({
     onVideoElement?.(element);
   }, [onVideoElement]);
 
-  useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.srcObject = camera.stream;
-    }
-  }, [camera.stream]);
+  const stream = previewStream === undefined ? camera.stream : previewStream;
+  const active = previewStream === undefined ? camera.status === "active" : Boolean(previewStream);
 
   useEffect(() => {
-    if (camera.status !== "active") onVideoElement?.(null);
-  }, [camera.status, onVideoElement]);
+    if (videoRef.current) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [stream]);
+
+  useEffect(() => {
+    if (!active) onVideoElement?.(null);
+  }, [active, onVideoElement]);
 
   const message =
     camera.status === "denied"
@@ -43,7 +48,7 @@ export function LocalCameraTile({
     <section className="local-camera-tile" aria-label="你的本機鏡頭">
       <p className="stage-label">你 · 本機預覽</p>
       {detail && <p>{detail}</p>}
-      {camera.status === "active" ? (
+      {active ? (
         <>
           <video ref={setVideoRef} autoPlay muted playsInline aria-label="本機鏡頭預覽" />
           {showControl && <button type="button" onClick={camera.stop}>關閉我的鏡頭</button>}
