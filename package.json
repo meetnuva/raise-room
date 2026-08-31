@@ -21,7 +21,7 @@
     "@mediapipe/tasks-vision": "1.0.1",
     "@perxona/presenter-types": "0.3.0",
     "express": "5.2.1",
-    "opencc-js": "1.4.1",
+    "opencc-js": "1.4.2",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
